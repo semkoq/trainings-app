@@ -302,6 +302,18 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
 .tile{background:var(--card2);border-radius:16px}
 .btn.go{box-shadow:0 8px 28px #ff6b3d40}
 #toast{bottom:calc(92px + env(safe-area-inset-bottom))}
+.bsheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.fight{position:relative;overflow:hidden;background:linear-gradient(135deg,#2a1410 0%,#16191e 60%);padding:16px}
+.fight::after{content:'';position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(#ff6b3d33,transparent 70%)}
+.ftop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:1}
+.ftitle{font:700 11px Inter,system-ui,sans-serif;letter-spacing:1.4px;text-transform:uppercase;color:var(--acc)}
+.fname{font:700 24px/1.1 'Barlow Condensed','Arial Narrow',sans-serif;text-transform:uppercase;margin-top:4px}
+.fdate{font-size:12px;color:var(--mut);margin-top:3px}
+.fcd{text-align:right;flex:none}.fcd b{display:block;font:700 46px/0.95 'Barlow Condensed','Arial Narrow',sans-serif;color:var(--acc)}.fcd span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.fw{display:flex;align-items:center;gap:10px;line-height:1.45;margin-top:12px;padding-top:10px;border-top:1px solid #ffffff12;font-size:13px;color:#c3c9d2;position:relative;z-index:1}
+.fw b{color:var(--txt)}.fw .warn{color:#ffb020}.fw .ok{color:var(--good)}
+.fwbtn{margin-left:auto;flex:none;background:#ffffff14;border:0;color:var(--txt);border-radius:10px;padding:7px 10px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
+.fadd{display:block;width:100%;margin-top:12px;background:none;border:1.5px dashed #2c333c;color:var(--mut);border-radius:16px;padding:12px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
 #weekCard{display:block;margin-top:12px}#weekCard[hidden]{display:none!important}
 .hv span{white-space:nowrap}
 </style>
@@ -407,6 +419,7 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
 <section class="view" id="view-session" hidden></section>
 
 <section class="view" id="view-overview">
+  <div id="fightBox"></div>
   <div class="card" id="todayCard" hidden></div>
   <div class="card" id="whToday" hidden></div>
   <div class="card" id="perfCard" hidden>
@@ -504,6 +517,23 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
 </section>
 </div>
 <div id="toast"></div>
+<div id="fightSheet" class="bsheet" hidden>
+  <div class="sheet" style="max-height:90vh;overflow-y:auto">
+    <h3>Fight Camp</h3>
+    <label class="field">Überschrift<input id="fTitle" placeholder="Fight Day"></label>
+    <label class="field" style="margin-top:8px">Kampf<input id="fName" placeholder="z.B. K1 Fight"></label>
+    <div class="row"><label>Ort<input id="fPlace" placeholder="z.B. Hamburg"></label><label>Datum<input id="fDate" type="date"></label></div>
+    <div class="row"><label>Kampfgewicht (kg)<input id="fClass" type="text" inputmode="decimal" placeholder="65"></label><label>Gewicht heute (kg)<input id="fWeight" type="text" inputmode="decimal" placeholder="68.4"></label></div>
+    <div class="lvrow" style="margin-top:6px"><button class="btn ghost" id="fCancel">Abbrechen</button><button class="btn" id="fSave">Speichern</button></div>
+    <button class="del" id="fDel" hidden>Kampf entfernen</button>
+  </div>
+</div>
+<div id="wSheet" class="bsheet" hidden>
+  <div class="sheet"><h3>Gewicht heute</h3>
+    <input id="wIn" type="text" inputmode="decimal" placeholder="z.B. 67.8" style="font:700 28px 'Barlow Condensed','Arial Narrow',sans-serif;text-align:center">
+    <div class="lvrow" style="margin-top:6px"><button class="btn ghost" id="wCancel">Abbrechen</button><button class="btn" id="wSave">Eintragen</button></div>
+  </div>
+</div>
 <div id="pastSheet" hidden>
   <div class="sheet" style="max-height:88vh;display:flex;flex-direction:column">
     <h3>Vergangene Trainings hinzufügen</h3>
@@ -1788,6 +1818,7 @@ async function syncRun(list) {
       catch (e) { fail++; if (e.status === 401 || e.status === 403) { syncStatus('Token ungültig oder ohne Schreibrecht. Bitte neuen Token eintragen.'); return; } if (fail > 3) break; }
     }
     try { const cur = await gh('GET', 'contents/profile.json'); await putFile('profile.json', JSON.stringify(state.profile, null, 1), 'Profil', cur && cur.sha); } catch (e) { }
+    try { const fj = typeof FC !== 'undefined' && FC.f ? JSON.stringify(FC.f, null, 1) : null; if (fj && fj !== sync.fightLast) { const cur = await gh('GET', 'contents/fight.json').catch(() => null); await putFile('fight.json', fj, 'Fight Camp', cur && cur.sha); sync.fightLast = fj; } } catch (e) { }
     try { if (typeof WH !== 'undefined' && WH.data && WH.data.last && WH.data.last !== sync.whoopLast) { const cur = await gh('GET', 'contents/whoop.json'); await putFile('whoop.json', JSON.stringify(WH.data.days), 'WHOOP-Daten', cur && cur.sha); sync.whoopLast = WH.data.last; } } catch (e) { }
   } finally { sync.busy = false; }
   if (sync.again) { sync.again = false; return syncRun(syncPending()); }
@@ -2549,6 +2580,63 @@ async function syncPull(manual) {
 $('#syPull').onclick = () => syncPull(true);
 (async () => { await ready; setTimeout(() => { if (sync.cfg) syncPull(false); }, 6000); })();
 
+// ===================== FIGHT CAMP =====================
+const FC = { f: null };
+(async () => { await ready; try { FC.f = await kvGet('fight') || null; } catch (e) { } renderFight(); })();
+function fcWeight() { const w = FC.f && FC.f.weights || []; return w.length ? w[w.length - 1] : (state.profile.weight ? { kg: state.profile.weight, d: null } : null); }
+function renderFight() {
+  const box = $('#fightBox'), f = FC.f;
+  if (!f || !f.date) { box.innerHTML = '<button class="fadd" id="fAdd">🥊 Nächsten Kampf eintragen</button>'; $('#fAdd').onclick = () => openFight(); return; }
+  const fd = new Date(f.date + 'T12:00'), today = new Date(); today.setHours(12, 0, 0, 0);
+  const days = Math.round((fd - today) / 864e5);
+  if (days < -2) { box.innerHTML = `<button class="fadd" id="fAdd">🥊 ${esc(f.name || 'Kampf')} ist vorbei – nächsten Kampf eintragen</button>`; $('#fAdd').onclick = () => openFight(true); return; }
+  const cd = days > 0 ? `<b>${days}</b><span>${days === 1 ? 'Tag' : 'Tage'}</span>` : days === 0 ? `<b>🔥</b><span>Heute</span>` : `<b>✓</b><span>gekämpft</span>`;
+  const wk = days > 13 ? `noch ${Math.floor(days / 7)} Wochen · ` : '';
+  const w = fcWeight(); let wl = '';
+  if (f.cls) {
+    if (w) {
+      const diff = Math.round((w.kg - f.cls) * 10) / 10;
+      if (diff > 0) {
+        const perWk = days > 0 ? diff / (days / 7) : diff, pct = perWk / w.kg * 100;
+        const st = days > 7 && pct > 1 ? `<span class="warn">≈ ${perWk.toFixed(1).replace(".", ",")} kg/Woche – recht schnell</span>` : days > 0 ? `≈ ${perWk.toFixed(1).replace(".", ",")} kg/Woche` : '';
+        wl = `<span>Ziel <b>${String(f.cls).replace('.', ',')} kg</b> · aktuell <b>${String(w.kg).replace('.', ',')} kg</b><br>noch <b>${String(diff).replace('.', ',')} kg</b> runter${st ? ' · ' + st : ''}</span>`;
+      } else wl = `<span>Ziel <b>${String(f.cls).replace('.', ',')} kg</b> · aktuell <b>${String(w.kg).replace('.', ',')} kg</b><br><span class="ok">Im Limit ✓</span></span>`;
+    } else wl = `<span>Kampfgewicht ${f.cls} kg · trag dein Gewicht ein</span>`;
+  }
+  box.innerHTML = `<div class="card fight" id="fCard"><div class="ftop"><div style="min-width:0"><div class="ftitle">${esc(f.title || 'Fight Day')}</div>
+    <div class="fname">${esc(f.name || 'Kampf')}${f.place ? ' · ' + esc(f.place) : ''}</div>
+    <div class="fdate">${wk}${fd.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' })}</div></div>
+    <div class="fcd">${cd}</div></div>
+    ${f.cls ? `<div class="fw">⚖️ ${wl}<button class="fwbtn" id="fWbtn">+ Gewicht</button></div>` : ''}</div>`;
+  $('#fCard').onclick = e => { if (e.target.id === 'fWbtn') { e.stopPropagation(); openWeight(); } else openFight(); };
+}
+function openFight(fresh) {
+  const f = (!fresh && FC.f) || {};
+  $('#fTitle').value = f.title || ''; $('#fName').value = f.name || ''; $('#fPlace').value = f.place || ''; $('#fDate').value = f.date || '';
+  $('#fClass').value = f.cls || ''; const w = fcWeight(); $('#fWeight').value = w ? w.kg : '';
+  $('#fDel').hidden = !FC.f; $('#fightSheet').hidden = false;
+}
+async function saveFight(f) { FC.f = f; await kvSet('fight', f); renderFight(); if (sync.cfg) setTimeout(() => syncRun(syncPending()), 800); }
+async function logWeight(kg) {
+  if (!(kg > 30 && kg < 200)) return;
+  const f = FC.f || {}; const d = dayKey(new Date()); f.weights = (f.weights || []).filter(x => x.d !== d); f.weights.push({ d, kg }); f.weights = f.weights.slice(-120);
+  state.profile.weight = kg; try { await store.saveProfile(state.profile); fillProfileForm(); } catch (e) { }
+  await saveFight(f);
+}
+$('#fSave').onclick = async () => {
+  const date = $('#fDate').value; if (!date) { toast('Bitte das Datum eintragen.'); return; }
+  const f = { ...(FC.f && FC.f.date === date ? FC.f : { weights: (FC.f && FC.f.weights) || [] }), title: $('#fTitle').value.trim(), name: $('#fName').value.trim(), place: $('#fPlace').value.trim(), date, cls: parseFloat(String($('#fClass').value).replace(',', '.')) || null };
+  await saveFight(f); const kg = parseFloat(String($('#fWeight').value).replace(',', '.')); const w = fcWeight();
+  if (kg && (!w || w.kg !== kg)) await logWeight(kg);
+  $('#fightSheet').hidden = true; toast('Kampf gespeichert 🥊');
+};
+$('#fCancel').onclick = () => { $('#fightSheet').hidden = true; };
+$('#fDel').onclick = async () => { if (!confirm('Kampf wirklich entfernen?')) return; FC.f = null; await kvSet('fight', null); renderFight(); $('#fightSheet').hidden = true; };
+function openWeight() { const w = fcWeight(); $('#wIn').value = ''; $('#wIn').placeholder = w ? 'zuletzt ' + w.kg : 'z.B. 67.8'; $('#wSheet').hidden = false; setTimeout(() => $('#wIn').focus(), 100); }
+$('#wCancel').onclick = () => { $('#wSheet').hidden = true; };
+$('#wSave').onclick = async () => { const kg = parseFloat(String($('#wIn').value).replace(',', '.')); if (!(kg > 30 && kg < 200)) { toast('Gewicht in kg eingeben'); return; } await logWeight(kg); $('#wSheet').hidden = true; toast('Gewicht eingetragen ✓'); };
+['#fightSheet', '#wSheet'].forEach(id => $(id).onclick = e => { if (e.target.id === id.slice(1)) $(id).hidden = true; });
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -2574,7 +2662,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2051';
+const APP_VERSION = '2026.11.17-2057';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
