@@ -1,5 +1,5 @@
 // Netzwerk zuerst (damit Updates sofort ankommen), offline aus dem Cache.
-const CACHE = 'trainings-app-2026.11.17-1617';
+const CACHE = 'trainings-app-2026.11.17-1624';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
@@ -8,6 +8,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const r = e.request;
   if (r.method !== 'GET') return;
+  const u = new URL(r.url);
+  if (u.origin !== location.origin && !/fonts\.(googleapis|gstatic)\.com|cdnjs\.cloudflare\.com/.test(u.hostname)) return;
   e.respondWith(fetch(r).then(res => {
     if (res.ok && (new URL(r.url).origin === location.origin || /fonts\.(googleapis|gstatic)\.com|cdnjs\.cloudflare\.com/.test(r.url))) {
       const copy = res.clone(); caches.open(CACHE).then(c => c.put(r, copy));

@@ -263,6 +263,17 @@ body{padding-top:env(safe-area-inset-top)}
     <input type="file" id="bkFile" accept=".json,application/json" hidden>
     <p class="hint" id="appVer"></p>
   </div>
+  <div class="card" id="syncCard">
+    <h3>Mit Claude verbinden</h3>
+    <p class="hint" style="margin-top:0">Jedes Training wird automatisch in dein <b>privates</b> GitHub-Repository hochgeladen. Dann kann Claude deine Trainings analysieren, wenn du fragst.</p>
+    <div class="row">
+      <label>GitHub-Name<input id="syUser" autocapitalize="off" autocomplete="off"></label>
+      <label>Repository<input id="syRepo" autocapitalize="off" autocomplete="off"></label>
+    </div>
+    <label class="field" style="margin-top:10px">Zugangsschlüssel (Token)<input id="syToken" type="password" autocapitalize="off" autocomplete="off" placeholder="github_pat_…"></label>
+    <div class="lvrow"><button class="btn" id="sySave">Speichern &amp; testen</button><button class="btn ghost" id="syAll">Alles hochladen</button></div>
+    <p class="hint" id="syStatus">Nicht verbunden.</p>
+  </div>
 </section>
 </div>
 <div id="toast"></div>
@@ -678,7 +689,7 @@ async function fileToSession(name, buf, fallbackType, note, lastModified) {
     type: guessType(name, parsed.sport, fallbackType), note: note || '', source: (name.split('.').pop() || '').slice(0, 5),
     ...res, kcalDevice: parsed.deviceKcal || null,
     prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
-    hr: { step: 5, v: downsample(arr, 5) }, ai: null, created: new Date().toISOString()
+    hr: { step: 5, v: downsample(arr, 5) }, hr1: arr.map(x => x == null ? null : Math.round(x)), ai: null, created: new Date().toISOString()
   };
 }
 
@@ -832,6 +843,7 @@ function openSession(s, isNew) {
     ['Belastungsphasen', s.effortCount ?? '–'], ['Zeit ≥ 85 %', s.effortSec != null ? fmtDur(s.effortSec) : '–']
   ];
   if (s.icuLoad != null) stats.splice(6, 2, ['Load (intervals.icu)', Math.round(s.icuLoad)]);
+  if (s.hrv) stats.push(['HRV (RMSSD)', `${s.hrv.rmssd} <small>ms</small>`], ['HRV ruhigste 2 min', s.hrvRest != null ? `${s.hrvRest} <small>ms</small>` : '–']);
   let cmp = '';
   if (prev.length) {
     const rows = [['Ø Puls', 'avgHr', 0, 'bpm'], ['Max Puls', 'maxHr', 0, 'bpm'], ['Kalorien', 'kcal', 0, 'kcal'], ['Belastung', 'trimp', 0, ''], ['Erholung', 'hrr60', 1, 'bpm'], ['Dauer', 'durationSec', 0, 'min']];
@@ -919,7 +931,7 @@ Zonen: Z1 <60 %, Z2 60–70 %, Z3 70–80 %, Z4 80–90 %, Z5 >90 % vom Max-Puls
 
 HEUTIGES TRAINING: ${JSON.stringify(strip(s))}
 ${s.rounds ? 'Intervall-Runden (Runde, Dauer s, Ø Puls, Max, Pulsabfall 1. Pausenminute): ' + JSON.stringify(s.rounds.map(r => [r.r, r.d, r.avg, r.max, r.drop])) + '\n' : ''}Phasen (Dauer s, Peak, Pulsabfall danach): ${JSON.stringify((s.efforts || []).map(e => [e.d, e.p, e.r]))}
-Pulskurve (alle 30 s): ${curve ? JSON.stringify(curve) : 'keine'}
+${s.hrv ? 'HRV: RMSSD ' + s.hrv.rmssd + ' ms gesamt, ruhigste 2 min ' + (s.hrvRest ?? '–') + ' ms\n' : ''}Pulskurve (alle 30 s): ${curve ? JSON.stringify(curve) : 'keine'}
 Wochenbelastung (TRIMP letzte 7 Tage): ${w.acute}, Schnitt pro Woche (28 Tage): ${w.chronic}
 FRÜHERE TRAININGS (neueste zuerst): ${hist.length ? JSON.stringify(hist) : 'noch keine'}`;
     return prompt;
@@ -1070,6 +1082,11 @@ function onHrValue(ev) {
   const hr = flags & 1 ? dv.getUint16(1, true) : dv.getUint8(1);
   if (hr < 25 || hr > 240) return;
   live.hr = hr; live.hrAt = Date.now();
+  if (flags & 0x10 && live.running && !live.paused) {
+    let o = (flags & 1 ? 3 : 2) + (flags & 0x08 ? 2 : 0);
+    const sec = liveSec();
+    for (; o + 1 < dv.byteLength; o += 2) { const ms = Math.round(dv.getUint16(o, true) / 1024 * 1000); if (ms > 250 && ms < 2500) { live.rr.push(ms); live.rrT.push(sec); } }
+  }
   if (!live.running) renderLive();
 }
 
@@ -1100,7 +1117,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 function liveStart() {
   if (!live.connected) { toast('Erst den Brustgurt verbinden.'); return; }
-  Object.assign(live, { running: true, paused: false, startedAt: new Date(), activeMs: 0, segStart: Date.now(), samples: [], rounds: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0, lastZone: -1 });
+  Object.assign(live, { running: true, paused: false, startedAt: new Date(), activeMs: 0, segStart: Date.now(), samples: [], rr: [], rrT: [], rounds: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0, lastZone: -1 });
   clearInterval(live.tick); live.tick = setInterval(liveTick, 1000);
   keepAwake(true); renderLiveButtons(); renderLive();
 }
@@ -1128,11 +1145,11 @@ function liveTick() {
 }
 
 function saveDraft() {
-  try { localStorage.setItem('ta_live_draft', JSON.stringify({ startedAt: live.startedAt, type: live.type, note: $('#lvNote').value, samples: live.samples, rounds: live.rounds })); } catch (e) { }
+  try { localStorage.setItem('ta_live_draft', JSON.stringify({ startedAt: live.startedAt, type: live.type, note: $('#lvNote').value, samples: live.samples, rounds: live.rounds, rr: live.rr, rrT: live.rrT })); } catch (e) { }
 }
 function clearDraft() { try { localStorage.removeItem('ta_live_draft'); } catch (e) { } }
 
-async function samplesToSession(samples, startedAt, type, note, rounds) {
+async function samplesToSession(samples, startedAt, type, note, rounds, rr, rrT) {
   const arr = toSeries(samples);
   if (arr.filter(x => x != null).length < 60) throw new Error('Zu kurz – unter 1 Minute Pulsdaten.');
   const p = state.profile, res = analyzeSeries(arr, p);
@@ -1141,9 +1158,25 @@ async function samplesToSession(samples, startedAt, type, note, rounds) {
     date: new Date(startedAt).toISOString(), type, note: note || '', source: 'live',
     ...res, kcalDevice: null,
     prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
-    hr: { step: 5, v: downsample(arr, 5) }, ai: null, created: new Date().toISOString(),
-    rounds: roundStats(arr, rounds)
+    hr: { step: 5, v: downsample(arr, 5) }, hr1: arr.map(x => x == null ? null : Math.round(x)), ai: null, created: new Date().toISOString(),
+    rounds: roundStats(arr, rounds), ...hrvFrom(rr, rrT, arr)
   };
+}
+function hrvFrom(rr, rrT, arr) {
+  if (!rr || rr.length < 60) return {};
+  // Artefakte raus: Sprung >20 % zum vorherigen Schlag -> Lücke (NaN)
+  const ok = [], okT = [];
+  for (let i = 0; i < rr.length; i++) { const p = rr[i - 1]; const good = p == null || Math.abs(rr[i] - p) / p < 0.2; ok.push(good ? rr[i] : NaN); okT.push(rrT[i]); }
+  const rmssd = a => { let s = 0, n = 0; for (let i = 1; i < a.length; i++) { const d = a[i] - a[i - 1]; if (isNaN(d)) continue; s += d * d; n++; } return n ? Math.sqrt(s / n) : null; };
+  const good = ok.filter(x => !isNaN(x));
+  const mean = good.reduce((a, b) => a + b, 0) / good.length;
+  const sdnn = Math.sqrt(good.reduce((a, b) => a + (b - mean) ** 2, 0) / good.length);
+  // ruhigste 2 Minuten (niedrigster Ø Puls)
+  let best = null, bestHr = 1e9;
+  for (let s0 = 0; s0 + 120 <= arr.length; s0 += 30) { const seg = arr.slice(s0, s0 + 120).filter(x => x != null); if (seg.length < 100) continue; const m = seg.reduce((a, b) => a + b, 0) / seg.length; if (m < bestHr) { bestHr = m; best = s0; } }
+  let hrvRest = null;
+  if (best != null) { const seg = ok.filter((_, i) => okT[i] >= best && okT[i] < best + 120); if (seg.length >= 60) hrvRest = Math.round(rmssd(seg)); }
+  return { rr, rrT, hrv: { rmssd: Math.round(rmssd(ok)), sdnn: Math.round(sdnn), n: good.length }, hrvRest };
 }
 function roundStats(arr, rounds) {
   if (!rounds || !rounds.length) return null;
@@ -1174,7 +1207,7 @@ async function liveStop(e) {
   try {
     await ready;
     if (iv.on) ivStop(true);
-    const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim(), live.rounds);
+    const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim(), live.rounds, live.rr, live.rrT);
     clearDraft(); $('#lvNote').value = '';
     await saveAndOpen(s);
   } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); }
@@ -1248,7 +1281,7 @@ function initLive() {
   if (d && d.samples && d.samples.length >= 60) {
     const c = $('#lvDraft'); c.hidden = false;
     c.innerHTML = `<p><b>Unterbrochenes Training gefunden</b> (${fmtDate(d.startedAt)}, ${fmtClock(d.samples[d.samples.length - 1].t)}).</p><div class="lvrow"><button class="btn" id="drSave">Speichern</button><button class="btn ghost" id="drDel">Verwerfen</button></div>`;
-    $('#drSave').onclick = async () => { try { await ready; const s = await samplesToSession(d.samples, d.startedAt, d.type || 'Sonstiges', d.note, d.rounds); clearDraft(); c.hidden = true; await saveAndOpen(s); } catch (e) { toast(e.message); } };
+    $('#drSave').onclick = async () => { try { await ready; const s = await samplesToSession(d.samples, d.startedAt, d.type || 'Sonstiges', d.note, d.rounds, d.rr, d.rrT); clearDraft(); c.hidden = true; await saveAndOpen(s); } catch (e) { toast(e.message); } };
     $('#drDel').onclick = () => { clearDraft(); c.hidden = true; };
   } else if (d) clearDraft();
   window.addEventListener('resize', drawLiveChart);
@@ -1374,6 +1407,97 @@ function goPage(i) { pager.scrollTo({ left: i * (pager.clientWidth + 12), behavi
 $('#pgTabs').querySelectorAll('button').forEach(b => b.onclick = () => goPage(+b.dataset.p));
 pager.addEventListener('scroll', () => { const i = Math.round(pager.scrollLeft / (pager.clientWidth + 12)); $('#pgTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.p === i)); }, { passive: true });
 
+// ===================== SYNC → privates GitHub-Repo (für Claude) =====================
+const sync = { cfg: null, map: {}, busy: false, queue: new Set() };
+const kvGet = k => idb.run('kv', 'readonly', s => s.get(k));
+const kvSet = (k, v) => idb.run('kv', 'readwrite', s => s.put(v, k));
+function b64(str) { const by = new TextEncoder().encode(str); let bin = ''; for (let i = 0; i < by.length; i += 0x8000) bin += String.fromCharCode.apply(null, by.subarray(i, i + 0x8000)); return btoa(bin); }
+function sHash(s) { const j = JSON.stringify(clean(s)); let h = 0; for (let i = 0; i < j.length; i++) h = (h * 31 + j.charCodeAt(i)) | 0; return j.length + ':' + h; }
+function sPath(s) {
+  const d = new Date(s.date), p = n => String(n).padStart(2, '0');
+  return `sessions/${d.getFullYear()}/${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}_${s.id}.json`;
+}
+async function gh(method, path, body) {
+  const c = sync.cfg;
+  const r = await fetch(`https://api.github.com/repos/${c.user}/${c.repo}/${path}`, {
+    method, headers: { Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined, cache: 'no-store'
+  });
+  if (r.status === 404 && method === 'GET') return null;
+  if (!r.ok) { const e = new Error('GitHub ' + r.status); e.status = r.status; throw e; }
+  return r.status === 204 ? {} : r.json();
+}
+async function putFile(path, text, msg, sha) {
+  try { return (await gh('PUT', 'contents/' + path, { message: msg, content: b64(text), ...(sha ? { sha } : {}) })).content.sha; }
+  catch (e) {
+    if (e.status === 422 || e.status === 409) { const cur = await gh('GET', 'contents/' + path); return (await gh('PUT', 'contents/' + path, { message: msg, content: b64(text), ...(cur ? { sha: cur.sha } : {}) })).content.sha; }
+    throw e;
+  }
+}
+async function syncSession(s) {
+  const h = sHash(s), m = sync.map[s.id];
+  if (m && m.h === h) return false;
+  const path = sPath(s);
+  if (m && m.path !== path) { try { await gh('DELETE', 'contents/' + m.path, { message: 'Verschoben', sha: m.sha }); } catch (e) { } }
+  const sha = await putFile(path, JSON.stringify(clean(s), null, 0), `${s.type} ${s.date.slice(0, 10)}`, m && m.path === path ? m.sha : null);
+  sync.map[s.id] = { h, path, sha }; await kvSet('syncMap', sync.map);
+  return true;
+}
+function syncStatus(t) { $('#syStatus').textContent = t; }
+function syncInfo() {
+  if (!sync.cfg) return syncStatus('Nicht verbunden.');
+  const done = state.sessions.filter(s => sync.map[s.id] && sync.map[s.id].h === sHash(s)).length;
+  syncStatus(`✓ Verbunden mit ${sync.cfg.user}/${sync.cfg.repo} · ${done} von ${state.sessions.length} Trainings hochgeladen.`);
+}
+async function syncRun(list) {
+  if (!sync.cfg || !navigator.onLine) return;
+  if (sync.busy) { sync.again = true; return; }
+  sync.busy = true; sync.again = false; let n = 0, fail = 0;
+  try {
+    for (const s of list) {
+      if (!state.sessions.includes(s)) continue;
+      try { if (await syncSession(s)) { n++; if (list.length > 3) syncStatus(`Lade hoch … ${n} / ${list.length}`); await new Promise(r => setTimeout(r, 900)); } }
+      catch (e) { fail++; if (e.status === 401 || e.status === 403) { syncStatus('Token ungültig oder ohne Schreibrecht. Bitte neuen Token eintragen.'); return; } if (fail > 3) break; }
+    }
+    try { const cur = await gh('GET', 'contents/profile.json'); await putFile('profile.json', JSON.stringify(state.profile, null, 1), 'Profil', cur && cur.sha); } catch (e) { }
+  } finally { sync.busy = false; }
+  if (sync.again) { sync.again = false; return syncRun(syncPending()); }
+  syncInfo(); if (n === 1) toast('Training an Claude übertragen ✓');
+}
+function syncPending() { return state.sessions.filter(s => !sync.map[s.id] || sync.map[s.id].h !== sHash(s)); }
+// Nach jedem Speichern/Löschen automatisch
+const _save = store.saveSession.bind(store), _del = store.deleteSession.bind(store);
+store.saveSession = async x => { await _save(x); if (sync.cfg) setTimeout(() => syncRun(syncPending()), 1500); };
+store.deleteSession = async id => {
+  await _del(id); const m = sync.map[id];
+  if (sync.cfg && m) { try { await gh('DELETE', 'contents/' + m.path, { message: 'Gelöscht', sha: m.sha }); delete sync.map[id]; await kvSet('syncMap', sync.map); } catch (e) { } }
+};
+$('#sySave').onclick = async () => {
+  const cfg = { user: $('#syUser').value.trim(), repo: $('#syRepo').value.trim(), token: $('#syToken').value.trim() || (sync.cfg && sync.cfg.token) };
+  if (!cfg.user || !cfg.repo || !cfg.token) { syncStatus('Bitte Name, Repository und Token eintragen.'); return; }
+  const old = sync.cfg; sync.cfg = cfg; syncStatus('Teste Verbindung …');
+  try {
+    const repo = await gh('GET', '');
+    if (!repo) throw Object.assign(new Error('nf'), { status: 404 });
+    if (!repo.private) { syncStatus('⚠️ Das Repository ist öffentlich! Bitte auf privat stellen – deine Daten wären sonst für alle sichtbar.'); sync.cfg = old; return; }
+    if (repo.permissions && !repo.permissions.push) { syncStatus('Token hat kein Schreibrecht (Contents: Read and write).'); sync.cfg = old; return; }
+    await kvSet('syncCfg', cfg); $('#syToken').value = ''; $('#syToken').placeholder = '•••••• gespeichert';
+    toast('Verbunden ✓'); syncInfo(); syncRun(syncPending());
+  } catch (e) {
+    sync.cfg = old;
+    syncStatus(e.status === 401 ? 'Token falsch oder abgelaufen.' : e.status === 404 ? 'Repository nicht gefunden – Name richtig? Hat der Token Zugriff darauf?' : 'Keine Verbindung zu GitHub.');
+  }
+};
+$('#syAll').onclick = () => { if (!sync.cfg) { syncStatus('Erst verbinden.'); return; } syncRun(syncPending()); };
+(async () => {
+  await ready;
+  try { sync.cfg = await kvGet('syncCfg') || null; sync.map = await kvGet('syncMap') || {}; } catch (e) { }
+  $('#syUser').value = sync.cfg ? sync.cfg.user : 'semkoq'; $('#syRepo').value = sync.cfg ? sync.cfg.repo : 'trainings-daten';
+  if (sync.cfg) $('#syToken').placeholder = '•••••• gespeichert';
+  syncInfo(); if (sync.cfg) setTimeout(() => syncRun(syncPending()), 3000);
+  window.addEventListener('online', () => syncRun(syncPending()));
+})();
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -1399,7 +1523,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1617';
+const APP_VERSION = '2026.11.17-1624';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
