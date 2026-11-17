@@ -126,6 +126,20 @@ h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing
 .wtype{display:grid;grid-template-columns:14px 1fr auto auto;gap:8px;align-items:center;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
 .wtype i{width:12px;height:12px;border-radius:3px}
 .wtype small{color:var(--mut);min-width:38px;text-align:right}
+/* bewertung */
+#rateSheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:720px;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40%)}}
+.rpe{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.rpe button{height:44px;border:2px solid transparent;border-radius:8px;color:#fff;font:700 18px 'Barlow Condensed';cursor:pointer;opacity:.55}
+.rpe button.on{opacity:1;border-color:#fff;transform:scale(1.08)}
+.rpelbl{text-align:center;margin-top:8px;font-weight:600;min-height:22px}
+.feel{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.feel button{background:#1d222a;border:2px solid transparent;border-radius:12px;padding:8px 0 6px;font-size:28px;cursor:pointer;color:var(--mut)}
+.feel button small{display:block;font:500 10px Inter;margin-top:2px}
+.feel button.on{border-color:var(--acc);background:#ff6b3d18;color:var(--txt)}
+.ratecard .rrow{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line);font-size:15px}
+.ratecard .rrow:first-of-type{border-top:0}
 /* navigation & start */
 [hidden]{display:none!important}
 .hrow{display:flex;justify-content:space-between;align-items:center}
@@ -360,6 +374,20 @@ body{padding-top:env(safe-area-inset-top)}
 </section>
 </div>
 <div id="toast"></div>
+<div id="rateSheet" hidden>
+  <div class="sheet">
+    <h3>Wie war dein Training?</h3>
+    <div class="lbl">Anstrengung</div>
+    <div class="rpe" id="rpeRow"></div>
+    <div class="rpelbl" id="rpeLbl">Tippe von 1 (sehr leicht) bis 10 (maximal)</div>
+    <div class="lbl" style="margin-top:16px">Körperlich</div>
+    <div class="feel" id="feelBody"></div>
+    <div class="lbl" style="margin-top:14px">Mental</div>
+    <div class="feel" id="feelMind"></div>
+    <input id="rateCmt" placeholder="Kommentar (optional), z.B. Beine schwer, wenig geschlafen" style="margin-top:14px">
+    <div class="lvrow" style="margin-top:4px"><button class="btn ghost" id="rateSkip">Später</button><button class="btn" id="rateSave">Speichern</button></div>
+  </div>
+</div>
 <script>
 // ===== Core: Parser + Analyse (ohne DOM-Rendering) =====
 const FIT_EPOCH = 631065600;
@@ -964,6 +992,7 @@ function openSession(s, isNew) {
       <div class="stype"><select id="sType">${TYPES.map(t => `<option ${t === s.type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="sdate">${fmtDate(s.date)}${s.note ? ' · ' + esc(s.note) : ''}</div>
     </div>
+    <div class="card ratecard" id="rateCard">${rateCardHtml(s)}</div>
     <div class="card verdict">${verdict(s)}${!s.hr ? '<p class="hint">Aus einer Übersicht importiert – ohne Pulskurve. Für Zonen, Runden und Erholung die .fit-Datei hochladen.</p>' : ''}</div>
     <div class="grid">${stats.map(([l, v]) => `<div class="stat"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('')}</div>
     ${s.hr ? `<div class="card"><h3>Pulsverlauf</h3><canvas id="hrChart" height="200"></canvas></div>` : ''}
@@ -1019,7 +1048,7 @@ function md(t) {
   return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split(/\n+/).map(l => /^\s*[-•]\s+/.test(l) ? `<li>${l.replace(/^\s*[-•]\s+/, '')}</li>` : /^#+\s/.test(l) ? `<h4>${l.replace(/^#+\s/, '')}</h4>` : `<p>${l}</p>`).join('').replace(/(<li>.*?<\/li>)+/g, m => `<ul>${m}</ul>`);
 }
 function buildPrompt(s) {
-    const strip = x => ({ datum: x.date.slice(0, 10), typ: x.type, notiz: x.note || undefined, dauer_min: Math.round(x.durationSec / 60), avg_hr: x.avgHr, max_hr: x.maxHr, kcal: x.kcal, belastung_trimp: x.trimp, phasen: x.effortCount, erholung_bpm: x.hrr60, zonen_min: x.zones ? x.zones.map(z => Math.round(z / 60)) : undefined });
+    const strip = x => ({ datum: x.date.slice(0, 10), typ: x.type, notiz: x.note || undefined, dauer_min: Math.round(x.durationSec / 60), avg_hr: x.avgHr, max_hr: x.maxHr, kcal: x.kcal, belastung_trimp: x.trimp, phasen: x.effortCount, erholung_bpm: x.hrr60, zonen_min: x.zones ? x.zones.map(z => Math.round(z / 60)) : undefined, rpe: x.rpe ?? undefined, koerper_1_5: x.feelBody ?? undefined, mental_1_5: x.feelMind ?? undefined });
     const curve = s.hr ? downsampleNull(s.hr.v, 6) : null;
     const hist = state.sessions.filter(x => x.id !== s.id && x.date < s.date).slice(0, 12).map(strip);
     const w = weekLoad(s.date);
@@ -1032,6 +1061,7 @@ Profil: Alter ${state.profile.age}, Gewicht ${state.profile.weight || 'unbekannt
 Zonen: Z1 <60 %, Z2 60–70 %, Z3 70–80 %, Z4 80–90 %, Z5 >90 % vom Max-Puls. Belastungsphasen = Abschnitte ≥85 % Max-Puls ≥20 s.
 
 HEUTIGES TRAINING: ${JSON.stringify(strip(s))}
+${s.rpe ? `Selbsteinschätzung: Anstrengung ${s.rpe}/10, körperlich ${s.feelBody || '–'}/5, mental ${s.feelMind || '–'}/5${s.rateNote ? ', Kommentar: ' + s.rateNote : ''}` : ''}
 ${s.rounds ? 'Intervall-Runden (Runde, Dauer s, Ø Puls, Max, Pulsabfall 1. Pausenminute): ' + JSON.stringify(s.rounds.map(r => [r.r, r.d, r.avg, r.max, r.drop])) + '\n' : ''}Phasen (Dauer s, Peak, Pulsabfall danach): ${JSON.stringify((s.efforts || []).map(e => [e.d, e.p, e.r]))}
 ${s.hrv ? 'HRV: RMSSD ' + s.hrv.rmssd + ' ms gesamt, ruhigste 2 min ' + (s.hrvRest ?? '–') + ' ms\n' : ''}Pulskurve (alle 30 s): ${curve ? JSON.stringify(curve) : 'keine'}
 Wochenbelastung (TRIMP letzte 7 Tage): ${w.acute}, Schnitt pro Woche (28 Tage): ${w.chronic}
@@ -1311,7 +1341,7 @@ async function liveStop(e) {
     if (iv.on) ivStop(true);
     const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim(), live.rounds, live.rr, live.rrT);
     clearDraft(); $('#lvNote').value = '';
-    await saveAndOpen(s);
+    await saveAndOpen(s); openRate(s);
   } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); showView('start'); }
 }
 
@@ -1727,6 +1757,49 @@ const _rh = renderHistory;
 renderHistory = function () { _rh(); requestAnimationFrame(() => { renderPerf(); renderWeek(); }); };
 window.addEventListener('resize', () => { if (state.view === 'history') { renderWeek(); } });
 
+// ===================== BEWERTUNG NACH DEM TRAINING (RPE + Gefühl) =====================
+const RPE_TXT = ['', 'Sehr leicht', 'Sehr leicht', 'Leicht', 'Leicht', 'Moderat', 'Moderat', 'Hart', 'Hart', 'Sehr hart', 'Maximal'];
+const RPE_COL = ['', '#3fa7ff', '#3fa7ff', '#3ddc84', '#3ddc84', '#ffb020', '#ffb020', '#ff8a3d', '#ff8a3d', '#ff4d4d', '#b3203a'];
+const FEEL = [['😫', 'Sehr schlecht'], ['🙁', 'Schlecht'], ['😐', 'Normal'], ['🙂', 'Gut'], ['💪', 'Sehr gut']];
+const rate = { s: null, rpe: null, body: null, mind: null };
+function rateCardHtml(s) {
+  if (s.rpe == null && s.feelBody == null && s.feelMind == null) return `<h3>Dein Gefühl</h3><p class="hint" style="margin-top:0">Noch nicht bewertet.</p><button class="btn ghost" id="rateEdit">Training bewerten</button>`;
+  const f = v => v ? FEEL[v - 1][0] + ' ' + FEEL[v - 1][1] : '–';
+  const srpe = s.rpe ? Math.round(s.rpe * s.durationSec / 60) : null;
+  return `<h3>Dein Gefühl <button class="link" id="rateEdit" style="float:right;font-size:13px">ändern</button></h3>
+    <div class="rrow"><span>Anstrengung</span><b style="color:${RPE_COL[s.rpe] || 'inherit'}">${s.rpe ? s.rpe + '/10 · ' + RPE_TXT[s.rpe] : '–'}</b></div>
+    <div class="rrow"><span>Körperlich</span><b>${f(s.feelBody)}</b></div>
+    <div class="rrow"><span>Mental</span><b>${f(s.feelMind)}</b></div>
+    ${s.rateNote ? `<div class="rrow"><span>Kommentar</span><b style="font-weight:500;text-align:right;max-width:65%">${esc(s.rateNote)}</b></div>` : ''}
+    ${srpe != null ? `<p class="hint">Gefühlte Belastung: <b>${srpe}</b> (Anstrengung × Minuten)${s.trimp ? ` · Puls-Belastung: <b>${s.trimp}</b>` : ''}</p>` : ''}`;
+}
+function rateRender() {
+  $('#rpeRow').innerHTML = Array.from({ length: 10 }, (_, i) => `<button data-v="${i + 1}" class="${rate.rpe === i + 1 ? 'on' : ''}" style="background:${RPE_COL[i + 1]}">${i + 1}</button>`).join('');
+  $('#rpeRow').querySelectorAll('button').forEach(b => b.onclick = () => { rate.rpe = +b.dataset.v; rateRender(); });
+  $('#rpeLbl').textContent = rate.rpe ? `${rate.rpe} · ${RPE_TXT[rate.rpe]}` : 'Tippe von 1 (sehr leicht) bis 10 (maximal)';
+  $('#rpeLbl').style.color = rate.rpe ? RPE_COL[rate.rpe] : '';
+  for (const [id, k] of [['#feelBody', 'body'], ['#feelMind', 'mind']]) {
+    $(id).innerHTML = FEEL.map(([e, l], i) => `<button data-v="${i + 1}" class="${rate[k] === i + 1 ? 'on' : ''}">${e}<small>${l}</small></button>`).join('');
+    $(id).querySelectorAll('button').forEach(b => b.onclick = () => { rate[k] = +b.dataset.v; rateRender(); });
+  }
+}
+function openRate(s) {
+  Object.assign(rate, { s, rpe: s.rpe ?? null, body: s.feelBody ?? null, mind: s.feelMind ?? null });
+  $('#rateCmt').value = s.rateNote || '';
+  rateRender(); $('#rateSheet').hidden = false;
+}
+$('#rateSkip').onclick = () => { $('#rateSheet').hidden = true; };
+$('#rateSheet').onclick = e => { if (e.target.id === 'rateSheet') $('#rateSheet').hidden = true; };
+$('#rateSave').onclick = async () => {
+  const s = rate.s; if (!s) return;
+  if (!rate.rpe) { toast('Bitte die Anstrengung antippen (1–10).'); return; }
+  s.rpe = rate.rpe; s.feelBody = rate.body; s.feelMind = rate.mind; s.rateNote = $('#rateCmt').value.trim();
+  try { await store.saveSession(s); } catch (e) { }
+  $('#rateSheet').hidden = true; toast('Gespeichert ✓');
+  if (state.current === s) openSession(s, s._new);
+};
+document.addEventListener('click', e => { if (e.target && e.target.id === 'rateEdit' && state.current) openRate(state.current); });
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -1752,7 +1825,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1640';
+const APP_VERSION = '2026.11.17-1644';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
