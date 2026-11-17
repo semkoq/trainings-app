@@ -2279,7 +2279,9 @@ function renderCompare() {
     h += `</table>`;
   }
   h += `<p class="hint">Grün = neuere Einheit besser (niedrigerer Puls bei gleicher Arbeit, schnellere Erholung).</p></div>`;
-  $('#anaCmp').innerHTML = h; $('#anaCmp').scrollIntoView({ behavior: 'smooth' });
+  h += cmpCoach(a, b);
+  $('#anaCmp').innerHTML = h;
+  const cb = $('#cmpAsk'); if (cb) cb.onclick = () => cmpAskClaude(a, b); $('#anaCmp').scrollIntoView({ behavior: 'smooth' });
   if (ha || hb) requestAnimationFrame(() => {
     const cv = $('#cmpChart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 190; cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
     const L = 30, R = 6, T = 6, B = 20, pw = W - L - R, ph = H - T - B;
@@ -2292,6 +2294,72 @@ function renderCompare() {
     for (let s = 0; s <= n * 5; s += step) g.fillText(Math.round(s / 60) + "'", x(s / 5), H - 5);
     [[ha, '#7d8590'], [hb, '#ff6b3d']].forEach(([arr, c]) => { if (!arr) return; g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); let st = false; arr.forEach((v, i) => { if (v == null) { st = false; return; } st ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); st = true; }); g.stroke(); });
   });
+}
+
+// ---- Coach-Feedback zum Vergleich (automatisch, ohne Internet) ----
+function cmpCoach(a, b) {
+  const pos = [], neg = [], info = []; let score = 0;
+  const min = s => (s.durationSec || 0) / 60, dDur = Math.abs(min(b) - min(a)) / Math.max(1, min(a));
+  const same = dDur < 0.25, perMin = s => s.trimp != null && min(s) ? s.trimp / min(s) : null;
+  // Ø Puls im Verhältnis zur Arbeit
+  if (a.avgHr && b.avgHr) {
+    const d = b.avgHr - a.avgHr, ia = perMin(a), ib = perMin(b);
+    if (same && d <= -4) { pos.push(`Ø Puls ${-d} Schläge niedriger bei ähnlicher Dauer – dein Herz arbeitet effizienter.`); score += 2; }
+    else if (same && d >= 4) { neg.push(`Ø Puls ${d} Schläge höher bei ähnlicher Dauer – entweder härter gearbeitet oder nicht ganz frisch.`); score -= 1; }
+    else if (!same) info.push(`Dauer war unterschiedlich (${Math.round(min(a))} vs. ${Math.round(min(b))} min) – Ø Puls nur bedingt vergleichbar.`);
+    if (ia && ib && Math.abs(ib - ia) / ia > 0.2) info.push(ib > ia ? 'Heute war die Einheit intensiver (mehr Belastung pro Minute).' : 'Heute war die Einheit lockerer (weniger Belastung pro Minute).');
+  }
+  // Erholung in den Pausen
+  const ra = recov(a), rb = recov(b);
+  if (ra != null && rb != null) {
+    const d = rb - ra;
+    if (d >= 3) { pos.push(`Erholung in den Pausen besser: Puls fällt um ${rb} statt ${ra} Schläge – klares Fitness-Zeichen.`); score += 2; }
+    else if (d <= -3) { neg.push(`Erholung in den Pausen schwächer (−${rb} statt −${ra}) – typisch bei Müdigkeit.`); score -= 2; }
+    else info.push('Erholung in den Pausen etwa gleich.');
+  }
+  // Hohe Intensität
+  if (a.zones && b.zones) {
+    const za = Math.round((a.zones[3] + a.zones[4]) / 60), zb = Math.round((b.zones[3] + b.zones[4]) / 60);
+    if (zb - za >= 3) info.push(`${zb - za} min mehr in Z4/Z5 – mehr harte Arbeit drin.`);
+    else if (za - zb >= 3) info.push(`${za - zb} min weniger in Z4/Z5.`);
+  }
+  // Gefühl vs. Puls (sRPE / TRIMP)
+  if (a.rpe && b.rpe && a.trimp && b.trimp) {
+    const qa = a.rpe * min(a) / a.trimp, qb = b.rpe * min(b) / b.trimp;
+    if (qb < qa * 0.85) { pos.push('Fühlte sich im Verhältnis zur Belastung leichter an als letztes Mal – gutes Zeichen.'); score += 1; }
+    else if (qb > qa * 1.15) { neg.push('Fühlte sich schwerer an, als der Puls es zeigt – Hinweis auf Müdigkeit oder schlechte Erholung.'); score -= 1; }
+  }
+  if (a.feelBody && b.feelBody && b.feelBody !== a.feelBody) (b.feelBody > a.feelBody ? pos : neg).push(`Körperlich ${b.feelBody > a.feelBody ? 'besser' : 'schlechter'} gefühlt (${FEEL[b.feelBody - 1][0]} statt ${FEEL[a.feelBody - 1][0]}).`);
+  // Runden
+  if (a.rounds && b.rounds) {
+    const n = Math.min(a.rounds.length, b.rounds.length); let up = 0, dn = 0;
+    for (let i = 0; i < n; i++) { const x = a.rounds[i], y = b.rounds[i]; if (x.drop != null && y.drop != null) { if (y.drop - x.drop >= 3) up++; else if (x.drop - y.drop >= 3) dn++; } }
+    if (up > dn && up >= 2) { pos.push(`In ${up} Runden schneller runtergekommen.`); score += 1; }
+    else if (dn > up && dn >= 2) { neg.push(`In ${dn} Runden langsamer runtergekommen.`); score -= 1; }
+    const late = r => r.length >= 3 ? r[r.length - 1].drop : null, la = late(a.rounds), lb = late(b.rounds);
+    if (la != null && lb != null && lb - la >= 4) pos.push('Besonders in der letzten Runde bessere Erholung – Ausdauer hält länger.');
+  }
+  // WHOOP-Erholung am jeweiligen Tag
+  try {
+    const dk = s => new Date(s.date).toLocaleDateString('sv-SE'), wa = WH.data.days[dk(a)], wb = WH.data.days[dk(b)];
+    if (wa && wb && wa.recovery != null && wb.recovery != null) info.push(`WHOOP-Erholung an dem Tag: ${wa.recovery} % vs. ${wb.recovery} %${wb.recovery < 34 ? ' – heute rot, Werte deshalb nicht zu streng sehen' : ''}.`);
+    else if (wb && wb.recovery != null && wb.recovery < 34) info.push(`WHOOP-Erholung heute nur ${wb.recovery} % – schlechtere Werte sind da normal.`);
+  } catch (e) { }
+  const head = score >= 2 ? ['💪 Klar besser als letztes Mal', 'var(--good)'] : score <= -2 ? ['⚠️ Schwächer als letztes Mal', 'var(--bad)'] : score > 0 ? ['👍 Leicht besser', 'var(--good)'] : score < 0 ? ['➖ Leicht schwächer', 'var(--bad)'] : ['≈ Ungefähr gleich', 'var(--mut)'];
+  let tip = score <= -2 ? 'Tipp: Nächste Einheit eher locker (Z2) oder Pause, gut schlafen – dann nochmal vergleichen.' : score >= 2 ? 'Tipp: Du bist bereit für mehr – nächstes Mal eine Runde mehr oder kürzere Pausen.' : 'Tipp: Gleiche Einheit nochmal unter ähnlichen Bedingungen, dann sieht man den Trend klarer.';
+  if (!pos.length && !neg.length && !info.length) return `<div class="card"><h3>Coach-Feedback</h3><p class="hint">Zu wenig Daten für eine Einschätzung (Pulskurve, Runden oder Bewertung fehlen).</p></div>`;
+  const li = (arr, ic) => arr.map(x => `<li>${ic} ${esc(x)}</li>`).join('');
+  return `<div class="card coach"><h3>Coach-Feedback</h3><p style="font-weight:700;font-size:17px;color:${head[1]};margin:4px 0 8px">${head[0]}</p>
+    <ul style="list-style:none;padding:0;margin:0;display:grid;gap:6px">${li(pos, '✅')}${li(neg, '🔻')}${li(info, 'ℹ️')}</ul>
+    <p style="margin:10px 0 0">${tip}</p>
+    <button class="btn ghost" id="cmpAsk" style="margin-top:10px">Ausführlich: Claude fragen</button></div>`;
+}
+async function cmpAskClaude(a, b) {
+  const pick = s => ({ datum: s.date, art: s.type, kategorie: s.anaCat, dauerMin: Math.round(s.durationSec / 60), avgHr: s.avgHr, maxHr: s.maxHr, trimp: s.trimp, zonenMin: s.zones && s.zones.map(z => Math.round(z / 60)), erholung: recov(s), runden: s.rounds, rpe: s.rpe, koerper: s.feelBody, kopf: s.feelMind, kommentar: s.rateNote, hrv: s.hrv });
+  const txt = `Vergleich meine zwei ${a.anaCat || ''}-Einheiten (alt → neu). Sag mir locker und direkt, wo ich besser/schlechter war, warum, und was ich nächstes Mal machen soll. Profil: ${JSON.stringify(state.profile)}\n\nALT: ${JSON.stringify(pick(a))}\n\nNEU: ${JSON.stringify(pick(b))}`;
+  let ok = false; try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) { }
+  if (ok) { toast('Kopiert! In Claude einfügen.'); setTimeout(() => (isNative() ? HN().openUrl({ url: 'https://claude.ai/new' }) : window.open('https://claude.ai/new', '_blank')), 400); }
+  else toast('Kopieren ging nicht.');
 }
 
 // ---- Vergangene Trainings gesammelt zur Analyse hinzufügen ----
@@ -2389,7 +2457,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2028';
+const APP_VERSION = '2026.11.17-2037';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
