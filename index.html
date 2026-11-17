@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trainings-App</title>
+<meta name="theme-color" content="#0d1014">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1014;--card:#161a20;--line:#252b33;--txt:#eef1f5;--mut:#8b94a1;--acc:#ff6b3d;--good:#3ddc84;--bad:#ff4d4d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:40px}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 80%,transparent);padding:14px 0 10px}
+h1{font:700 26px/1 'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+h1 span{color:var(--acc)}
+.tabs{display:flex;gap:6px;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tab{flex:1;border:0;background:none;color:var(--mut);font:600 14px Inter,sans-serif;padding:9px 0;border-radius:9px;cursor:pointer}
+.tab.on{background:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px}
+h3{font:700 18px 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing:0}
+.lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#1d222a;color:var(--txt);border-radius:20px;padding:7px 13px;font:500 14px Inter;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+#drop{display:block;border:2px dashed #39414c;border-radius:14px;padding:28px 14px;text-align:center;cursor:pointer;margin-top:14px;transition:.15s}
+#drop.hot,#drop:hover{border-color:var(--acc);background:#ff6b3d10}
+#drop .big{display:block;font:700 22px 'Barlow Condensed';text-transform:uppercase;color:var(--acc)}
+#drop .sm{font-size:13px;color:var(--mut)}
+#file{display:none}
+input,select{width:100%;background:#0f1216;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 12px;font:15px Inter}
+input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.row label,.field{display:block;font-size:12px;color:var(--mut)}
+.row label input,.row label select{margin-top:4px}
+.err{color:var(--bad);font-size:14px;margin-top:10px}
+.hint{color:var(--mut);font-size:13px;margin-top:8px}
+details summary{cursor:pointer;color:var(--mut);font-size:14px;font-weight:600}
+.btn{width:100%;margin-top:12px;border:0;background:var(--acc);color:#fff;font:600 15px Inter;padding:12px;border-radius:10px;cursor:pointer}
+.btn:disabled{opacity:.6}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.grid.three{grid-template-columns:repeat(3,1fr);margin-top:0}
+@media(min-width:560px){.grid{grid-template-columns:repeat(4,1fr)}.grid.three{grid-template-columns:repeat(3,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.card .stat{background:#0f1216}
+.stat .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.stat .v{font:700 26px/1.15 'Barlow Condensed';margin-top:2px}
+.stat .v small{font:500 12px Inter;color:var(--mut)}
+.shead{margin-top:6px}
+.back{background:none;border:0;color:var(--acc);font:600 14px Inter;cursor:pointer;padding:4px 0}
+.stype select{width:auto;font:700 26px 'Barlow Condensed';text-transform:uppercase;background:none;border:0;padding:0;margin-top:4px;color:var(--txt);appearance:none;-webkit-appearance:none;cursor:pointer}
+.stype select option{font:15px Inter;background:var(--card)}
+.sdate{color:var(--mut);font-size:13px}
+.verdict{border-left:3px solid var(--acc)}
+.verdict p+p{margin-top:6px}
+.link{background:none;border:0;color:var(--acc);font:600 14px Inter;text-decoration:underline;cursor:pointer}
+canvas{width:100%;display:block}
+.zrow{display:grid;grid-template-columns:100px 1fr 54px;align-items:center;gap:8px;margin:7px 0;font-size:13px}
+.zl{color:var(--mut)}
+.zbar{height:10px;background:#0f1216;border-radius:6px;overflow:hidden}
+.zbar i{display:block;height:100%;border-radius:6px}
+.zv{text-align:right;font-variant-numeric:tabular-nums}
+.efforts{display:grid;gap:4px}
+.ef{display:grid;grid-template-columns:26px 1fr 1fr 1fr;font-size:14px;padding:6px 8px;background:#0f1216;border-radius:8px;font-variant-numeric:tabular-nums}
+.ef b{color:var(--acc)}
+.ef span:last-child{color:var(--good);text-align:right}
+table.cmp{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.cmp th{color:var(--mut);font-weight:600;font-size:12px;text-align:right;padding:4px}
+.cmp td{padding:7px 4px;border-top:1px solid var(--line);text-align:right}
+.cmp td:first-child,.cmp th:first-child{text-align:left;color:var(--mut)}
+.cmp td.up{color:var(--good);font-weight:600}.cmp td.down{color:var(--bad);font-weight:600}
+.ai p,.ai li{margin-top:6px}.ai ul{padding-left:18px}.ai h4{margin-top:10px;font:700 16px 'Barlow Condensed';text-transform:uppercase}
+.del{display:block;margin:22px auto 0;background:none;border:1px solid #3a2226;color:#ff7b7b;padding:9px 16px;border-radius:10px;font:500 14px Inter;cursor:pointer}
+.del.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+.hitem{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:12px;padding:12px 14px;margin-top:8px;cursor:pointer;font:15px Inter}
+.hitem span{display:block;color:var(--mut);font-size:12px}
+.hv{display:flex;gap:10px;align-items:center;text-align:right}
+.hv span{font-size:13px;color:var(--txt)}
+.load{min-width:40px;text-align:center !important;border-radius:8px;padding:3px 6px;font-weight:600;color:#fff !important}
+.l0{background:#3a4250}.l1{background:#2a6fb0}.l2{background:#c47a12}.l3{background:#c43a3a}.l4{background:#8e1f4a}
+.empty{color:var(--mut);text-align:center;padding:30px 0}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* batch + year */
+.pbar{height:8px;background:#0f1216;border-radius:6px;overflow:hidden;margin-top:12px}.pbar i{display:block;height:100%;background:var(--acc);transition:width .2s}
+#batch p{margin-top:10px}
+.ysel{width:auto;display:inline-block;padding:2px 8px;font:600 15px Inter;margin-left:6px;vertical-align:2px}
+.months{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:14px}
+.mo{text-align:center;font-size:11px;color:var(--mut)}.mo span{display:block;color:var(--txt);height:15px}.mo small{display:block}
+.mb{height:70px;background:#0f1216;border-radius:5px;display:flex;align-items:flex-end;overflow:hidden}.mb i{display:block;width:100%;background:var(--acc);border-radius:5px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#2a313b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media (max-width:400px){.hv span:not(.load):first-child{display:none}}
+/* live */
+#lvHrBox{--zc:#39414c;text-align:center;border:2px solid var(--zc);border-radius:18px;padding:14px 10px 12px;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--zc) 22%,transparent),transparent 70%);transition:border-color .4s}
+#lvHr{font:700 96px/1 'Barlow Condensed',sans-serif;color:var(--zc);transition:color .4s;font-variant-numeric:tabular-nums}
+#lvHr+small{display:block;color:var(--mut);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+#lvZone{font:600 16px Inter;margin-top:6px}
+#lvTime{font:700 44px/1 'Barlow Condensed';text-align:center;margin-top:12px;font-variant-numeric:tabular-nums}
+#lvTime.paused{color:var(--mut);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.lvstatus{font-size:13px;color:var(--mut);margin-top:10px;text-align:center}
+.lvstatus.good{color:var(--good)}.lvstatus.warn{color:#ffb020}.lvstatus.bad{color:var(--bad)}
+.lvrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn.big{font-size:18px;padding:16px}
+.btn.ghost{background:#252b33}
+.btn.stop{background:#c43a3a}.btn.stop.armed,.btn.armed{background:var(--bad);outline:2px solid #fff}
+.lvsmall{display:block;margin:10px auto 0;font-size:13px}
+.seg{display:inline-flex;background:#0f1216;border-radius:8px;padding:2px;float:right}
+.seg button{border:0;background:none;color:var(--mut);font:600 12px Inter;padding:4px 10px;border-radius:6px;cursor:pointer}
+.seg button.on{background:#2a313b;color:var(--txt)}
+textarea.cp{width:100%;height:120px;background:#0f1216;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font:12px monospace;margin-top:8px}
+body{padding-top:env(safe-area-inset-top)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Trainings<span>-App</span></h1>
+  <nav class="tabs"><button class="tab on" data-v="live">Live</button><button class="tab" data-v="new">Datei</button><button class="tab" data-v="history">Verlauf</button><button class="tab" data-v="profile">Profil</button></nav>
+</header>
+
+<section class="view" id="view-live">
+  <div class="card" id="lvBt" hidden><b>Bluetooth geht hier nicht.</b><p class="hint">Öffne die App in <b>Chrome auf deinem Android-Handy</b>. Auf dem iPhone und in manchen Browsern ist Bluetooth für Web-Apps gesperrt.</p></div>
+  <div class="card" id="lvDraft" hidden></div>
+  <div class="card">
+    <div id="lvHrBox"><div id="lvHr">--</div><small>bpm</small><div id="lvZone">nicht verbunden</div></div>
+    <div id="lvTime">00:00</div>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="l">Ø Puls</div><div class="v" id="lvAvg">–</div></div>
+      <div class="stat"><div class="l">Max</div><div class="v" id="lvMax">–</div></div>
+      <div class="stat"><div class="l">kcal</div><div class="v" id="lvKcal">0</div></div>
+      <div class="stat"><div class="l">Belastung</div><div class="v" id="lvLoad">0</div></div>
+    </div>
+    <div id="lvBtns" style="margin-top:4px"></div>
+    <div class="lvstatus" id="lvStatus">Gurt anlegen, Kontakte anfeuchten, dann verbinden.</div>
+  </div>
+  <div class="card"><h3>Puls <div class="seg" id="lvView"><button data-r="5">5 min</button><button data-r="all" class="on">Alles</button></div></h3><canvas id="lvChart" height="170"></canvas></div>
+  <div class="card"><h3>Zeit in Zonen</h3><div id="lvZones"></div></div>
+  <div class="card">
+    <div class="lbl">Was trainierst du?</div>
+    <div class="chips" id="lvTypeChips"></div>
+    <div style="margin-top:12px"><input id="lvNote" placeholder="Notiz (optional), z.B. 5×3 min Sparring"></div>
+    <p class="hint">Tipp: Bildschirm bleibt während des Trainings an. Wenn die Wahoo-App gleichzeitig mit dem Gurt verbunden ist, kann es Probleme geben – dann Wahoo kurz schließen.</p>
+  </div>
+</section>
+
+<section class="view" id="view-new" hidden>
+  <div class="card">
+    <div class="lbl">Was hast du trainiert?</div>
+    <div class="chips" id="typeChips"></div>
+    <div style="margin-top:12px"><input id="note" placeholder="Notiz (optional), z.B. 5×3 min Sparring"></div>
+    <label id="drop" for="file">
+      <span class="big">Dateien auswählen</span>
+      <span class="sm">.fit · .tcx · .gpx · .csv · .zip · intervals.icu-Übersicht (.csv)</span>
+      <input type="file" id="file" multiple>
+    </label>
+    <div class="err" id="upErr"></div>
+    <div id="batch" hidden></div>
+    <p class="hint">Einzeln: Wahoo-App → Training → Teilen → <b>.fit</b>.<br>Alle auf einmal: intervals.icu → Aktivitäten → Listenansicht → Zeitraum wählen, alle anhaken → Bearbeiten → FIT-Dateien herunterladen → die ZIP hier hochladen. Trainingsart wird aus dem Namen erkannt, sonst gilt die oben gewählte.</p>
+  </div>
+  <div class="card">
+    <details>
+      <summary>Keine Datei? Werte von Hand eintragen</summary>
+      <div class="row">
+        <label>Dauer (min)<input id="mDur" type="number" inputmode="decimal"></label>
+        <label>Ø Puls<input id="mAvg" type="number" inputmode="numeric"></label>
+        <label>Max Puls<input id="mMax" type="number" inputmode="numeric"></label>
+        <label>Kalorien laut App<input id="mKcal" type="number" inputmode="numeric"></label>
+      </div>
+      <button class="btn" id="manualBtn">Auswerten</button>
+    </details>
+  </div>
+</section>
+
+<section class="view" id="view-session" hidden></section>
+
+<section class="view" id="view-history" hidden>
+  <div class="card" id="yearCard" hidden></div>
+  <div class="card"><h3>Diese Woche</h3><div id="weekCard"></div></div>
+  <div class="card" id="trendCard" hidden><h3>Trend</h3><canvas id="trendChart" height="170"></canvas>
+    <div class="legend"><span><i style="background:#ff6b3d88"></i>Belastung</span><span><i style="background:#3ddc84"></i>Erholung (höher = fitter)</span></div></div>
+  <div id="histList"></div>
+</section>
+
+<section class="view" id="view-profile" hidden>
+  <div class="card">
+    <h3>Dein Profil</h3>
+    <p class="hint" style="margin-top:0">Wird für Kalorien, Zonen und Belastung gebraucht. Je genauer, desto besser die Analyse.</p>
+    <div class="row">
+      <label>Alter<input id="pAge" type="number" inputmode="numeric"></label>
+      <label>Gewicht (kg)<input id="pWeight" type="number" inputmode="decimal"></label>
+      <label>Geschlecht<select id="pSex"><option value="m">Männlich</option><option value="f">Weiblich</option></select></label>
+      <label>Ruhepuls<input id="pRest" type="number" inputmode="numeric"></label>
+      <label>Max-Puls<input id="pMax" type="number" inputmode="numeric"></label>
+    </div>
+    <p class="hint" id="maxHint">Max-Puls: am besten den höchsten Wert aus einem harten Sparring oder Sprint nehmen. Die App sagt Bescheid, wenn sie einen höheren sieht.</p>
+    <p class="err" id="weightWarn" hidden>Gewicht fehlt – Kalorien werden mit 75 kg geschätzt.</p>
+    <button class="btn" id="saveProfile">Speichern</button>
+    <p class="hint" id="storeInfo">Speicher wird geladen …</p>
+  </div>
+  <div class="card">
+    <h3>Sicherung</h3>
+    <p class="hint" style="margin-top:0">Deine Trainings liegen nur auf diesem Handy. Mach ab und zu eine Sicherung – z.B. bevor du die App löschst oder ein neues Handy bekommst.</p>
+    <div class="lvrow"><button class="btn" id="bkExport">Sicherung speichern</button><button class="btn ghost" id="bkImportBtn">Sicherung laden</button></div>
+    <input type="file" id="bkFile" accept=".json,application/json" hidden>
+    <p class="hint" id="appVer"></p>
+  </div>
+</section>
+</div>
+<div id="toast"></div>
+<script>
+// ===== Core: Parser + Analyse (ohne DOM-Rendering) =====
+const FIT_EPOCH = 631065600;
+
+function parseFIT(buf) {
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  const recs = []; let session = null; let off = 0;
+  while (off + 12 <= buf.byteLength) {
+    const hs = u8[off];
+    const sig = String.fromCharCode(u8[off + 8], u8[off + 9], u8[off + 10], u8[off + 11]);
+    if (sig !== '.FIT') { if (off === 0) throw new Error('Keine gültige FIT-Datei.'); break; }
+    const dataSize = dv.getUint32(off + 4, true);
+    let p = off + hs; const end = Math.min(p + dataSize, buf.byteLength);
+    const defs = {}; let lastTs = 0;
+    const readData = (def) => {
+      const vals = {}; let q = p;
+      for (const f of def.fields) {
+        if (q + f.s > buf.byteLength) break;
+        let v = null;
+        if (f.s === 1) { v = u8[q]; if (v === 0xFF) v = null; }
+        else if (f.s === 2) { v = dv.getUint16(q, def.le); if (v === 0xFFFF) v = null; }
+        else if (f.s === 4) { v = dv.getUint32(q, def.le); if (v === 0xFFFFFFFF) v = null; }
+        if (v !== null) vals[f.n] = v;
+        q += f.s;
+      }
+      p += def.size;
+      return vals;
+    };
+    const handle = (num, vals) => {
+      if (vals[253] != null) lastTs = vals[253];
+      if (num === 20 && vals[3] != null && vals[253] != null && vals[3] > 0) recs.push({ ts: vals[253], hr: vals[3] });
+      else if (num === 18) session = {
+        start: vals[2], kcal: vals[11] ?? null, sport: vals[5] ?? null,
+        timer: vals[8] != null ? vals[8] / 1000 : null,
+        avg: vals[16] ?? null, max: vals[17] ?? null
+      };
+    };
+    while (p < end) {
+      const h = u8[p++];
+      if (h & 0x80) {
+        const def = defs[(h >> 5) & 3];
+        if (!def) throw new Error('Defekte FIT-Datei.');
+        const to = h & 0x1F;
+        const ts = lastTs + ((to - (lastTs & 0x1F)) & 0x1F);
+        const vals = readData(def);
+        if (vals[253] == null) vals[253] = ts;
+        handle(def.num, vals);
+      } else if (h & 0x40) {
+        const lt = h & 0x0F, dev = !!(h & 0x20);
+        p++;
+        const le = u8[p++] === 0;
+        const num = dv.getUint16(p, le); p += 2;
+        const nf = u8[p++]; const fields = []; let size = 0;
+        for (let i = 0; i < nf; i++) { fields.push({ n: u8[p], s: u8[p + 1], t: u8[p + 2] }); size += u8[p + 1]; p += 3; }
+        if (dev) { const nd = u8[p++]; for (let i = 0; i < nd; i++) { size += u8[p + 1]; p += 3; } }
+        defs[lt] = { num, le, fields, size };
+      } else {
+        const def = defs[h & 0x0F];
+        if (!def) throw new Error('Defekte FIT-Datei.');
+        handle(def.num, readData(def));
+      }
+    }
+    off = off + hs + dataSize + 2;
+  }
+  if (!recs.length) throw new Error('In der FIT-Datei sind keine Pulsdaten.');
+  const t0 = recs[0].ts;
+  return {
+    samples: recs.map(r => ({ t: r.ts - t0, hr: r.hr })),
+    date: new Date((t0 + FIT_EPOCH) * 1000),
+    deviceKcal: session && session.kcal ? session.kcal : null,
+    sport: session ? session.sport : null
+  };
+}
+
+function byLocal(el, name) { return Array.from(el.getElementsByTagNameNS('*', name)); }
+function childText(el, name) { const c = Array.from(el.children).find(x => x.localName === name); return c ? c.textContent.trim() : null; }
+
+function parseXMLTrack(text, kind) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('Datei konnte nicht gelesen werden.');
+  const pts = byLocal(doc, kind === 'tcx' ? 'Trackpoint' : 'trkpt');
+  const raw = [];
+  for (const tp of pts) {
+    const time = childText(tp, 'time') || childText(tp, 'Time');
+    let hr = null;
+    if (kind === 'tcx') { const b = byLocal(tp, 'HeartRateBpm')[0]; if (b) hr = parseFloat(childText(b, 'Value')); }
+    else { const h = byLocal(tp, 'hr')[0]; if (h) hr = parseFloat(h.textContent); }
+    if (time && hr) raw.push({ ts: Date.parse(time) / 1000, hr });
+  }
+  if (!raw.length) throw new Error('Keine Pulsdaten in der Datei gefunden.');
+  let kcal = null;
+  if (kind === 'tcx') {
+    let sum = 0; for (const lap of byLocal(doc, 'Lap')) { const c = childText(lap, 'Calories'); if (c) sum += parseFloat(c) || 0; }
+    if (sum > 0) kcal = Math.round(sum);
+  }
+  const t0 = raw[0].ts;
+  return { samples: raw.map(r => ({ t: r.ts - t0, hr: r.hr })), date: new Date(t0 * 1000), deviceKcal: kcal };
+}
+
+function parseTimeCell(s) {
+  s = String(s).trim().replace(/^"|"$/g, '');
+  if (/^\d+(\.\d+)?$/.test(s)) return parseFloat(s);
+  const m = s.match(/^(\d+):(\d{1,2})(?::(\d{1,2}(?:\.\d+)?))?$/);
+  if (m) return m[3] != null ? (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3]) : (+m[1]) * 60 + (+m[2]);
+  const d = Date.parse(s); if (!isNaN(d)) return d / 1000;
+  return null;
+}
+
+function parseCSV(text, fileDate) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const delim = [';', '\t', ','].find(d => (lines.slice(0, 10).join('').split(d).length > 3)) || ',';
+  const split = l => l.split(delim).map(c => c.trim().replace(/^"|"$/g, ''));
+  let hi = -1, hrCol = -1, tCol = -1;
+  for (let i = 0; i < Math.min(lines.length, 40); i++) {
+    const cells = split(lines[i]);
+    const h = cells.findIndex(c => /^(hr|heart ?rate|herzfrequenz|puls|bpm)\b|hr ?\(bpm\)/i.test(c));
+    if (h >= 0) { hi = i; hrCol = h; tCol = cells.findIndex((c, j) => j !== h && /time|zeit|timestamp|sec/i.test(c)); break; }
+  }
+  if (hi < 0) throw new Error('CSV: keine Puls-Spalte gefunden (z.B. "HR" oder "Heart Rate").');
+  const raw = [];
+  for (let i = hi + 1; i < lines.length; i++) {
+    const c = split(lines[i]); const hr = parseFloat(String(c[hrCol]).replace(',', '.'));
+    if (!(hr > 0)) continue;
+    let t = tCol >= 0 ? parseTimeCell(c[tCol]) : null;
+    if (t == null) t = raw.length ? raw[raw.length - 1].ts + 1 : 0;
+    raw.push({ ts: t, hr });
+  }
+  if (!raw.length) throw new Error('CSV: keine Pulswerte gefunden.');
+  const t0 = raw[0].ts;
+  const isAbs = t0 > 1e9;
+  return { samples: raw.map(r => ({ t: r.ts - t0, hr: r.hr })), date: isAbs ? new Date(t0 * 1000) : fileDate, deviceKcal: null };
+}
+
+// ---- 1-Hz-Serie mit Lücken (null = Pause) ----
+function toSeries(samples) {
+  const s = samples.filter(x => x.hr >= 30 && x.hr <= 240 && x.t >= 0).sort((a, b) => a.t - b.t);
+  if (!s.length) return [];
+  const T = Math.min(Math.round(s[s.length - 1].t) + 1, 6 * 3600);
+  const arr = new Array(T).fill(null);
+  for (const x of s) { const i = Math.round(x.t); if (i < T) arr[i] = x.hr; }
+  let last = null, li = -99;
+  for (let i = 0; i < T; i++) {
+    if (arr[i] != null) { last = arr[i]; li = i; } else if (last != null && i - li <= 10) arr[i] = last;
+  }
+  // nur isolierte Ausreißer glätten (Wert springt und ist 3 s später wieder zurück)
+  for (let i = 1; i < T - 3; i++) {
+    const a = arr[i - 1], v = arr[i], b = arr[i + 3];
+    if (a != null && v != null && b != null && Math.abs(v - a) > 35 && Math.abs(b - a) < 20) arr[i] = a;
+  }
+  return arr;
+}
+
+function smooth(arr, w = 5) {
+  const out = new Array(arr.length).fill(null);
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] == null) continue;
+    let s = 0, n = 0;
+    for (let j = Math.max(0, i - w + 1); j <= i; j++) if (arr[j] != null) { s += arr[j]; n++; }
+    out[i] = s / n;
+  }
+  return out;
+}
+
+function kcalPerMin(hr, p) {
+  const w = p.weight || 75, a = p.age || 25;
+  const v = p.sex === 'f'
+    ? (-20.4022 + 0.4472 * hr - 0.1263 * w + 0.074 * a) / 4.184
+    : (-55.0969 + 0.6309 * hr + 0.1988 * w + 0.2017 * a) / 4.184;
+  return Math.max(v, 1.2);
+}
+
+function trimpMin(hr, p) {
+  const r = Math.min(1, Math.max(0, (hr - p.rest) / (p.max - p.rest)));
+  return p.sex === 'f' ? r * 0.86 * Math.exp(1.67 * r) : r * 0.64 * Math.exp(1.92 * r);
+}
+
+function zoneOf(hr, max) {
+  const q = hr / max;
+  return q < 0.6 ? 0 : q < 0.7 ? 1 : q < 0.8 ? 2 : q < 0.9 ? 3 : 4;
+}
+
+function loadLabel(t) {
+  return t < 40 ? 'Locker' : t < 90 ? 'Moderat' : t < 160 ? 'Hart' : t < 250 ? 'Sehr hart' : 'Extrem';
+}
+
+function analyzeSeries(arr, p) {
+  let n = 0, sum = 0, max = 0, min = 999, kcal = 0, trimp = 0;
+  const zones = [0, 0, 0, 0, 0];
+  for (const hr of arr) {
+    if (hr == null) continue;
+    n++; sum += hr; if (hr > max) max = hr; if (hr < min) min = hr;
+    kcal += kcalPerMin(hr, p) / 60; trimp += trimpMin(hr, p) / 60;
+    zones[zoneOf(hr, p.max)]++;
+  }
+  if (!n) throw new Error('Keine brauchbaren Pulswerte.');
+  // Belastungsphasen (≥85 % HFmax, ≥20 s) + Erholung nach 60 s
+  const s = smooth(arr, 5), thr = 0.85 * p.max;
+  const efforts = []; let st = -1, lastAbove = -1;
+  for (let i = 0; i <= s.length; i++) {
+    const v = i < s.length ? s[i] : null;
+    if (v != null && v >= thr) { if (st < 0) st = i; lastAbove = i; }
+    else if (st >= 0 && (v == null || i - lastAbove > 10 || i === s.length)) {
+      if (lastAbove - st >= 20) efforts.push({ start: st, end: lastAbove });
+      st = -1;
+    }
+  }
+  for (let k = 0; k < efforts.length; k++) {
+    const e = efforts[k];
+    let peak = 0; for (let i = e.start; i <= e.end; i++) if (s[i] != null && s[i] > peak) peak = s[i];
+    e.peak = Math.round(peak);
+    const next = efforts[k + 1];
+    // Erholung: Pulsabfall in der Pause danach (bis 60 s, mind. 40 s Pause nötig)
+    const j = Math.min(e.end + 60, next ? next.start : Infinity);
+    let endHr = 0; for (let i = Math.max(e.start, e.end - 10); i <= e.end; i++) if (s[i] != null && s[i] > endHr) endHr = s[i];
+    if (j - e.end >= 40 && j < s.length) {
+      let lo = 999; for (let i = e.end; i <= j; i++) if (s[i] != null && s[i] < lo) lo = s[i];
+      if (lo < 999) e.drop = Math.round(endHr - lo);
+    }
+  }
+  const drops = efforts.filter(e => e.drop != null && e.drop > 0).map(e => e.drop);
+  return {
+    durationSec: n,
+    avgHr: Math.round(sum / n), maxHr: max, minHr: min,
+    kcal: Math.round(kcal), trimp: Math.round(trimp),
+    zones,
+    effortCount: efforts.length,
+    effortSec: efforts.reduce((a, e) => a + (e.end - e.start), 0),
+    hrr60: drops.length ? Math.round(drops.reduce((a, b) => a + b, 0) / drops.length) : null,
+    efforts: efforts.slice(0, 40).map(e => ({ s: e.start, d: e.end - e.start, p: e.peak, r: e.drop ?? null }))
+  };
+}
+
+function downsample(arr, step = 5) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += step) {
+    let s = 0, n = 0;
+    for (let j = i; j < Math.min(i + step, arr.length); j++) if (arr[j] != null) { s += arr[j]; n++; }
+    out.push(n ? Math.round(s / n) : null);
+  }
+  return out;
+}
+
+
+
+// ===== UI, Speicher, Vergleich, KI-Coach =====
+const TYPES = ['Kickboxen', 'Sparring', 'Pratzen', 'Sandsack', 'Intervalle', 'Laufen', 'Rudern', 'Kraft', 'Mobility', 'Sonstiges'];
+const ZONE_NAMES = ['Z1 Locker', 'Z2 Grundlage', 'Z3 Tempo', 'Z4 Schwelle', 'Z5 Max'];
+const ZONE_COLORS = ['#8a94a6', '#3fa7ff', '#3ddc84', '#ffb020', '#ff4d4d'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtDur = sec => { sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return h ? `${h}:${String(m).padStart(2, '0')} h` : `${m}:${String(s).padStart(2, '0')} min`; };
+const fmtDate = iso => new Date(iso).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' }) + ', ' + new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+const DEFAULT_PROFILE = { age: 22, weight: null, sex: 'm', rest: 60, max: 198 };
+const state = { profile: { ...DEFAULT_PROFILE }, sessions: [], current: null, type: 'Kickboxen' };
+
+// ---------- Speicher: IndexedDB auf dem Handy ----------
+const idb = {
+  db: null,
+  open() {
+    return new Promise((ok, no) => {
+      const r = indexedDB.open('trainings-app', 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('sessions', { keyPath: 'id' }); d.createObjectStore('kv'); };
+      r.onsuccess = () => { this.db = r.result; ok(); }; r.onerror = () => no(r.error);
+    });
+  },
+  run(name, mode, fn) {
+    return new Promise((ok, no) => {
+      const tx = this.db.transaction(name, mode), rq = fn(tx.objectStore(name)); let res;
+      if (rq) rq.onsuccess = () => res = rq.result;
+      tx.oncomplete = () => ok(res); tx.onerror = () => no(tx.error); tx.onabort = () => no(tx.error);
+    });
+  }
+};
+const clean = s => { const c = JSON.parse(JSON.stringify(s)); delete c._new; return c; };
+const store = {
+  mode: 'local',
+  async init() { await idb.open(); try { navigator.storage && navigator.storage.persist && await navigator.storage.persist(); } catch (e) { } },
+  loadProfile() { return idb.run('kv', 'readonly', s => s.get('profile')); },
+  saveProfile(p) { return idb.run('kv', 'readwrite', s => s.put({ ...p }, 'profile')); },
+  loadSessions() { return idb.run('sessions', 'readonly', s => s.getAll()).then(r => r || []); },
+  saveSession(x) { return idb.run('sessions', 'readwrite', s => s.put(clean(x))); },
+  deleteSession(id) { return idb.run('sessions', 'readwrite', s => s.delete(id)); }
+};
+const ready = (async () => {
+  await store.init();
+  try { const p = await store.loadProfile(); if (p) state.profile = { ...DEFAULT_PROFILE, ...p }; } catch (e) { }
+  try { state.sessions = (await store.loadSessions()).sort((a, b) => b.date.localeCompare(a.date)); } catch (e) { toast('Verlauf konnte nicht geladen werden.'); }
+  fillProfileForm(); renderHistory();
+  $('#storeInfo').textContent = `Gespeichert auf diesem Handy · ${state.sessions.length} Trainings.`;
+})();
+
+// ---------- Tabs ----------
+function showView(v) {
+  document.querySelectorAll('.view').forEach(x => x.hidden = x.id !== 'view-' + v);
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.v === v || (v === 'session' && x.dataset.v === (state.current && state.current.source === 'live' ? 'live' : 'new') && state.current && state.current._new)));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => { if (t.dataset.v === 'history') renderHistory(); showView(t.dataset.v); });
+
+// ---------- Typ-Auswahl ----------
+function renderTypeChips(el, sel, onPick) {
+  el.innerHTML = TYPES.map(t => `<button class="chip ${t === sel ? 'on' : ''}" data-t="${t}">${t}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(b => b.onclick = () => { el.querySelectorAll('.chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); onPick(b.dataset.t); });
+}
+renderTypeChips($('#typeChips'), state.type, t => state.type = t);
+
+// ---------- Upload ----------
+const drop = $('#drop');
+['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hot'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hot'); }));
+drop.addEventListener('drop', e => { if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+$('#file').onchange = e => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; };
+
+// Typ automatisch erkennen (Dateiname / Sportart in der FIT-Datei), sonst ausgewählter Typ
+function guessType(name, sport, fallback) {
+  const n = (name || '').toLowerCase();
+  const map = [
+    [['sparring', 'sparing'], 'Sparring'], [['pratzen', 'pads'], 'Pratzen'], [['boxsack', 'box sack', 'sandsack', 'heavy bag'], 'Sandsack'],
+    [['intervall', 'interval', 'hiit'], 'Intervalle'], [['lauf', 'berglä', '10km', '10 km', 'run'], 'Laufen'], [['ruder', 'rowing'], 'Rudern'],
+    [['mobility', 'dehnen', 'dehen', 'dehben', 'beweglich', 'restday', 'stretch'], 'Mobility'],
+    [['kraft', 'explosiv', 'schlag', 'calisthenics', 'bauch', 'beine', 'schulter', 'körper', 'zirkel', 'rücken', 'strength', 'weight'], 'Kraft'],
+    [['kick', 'box', 'k1', 'footwork', 'technik', 'muay', 'thai'], 'Kickboxen']];
+  for (const [ks, t] of map) if (ks.some(k => n.includes(k))) return t;
+  if (sport === 1) return 'Laufen';
+  if (sport === 15) return 'Rudern';
+  return fallback;
+}
+
+// ---- Übersichts-CSV (z.B. intervals.icu „Aktivitäten exportieren“): eine Zeile pro Training ----
+function csvRows(text) {
+  const rows = []; let row = [], cur = '', q = false;
+  const d = text.split('\n')[0].split(';').length > text.split('\n')[0].split(',').length ? ';' : ',';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === d) { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; }
+    else cur += c;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+function isSummaryCSV(text) {
+  const h = text.slice(0, 400).toLowerCase();
+  return /(datum|date|start)/.test(h) && /(bewegungszeit|moving.?time|dauer|duration|elapsed)/.test(h) && /(hf|heart|avg.?hr|puls)/.test(h);
+}
+function summaryToSessions(text) {
+  const rows = csvRows(text.replace(/^\uFEFF/, ''));
+  const H = rows[0].map(x => x.trim().toLowerCase());
+  const col = re => H.findIndex(h => re.test(h));
+  const ci = { id: col(/^id$/), date: col(/^(datum|date|start)/), dur: col(/bewegungszeit|moving.?time/), dur2: col(/dauer|duration|elapsed/), name: col(/^name$/), hr: col(/(⌀|ø|avg|durchschn).*(hf|hr|heart|puls)|^(hf|hr|avg_hr)$/), w: col(/gewicht|weight/), load: col(/belastung|load/) };
+  if (ci.date < 0 || ci.hr < 0) throw new Error('CSV: Datum oder Ø HF Spalte nicht gefunden.');
+  const num = v => { const x = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(x) ? null : x; };
+  const list = [];
+  for (const r of rows.slice(1)) {
+    const d = new Date(r[ci.date]); const sec = num(r[ci.dur >= 0 ? ci.dur : ci.dur2]); const hr = num(r[ci.hr]);
+    if (isNaN(d) || !(sec >= 300) || sec > 6 * 3600 || !(hr >= 60)) continue;
+    list.push({ id: r[ci.id], d, sec, hr, name: (r[ci.name] || '').trim(), w: num(r[ci.w]), load: num(r[ci.load]) });
+  }
+  list.sort((a, b) => a.d - b.d);
+  // Doppelte (gleiches Training aus zwei Quellen, Start < 10 min auseinander) zusammenfassen
+  const score = x => [x.load != null ? 1 : 0, /^(sonstige|workout|boxen)$/i.test(x.name) ? 0 : 1, x.sec];
+  const better = (a, b) => { const sa = score(a), sb = score(b); for (let i = 0; i < 3; i++) if (sa[i] !== sb[i]) return sa[i] > sb[i]; return false; };
+  const keep = [];
+  for (const x of list) {
+    const last = keep[keep.length - 1];
+    if (last && Math.abs(x.d - last.d) < 600e3) { if (better(x, last)) keep[keep.length - 1] = x; continue; }
+    keep.push(x);
+  }
+  const p = state.profile;
+  return keep.map(x => {
+    const pp = { ...p, weight: x.w || p.weight }, min = x.sec / 60;
+    return {
+      id: 'c' + (x.id || x.d.getTime().toString(36)).replace(/[^a-zA-Z0-9_-]/g, ''), date: x.d.toISOString(),
+      type: guessType(x.name, null, 'Sonstiges'), note: x.name, source: 'liste',
+      durationSec: Math.round(x.sec), avgHr: Math.round(x.hr), maxHr: null, minHr: null,
+      kcal: Math.round(kcalPerMin(x.hr, pp) * min), kcalDevice: null, trimp: Math.round(trimpMin(x.hr, pp) * min), icuLoad: x.load,
+      zones: null, effortCount: null, effortSec: null, hrr60: null, efforts: [],
+      prof: { max: p.max, rest: p.rest, weight: pp.weight, age: p.age, sex: p.sex }, hr: null, ai: null, created: new Date().toISOString()
+    };
+  });
+}
+
+async function gunzip(buf) {
+  const ds = new DecompressionStream('gzip');
+  return await new Response(new Blob([buf]).stream().pipeThrough(ds)).arrayBuffer();
+}
+
+// Eine Datei (Name + ArrayBuffer) -> Session-Objekt
+async function fileToSession(name, buf, fallbackType, note, lastModified) {
+  name = name.toLowerCase();
+  if (name.endsWith('.gz')) { buf = await gunzip(buf); name = name.slice(0, -3); }
+  const u8 = new Uint8Array(buf);
+  const text = () => new TextDecoder().decode(u8);
+  let parsed;
+  const isFit = u8.length > 12 && String.fromCharCode(u8[8], u8[9], u8[10], u8[11]) === '.FIT';
+  if (isFit) parsed = parseFIT(buf);
+  else if (name.endsWith('.tcx') || text().includes('<TrainingCenterDatabase')) parsed = parseXMLTrack(text(), 'tcx');
+  else if (name.endsWith('.gpx') || text().includes('<gpx')) parsed = parseXMLTrack(text(), 'gpx');
+  else parsed = parseCSV(text(), new Date(lastModified || Date.now()));
+  const arr = toSeries(parsed.samples);
+  if (arr.filter(x => x != null).length < 60) throw new Error('Zu wenig Pulsdaten (unter 1 Minute).');
+  const p = state.profile;
+  const res = analyzeSeries(arr, p);
+  return {
+    id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    date: (parsed.date && !isNaN(parsed.date)) ? parsed.date.toISOString() : new Date().toISOString(),
+    type: guessType(name, parsed.sport, fallbackType), note: note || '', source: (name.split('.').pop() || '').slice(0, 5),
+    ...res, kcalDevice: parsed.deviceKcal || null,
+    prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
+    hr: { step: 5, v: downsample(arr, 5) }, ai: null, created: new Date().toISOString()
+  };
+}
+
+const near = (a, b) => Math.abs(new Date(a.date) - new Date(b.date)) < 600e3;
+async function batchSave(makers) {
+  const prog = $('#batch'); prog.hidden = false;
+  let ok = 0, dupN = 0, bad = 0, failSave = 0;
+  for (let i = 0; i < makers.length; i++) {
+    if (i % 3 === 0) prog.innerHTML = `<div class="pbar"><i style="width:${(i / makers.length * 100).toFixed(1)}%"></i></div><p class="hint">Importiere ${i + 1} von ${makers.length} …</p>`;
+    try {
+      const s = await makers[i]();
+      const dup = state.sessions.find(x => near(x, s));
+      if (dup && !(s.hr && !dup.hr)) { dupN++; continue; }
+      if (dup) { s.type = dup.type; s.note = s.note || dup.note; try { await store.deleteSession(dup.id); } catch (e) { } state.sessions = state.sessions.filter(x => x !== dup); }
+      try { await store.saveSession(s); } catch (e) { failSave++; if (e && e.code === 'quota_exceeded') break; continue; }
+      state.sessions.push(s); ok++;
+    } catch (e) { bad++; }
+  }
+  state.sessions.sort((a, b) => b.date.localeCompare(a.date));
+  prog.innerHTML = `<p><b>${ok} Trainings importiert.</b>${dupN ? ` ${dupN} waren schon drin.` : ''}${bad ? ` ${bad} Dateien ohne Pulsdaten übersprungen.` : ''}${failSave ? ` ${failSave} konnten nicht gespeichert werden.` : ''}</p><button class="btn" id="toHist">Zum Verlauf</button>`;
+  $('#toHist').onclick = () => { prog.hidden = true; renderHistory(); showView('history'); };
+}
+
+async function loadJSZip() {
+  if (window.JSZip) return window.JSZip;
+  await new Promise((ok, fail) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = ok; sc.onerror = () => fail(new Error('ZIP-Modul konnte nicht geladen werden.')); document.head.appendChild(sc); });
+  return window.JSZip;
+}
+
+async function handleFiles(fileList) {
+  $('#upErr').textContent = '';
+  const big = $('#drop .big'); big.textContent = 'Lese Dateien …';
+  // Alle Einträge sammeln (ZIPs entpacken)
+  const entries = [];
+  try {
+    for (const f of fileList) {
+      if (f.name.toLowerCase().endsWith('.zip')) {
+        const JSZip = await loadJSZip();
+        const zip = await JSZip.loadAsync(await f.arrayBuffer());
+        const items = Object.values(zip.files).filter(z => !z.dir && /\.(fit|tcx|gpx|csv)(\.gz)?$/i.test(z.name) && !z.name.includes('__MACOSX'));
+        for (const z of items) entries.push({ name: z.name.split('/').pop(), get: () => z.async('arraybuffer'), lm: f.lastModified });
+      } else entries.push({ name: f.name, get: () => f.arrayBuffer(), lm: f.lastModified });
+    }
+  } catch (e) { $('#upErr').textContent = e.message || 'ZIP konnte nicht gelesen werden.'; big.textContent = 'Dateien auswählen'; return; }
+  if (!entries.length) { $('#upErr').textContent = 'Keine Trainingsdateien gefunden (.fit, .tcx, .gpx, .csv).'; big.textContent = 'Dateien auswählen'; return; }
+  await ready;
+  const note = $('#note').value.trim();
+  // Übersichts-CSV erkennen -> viele Trainings auf einmal (ohne Pulskurve)
+  const pre = [];
+  for (const en of entries) {
+    if (/\.csv$/i.test(en.name)) {
+      const txt = new TextDecoder().decode(await en.get());
+      if (isSummaryCSV(txt)) { try { pre.push(...summaryToSessions(txt)); } catch (e) { $('#upErr').textContent = e.message; } en.skip = true; }
+    }
+  }
+  const files = entries.filter(e => !e.skip);
+  if (pre.length && !files.length) { await batchSave(pre.map(s => async () => s)); big.textContent = 'Dateien auswählen'; return; }
+  entries.length = 0; entries.push(...files);
+  if (!entries.length) { big.textContent = 'Dateien auswählen'; return; }
+  if (entries.length === 1 && !pre.length) {
+    try {
+      const s = await fileToSession(entries[0].name, await entries[0].get(), state.type, note, entries[0].lm);
+      const dup = state.sessions.find(x => near(x, s));
+      if (dup && dup.hr) { toast('Dieses Training ist schon gespeichert'); openSession(dup, true); }
+      else {
+        if (dup) { s.note = s.note || dup.note; s.type = guessType(dup.note, null, s.type); try { await store.deleteSession(dup.id); } catch (e) { } state.sessions = state.sessions.filter(x => x !== dup); }
+        await saveAndOpen(s); $('#note').value = '';
+      }
+    } catch (e) { $('#upErr').textContent = e.message || 'Datei konnte nicht gelesen werden.'; }
+    big.textContent = 'Dateien auswählen'; return;
+  }
+  await batchSave([...pre.map(x => async () => x), ...entries.map(en => async () => fileToSession(en.name, await en.get(), state.type, '', en.lm))]);
+  big.textContent = 'Dateien auswählen';
+}
+
+$('#manualBtn').onclick = async () => {
+  const dur = parseFloat($('#mDur').value), avg = parseFloat($('#mAvg').value), max = parseFloat($('#mMax').value), kc = parseFloat($('#mKcal').value);
+  if (!(dur > 0 && avg > 30)) { $('#upErr').textContent = 'Mindestens Dauer und Ø Puls eintragen.'; return; }
+  const p = state.profile;
+  const s = {
+    id: 's' + Date.now().toString(36), date: new Date().toISOString(), type: state.type, note: $('#note').value.trim(), source: 'manuell',
+    durationSec: Math.round(dur * 60), avgHr: Math.round(avg), maxHr: max > 0 ? Math.round(max) : null, minHr: null,
+    kcal: Math.round(kcalPerMin(avg, p) * dur), kcalDevice: kc > 0 ? Math.round(kc) : null,
+    trimp: Math.round(trimpMin(avg, p) * dur), zones: null, effortCount: null, effortSec: null, hrr60: null, efforts: [],
+    prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex }, hr: null, ai: null, created: new Date().toISOString()
+  };
+  ['#mDur', '#mAvg', '#mMax', '#mKcal'].forEach(x => $(x).value = '');
+  await saveAndOpen(s);
+};
+
+async function saveAndOpen(s) {
+  await ready;
+  try { await store.saveSession(s); } catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Speicher voll – alte Trainings löschen.' : 'Speichern fehlgeschlagen, Analyse trotzdem unten.'); }
+  state.sessions = [s, ...state.sessions.filter(x => x.id !== s.id)].sort((a, b) => b.date.localeCompare(a.date));
+  openSession(s, true);
+}
+
+// ---------- Vergleich ----------
+function previousSame(s, n = 5) {
+  return state.sessions.filter(x => x.id !== s.id && x.type === s.type && x.date < s.date).slice(0, n);
+}
+const avgOf = (arr, k) => { const v = arr.map(x => x[k]).filter(x => x != null && !isNaN(x)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+function weekLoad(refDate) {
+  const t = new Date(refDate).getTime(), day = 864e5;
+  const acute = state.sessions.filter(x => { const d = new Date(x.date).getTime(); return d <= t && d > t - 7 * day; });
+  const chronic = state.sessions.filter(x => { const d = new Date(x.date).getTime(); return d <= t && d > t - 28 * day; });
+  const a = acute.reduce((s, x) => s + (x.trimp || 0), 0), c = chronic.reduce((s, x) => s + (x.trimp || 0), 0) / 4;
+  const oldest = state.sessions.length ? new Date(state.sessions[state.sessions.length - 1].date).getTime() : t;
+  const enoughHistory = t - oldest > 21 * day;
+  return { acute: Math.round(a), chronic: Math.round(c), count: acute.length, ratio: enoughHistory && c > 0 ? a / c : null };
+}
+
+// ---------- Fazit (regelbasiert) ----------
+function verdict(s) {
+  const out = [];
+  const z45 = s.zones ? s.zones[3] + s.zones[4] : null;
+  out.push(`<b>${loadLabel(s.trimp)}e Einheit</b> – Belastungswert ${s.trimp}, ca. ${s.kcal} kcal in ${fmtDur(s.durationSec)}.`);
+  if (z45 != null) {
+    const pct = Math.round(z45 / s.durationSec * 100);
+    out.push(pct >= 35 ? `${fmtDur(z45)} im roten Bereich (Z4–Z5, ${pct} %) – richtig Gas gegeben.` : pct >= 15 ? `${fmtDur(z45)} im roten Bereich (${pct} %) – gute Mischung aus Druck und Pause.` : `Nur ${pct} % im roten Bereich – eher Technik/Grundlage.`);
+  }
+  if (s.effortCount) out.push(`${s.effortCount} Belastungsphasen erkannt${s.hrr60 != null ? `, in den Pausen fällt dein Puls im Schnitt um <b>${s.hrr60} Schläge</b>` : ''}.`);
+  const prev = previousSame(s);
+  if (prev.length) {
+    const pr = avgOf(prev, 'hrr60'), pa = avgOf(prev, 'avgHr');
+    if (s.hrr60 != null && pr != null) {
+      const d = s.hrr60 - pr;
+      out.push(d >= 3 ? `📈 Erholung <b>${Math.round(d)} Schläge besser</b> als dein ${s.type}-Schnitt – Kondition geht hoch.` : d <= -3 ? `📉 Erholung ${Math.round(-d)} Schläge schlechter als sonst – evtl. müde, wenig Schlaf oder härter als sonst trainiert.` : `Erholung auf deinem normalen Niveau.`);
+    }
+    if (pa != null) {
+      const d = s.avgHr - pa;
+      if (Math.abs(d) >= 4) out.push(d < 0 ? `Ø Puls ${Math.round(-d)} Schläge niedriger als sonst bei ${s.type} – lockerer trainiert oder fitter geworden.` : `Ø Puls ${Math.round(d)} Schläge höher als sonst bei ${s.type} – intensiver als üblich.`);
+    }
+  } else out.push(`Erstes gespeichertes ${s.type}-Training – ab dem nächsten siehst du hier, ob du besser wirst.`);
+  const w = weekLoad(s.date);
+  if (w.ratio != null && w.ratio > 1.5) out.push(`⚠️ Deine Belastung der letzten 7 Tage ist ${w.ratio.toFixed(1)}× so hoch wie dein Schnitt – Regeneration einplanen.`);
+  if (s.maxHr && s.maxHr > state.profile.max) out.push(`Neuer Max-Puls: <b>${s.maxHr}</b> (Profil: ${state.profile.max}). <button class="link" id="setMax">Im Profil übernehmen</button>`);
+  return out.map(x => `<p>${x}</p>`).join('');
+}
+
+// ---------- Session-Ansicht ----------
+function openSession(s, isNew) {
+  state.current = s; s._new = !!isNew;
+  const v = $('#view-session');
+  const prev = previousSame(s);
+  const kcalTxt = s.kcalDevice ? `${s.kcal}<small> (Gerät: ${s.kcalDevice})</small>` : s.kcal;
+  const stats = [
+    ['Dauer', fmtDur(s.durationSec)], ['Kalorien', kcalTxt + ' <small>kcal</small>'],
+    ['Ø Puls', s.avgHr + ' <small>bpm</small>'], ['Max Puls', (s.maxHr ?? '–') + ' <small>bpm</small>'],
+    ['Belastung', `${s.trimp} <small>${loadLabel(s.trimp)}</small>`], ['Erholung (Pause)', s.hrr60 != null ? `−${s.hrr60} <small>bpm</small>` : '–'],
+    ['Belastungsphasen', s.effortCount ?? '–'], ['Zeit ≥ 85 %', s.effortSec != null ? fmtDur(s.effortSec) : '–']
+  ];
+  if (s.icuLoad != null) stats.splice(6, 2, ['Load (intervals.icu)', Math.round(s.icuLoad)]);
+  let cmp = '';
+  if (prev.length) {
+    const rows = [['Ø Puls', 'avgHr', 0, 'bpm'], ['Max Puls', 'maxHr', 0, 'bpm'], ['Kalorien', 'kcal', 0, 'kcal'], ['Belastung', 'trimp', 0, ''], ['Erholung', 'hrr60', 1, 'bpm'], ['Dauer', 'durationSec', 0, 'min']];
+    cmp = `<div class="card"><h3>Vergleich: letzte ${prev.length}× ${esc(s.type)}</h3><table class="cmp"><tr><th></th><th>Heute</th><th>Schnitt</th><th>Δ</th></tr>` +
+      rows.map(([lbl, k, good, u]) => {
+        const a = avgOf(prev, k); if (a == null || s[k] == null) return '';
+        const f = k === 'durationSec' ? x => Math.round(x / 60) : x => Math.round(x);
+        const d = f(s[k]) - f(a);
+        const cls = good && d >= 3 ? 'up' : good && d <= -3 ? 'down' : '';
+        return `<tr><td>${lbl}</td><td>${f(s[k])} ${u}</td><td>${f(a)} ${u}</td><td class="${cls}">${d > 0 ? '+' : ''}${d}</td></tr>`;
+      }).join('') + `</table><p class="hint">Grün = besser. Erholung ist dein bester Fitness-Anzeiger: je mehr der Puls in der Pause fällt, desto fitter.</p></div>`;
+  }
+  v.innerHTML = `
+    <div class="shead">
+      <button class="back" id="backBtn">‹ ${isNew ? (s.source === 'live' ? 'Live' : 'Datei') : 'Verlauf'}</button>
+      <div class="stype"><select id="sType">${TYPES.map(t => `<option ${t === s.type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="sdate">${fmtDate(s.date)}${s.note ? ' · ' + esc(s.note) : ''}</div>
+    </div>
+    <div class="card verdict">${verdict(s)}${!s.hr ? '<p class="hint">Aus einer Übersicht importiert – ohne Pulskurve. Für Zonen, Runden und Erholung die .fit-Datei hochladen.</p>' : ''}</div>
+    <div class="grid">${stats.map(([l, v]) => `<div class="stat"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('')}</div>
+    ${s.hr ? `<div class="card"><h3>Pulsverlauf</h3><canvas id="hrChart" height="200"></canvas></div>` : ''}
+    ${s.zones ? `<div class="card"><h3>Zeit in Zonen <small>(Max ${s.prof.max} bpm)</small></h3>${s.zones.map((z, i) => {
+      const pct = z / s.durationSec * 100;
+      return `<div class="zrow"><span class="zl">${ZONE_NAMES[i]}</span><div class="zbar"><i style="width:${pct.toFixed(1)}%;background:${ZONE_COLORS[i]}"></i></div><span class="zv">${fmtDur(z).replace(' min', '').replace(' h', 'h')}</span></div>`;
+    }).join('')}</div>` : ''}
+    ${s.efforts && s.efforts.length ? `<div class="card"><h3>Belastungsphasen</h3><div class="efforts">${s.efforts.map((e, i) => `<div class="ef"><b>${i + 1}</b><span>${fmtDur(e.d).replace(' min', '')}</span><span>Peak ${e.p}</span><span>${e.r != null ? '−' + e.r : '–'}</span></div>`).join('')}</div><p class="hint">Dauer · Spitzenpuls · Pulsabfall in der Pause danach</p></div>` : ''}
+    ${cmp}
+    <div class="card" id="aiCard" hidden><h3>KI-Coach</h3><div id="aiOut" class="ai">${s.ai ? md(s.ai) : ''}<p class="hint">Kopiert alle Daten von diesem Training. In Claude einfügen – dann bekommst du eine ausführliche Auswertung mit Tipps.</p></div><button class="btn" id="aiBtn">An Claude schicken</button></div>
+    <button class="del" id="delBtn">Training löschen</button>`;
+  showView('session');
+  $('#backBtn').onclick = () => { if (isNew) showView(s.source === 'live' ? 'live' : 'new'); else { renderHistory(); showView('history'); } };
+  $('#sType').onchange = async e => { s.type = e.target.value; try { await store.saveSession(s); } catch (x) { } openSession(s, isNew); };
+  const sm = $('#setMax'); if (sm) sm.onclick = async () => { state.profile.max = s.maxHr; try { await store.saveProfile(state.profile); } catch (x) { } fillProfileForm(); toast('Max-Puls aktualisiert'); openSession(s, isNew); };
+  let armed = false;
+  $('#delBtn').onclick = async e => {
+    if (!armed) { armed = true; e.target.textContent = 'Wirklich löschen? Nochmal tippen'; e.target.classList.add('armed'); setTimeout(() => { armed = false; e.target.textContent = 'Training löschen'; e.target.classList.remove('armed'); }, 4000); return; }
+    try { await store.deleteSession(s.id); } catch (x) { toast('Löschen fehlgeschlagen'); return; }
+    state.sessions = state.sessions.filter(x => x.id !== s.id); renderHistory(); showView('history');
+  };
+  if (s.hr) requestAnimationFrame(() => drawHR($('#hrChart'), s));
+  setupAI(s);
+}
+
+function drawHR(cv, s) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 200;
+  cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const vals = s.hr.v, step = s.hr.step, max = s.prof.max;
+  const nums = vals.filter(x => x != null);
+  const lo = Math.max(40, Math.floor((Math.min(...nums) - 10) / 10) * 10), hi = Math.max(max, Math.max(...nums)) + 5;
+  const L = 34, R = 6, T = 6, B = 22, pw = W - L - R, ph = H - T - B;
+  const y = v => T + ph - (v - lo) / (hi - lo) * ph, x = i => L + i / (vals.length - 1) * pw;
+  const bounds = [0, 0.6, 0.7, 0.8, 0.9, 2];
+  for (let z = 0; z < 5; z++) {
+    const a = Math.max(lo, bounds[z] * max), b = Math.min(hi, bounds[z + 1] * max); if (b <= a) continue;
+    g.fillStyle = ZONE_COLORS[z] + '22'; g.fillRect(L, y(b), pw, y(a) - y(b));
+  }
+  g.fillStyle = '#7d8590'; g.font = '11px Inter, sans-serif'; g.textAlign = 'right';
+  for (let v = Math.ceil(lo / 20) * 20; v <= hi; v += 20) { g.fillText(v, L - 6, y(v) + 4); g.strokeStyle = '#ffffff10'; g.beginPath(); g.moveTo(L, y(v)); g.lineTo(W - R, y(v)); g.stroke(); }
+  const totalMin = vals.length * step / 60, tick = totalMin > 90 ? 30 : totalMin > 40 ? 10 : 5;
+  g.textAlign = 'center';
+  for (let m = 0; m <= totalMin; m += tick) g.fillText(m + "'", L + (m * 60 / step) / (vals.length - 1) * pw, H - 6);
+  g.lineWidth = 1.6; g.lineJoin = 'round';
+  let started = false; g.beginPath();
+  vals.forEach((v, i) => { if (v == null) { started = false; return; } if (!started) { g.moveTo(x(i), y(v)); started = true; } else g.lineTo(x(i), y(v)); });
+  g.strokeStyle = '#f2f4f7'; g.stroke();
+}
+
+// ---------- KI-Coach ----------
+function md(t) {
+  return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split(/\n+/).map(l => /^\s*[-•]\s+/.test(l) ? `<li>${l.replace(/^\s*[-•]\s+/, '')}</li>` : /^#+\s/.test(l) ? `<h4>${l.replace(/^#+\s/, '')}</h4>` : `<p>${l}</p>`).join('').replace(/(<li>.*?<\/li>)+/g, m => `<ul>${m}</ul>`);
+}
+function buildPrompt(s) {
+    const strip = x => ({ datum: x.date.slice(0, 10), typ: x.type, notiz: x.note || undefined, dauer_min: Math.round(x.durationSec / 60), avg_hr: x.avgHr, max_hr: x.maxHr, kcal: x.kcal, belastung_trimp: x.trimp, phasen: x.effortCount, erholung_bpm: x.hrr60, zonen_min: x.zones ? x.zones.map(z => Math.round(z / 60)) : undefined });
+    const curve = s.hr ? downsampleNull(s.hr.v, 6) : null;
+    const hist = state.sessions.filter(x => x.id !== s.id && x.date < s.date).slice(0, 12).map(strip);
+    const w = weekLoad(s.date);
+    const prompt = `Du bist ein direkter Fitness-Coach für einen K1-/Kickbox-Kämpfer. Werte dieses Training aus Brustgurt-Pulsdaten aus.
+Antworte auf Deutsch, locker und direkt, ohne Floskeln, max. 200 Wörter. Gliederung mit fetten Überschriften:
+**Kurzfazit** (1–2 Sätze), **Was gut lief**, **Was auffällt**, **Fortschritt** (Vergleich mit früheren Trainings, v.a. Erholung = Pulsabfall in den Pausen, höher ist besser), **Nächstes Training** (konkrete Empfehlung).
+Keine medizinischen Diagnosen. Kalorien sind Schätzungen aus dem Puls.
+
+Profil: Alter ${state.profile.age}, Gewicht ${state.profile.weight || 'unbekannt'} kg, Ruhepuls ${s.prof.rest}, Max-Puls ${s.prof.max}.
+Zonen: Z1 <60 %, Z2 60–70 %, Z3 70–80 %, Z4 80–90 %, Z5 >90 % vom Max-Puls. Belastungsphasen = Abschnitte ≥85 % Max-Puls ≥20 s.
+
+HEUTIGES TRAINING: ${JSON.stringify(strip(s))}
+Phasen (Dauer s, Peak, Pulsabfall danach): ${JSON.stringify((s.efforts || []).map(e => [e.d, e.p, e.r]))}
+Pulskurve (alle 30 s): ${curve ? JSON.stringify(curve) : 'keine'}
+Wochenbelastung (TRIMP letzte 7 Tage): ${w.acute}, Schnitt pro Woche (28 Tage): ${w.chronic}
+FRÜHERE TRAININGS (neueste zuerst): ${hist.length ? JSON.stringify(hist) : 'noch keine'}`;
+    return prompt;
+}
+function setupAI(s) {
+  if (state.current !== s) return;
+  $('#aiCard').hidden = false;
+  const btn = $('#aiBtn'), out = $('#aiOut');
+  btn.onclick = async () => {
+    const txt = buildPrompt(s);
+    let ok = false;
+    try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) { }
+    if (ok) { toast('Kopiert! Jetzt in Claude einfügen.'); setTimeout(() => window.open('https://claude.ai/new', '_blank'), 400); }
+    else { out.innerHTML = '<p class="hint">Kopieren ging nicht automatisch. Text markieren, kopieren und in Claude einfügen:</p><textarea class="cp" readonly></textarea>'; out.querySelector('textarea').value = txt; out.querySelector('textarea').select(); }
+  };
+}
+function downsampleNull(v, k) { const o = []; for (let i = 0; i < v.length; i += k) { const c = v.slice(i, i + k).filter(x => x != null); o.push(c.length ? Math.round(c.reduce((a, b) => a + b, 0) / c.length) : null); } return o; }
+
+// ---------- Verlauf ----------
+function renderHistory() {
+  const el = $('#histList'), ss = state.sessions;
+  const w = weekLoad(new Date().toISOString());
+  const ratioTxt = w.ratio == null ? 'Noch zu wenig Verlauf' : w.ratio > 1.5 ? 'Deutlich mehr als sonst – aufpassen' : w.ratio > 1.3 ? 'Etwas mehr als sonst' : w.ratio < 0.8 ? 'Weniger als sonst' : 'Im grünen Bereich';
+  $('#weekCard').innerHTML = `<div class="grid three"><div class="stat"><div class="l">Trainings 7 Tage</div><div class="v">${w.count}</div></div><div class="stat"><div class="l">Belastung 7 Tage</div><div class="v">${w.acute}</div></div><div class="stat"><div class="l">Ø pro Woche</div><div class="v">${w.chronic}</div></div></div><p class="hint">${ratioTxt}</p>`;
+  if (!ss.length) { el.innerHTML = '<p class="empty">Noch keine Trainings. Starte unter „Live" ein Training oder lade unter „Datei" alte Trainings hoch.</p>'; $('#trendCard').hidden = true; $('#yearCard').hidden = true; return; }
+  renderYear();
+  el.innerHTML = ss.map(s => `<button class="hitem" data-id="${s.id}"><div><b>${esc(s.type)}</b><span>${fmtDate(s.date)}</span></div><div class="hv"><span>${fmtDur(s.durationSec)}</span><span>${s.kcal} kcal</span><span class="load l${['Locker', 'Moderat', 'Hart', 'Sehr hart', 'Extrem'].indexOf(loadLabel(s.trimp))}">${s.trimp}</span></div></button>`).join('');
+  el.querySelectorAll('.hitem').forEach(b => b.onclick = () => openSession(ss.find(x => x.id === b.dataset.id), false));
+  const withR = ss.filter(s => s.hr || s.trimp);
+  $('#trendCard').hidden = withR.length < 2;
+  if (withR.length >= 2) requestAnimationFrame(() => drawTrend($('#trendChart'), ss.slice(0, 20).reverse()));
+}
+function drawTrend(cv, list) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 170;
+  cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const L = 30, R = 30, T = 10, B = 20, pw = W - L - R, ph = H - T - B;
+  const maxT = Math.max(50, ...list.map(s => s.trimp || 0));
+  const rs = list.map(s => s.hrr60).filter(x => x != null);
+  const rLo = rs.length ? Math.min(...rs) - 5 : 0, rHi = rs.length ? Math.max(...rs) + 5 : 1;
+  const bw = pw / list.length;
+  g.font = '11px Inter, sans-serif'; g.fillStyle = '#7d8590';
+  g.textAlign = 'right'; g.fillText(Math.round(maxT), L - 4, T + 8); g.fillText('0', L - 4, T + ph);
+  list.forEach((s, i) => {
+    const h = (s.trimp || 0) / maxT * ph;
+    g.fillStyle = '#ff6b3d88'; g.fillRect(L + i * bw + bw * 0.18, T + ph - h, bw * 0.64, h);
+  });
+  if (rs.length >= 2) {
+    g.strokeStyle = '#3ddc84'; g.lineWidth = 2; g.beginPath(); let st = false;
+    list.forEach((s, i) => { if (s.hrr60 == null) return; const xx = L + i * bw + bw / 2, yy = T + ph - (s.hrr60 - rLo) / (rHi - rLo) * ph; if (!st) { g.moveTo(xx, yy); st = true; } else g.lineTo(xx, yy); });
+    g.stroke();
+    list.forEach((s, i) => { if (s.hrr60 == null) return; const xx = L + i * bw + bw / 2, yy = T + ph - (s.hrr60 - rLo) / (rHi - rLo) * ph; g.fillStyle = '#3ddc84'; g.beginPath(); g.arc(xx, yy, 3, 0, 7); g.fill(); });
+    g.fillStyle = '#3ddc84'; g.textAlign = 'left'; g.fillText(Math.round(rHi), W - R + 4, T + 8); g.fillText(Math.round(rLo), W - R + 4, T + ph);
+  }
+  g.fillStyle = '#7d8590'; g.textAlign = 'center';
+  g.fillText(new Date(list[0].date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), L + bw / 2, H - 4);
+  g.fillText(new Date(list[list.length - 1].date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }), L + (list.length - 0.5) * bw, H - 4);
+}
+
+// ---------- Jahresrückblick ----------
+let yearSel = new Date().getFullYear();
+function renderYear() {
+  const years = [...new Set(state.sessions.map(s => new Date(s.date).getFullYear()))].sort((a, b) => b - a);
+  if (!years.includes(yearSel)) yearSel = years[0];
+  const ys = state.sessions.filter(s => new Date(s.date).getFullYear() === yearSel);
+  const card = $('#yearCard'); card.hidden = false;
+  const sum = k => ys.reduce((a, s) => a + (s[k] || 0), 0);
+  const months = new Array(12).fill(0).map(() => ({ n: 0, t: 0 }));
+  ys.forEach(s => { const m = new Date(s.date).getMonth(); months[m].n++; months[m].t += s.trimp || 0; });
+  const types = {}; ys.forEach(s => types[s.type] = (types[s.type] || 0) + 1);
+  const best = ys.filter(s => s.hrr60 != null);
+  const firstQ = best.slice(-5), lastQ = best.slice(0, 5);
+  const rTrend = best.length >= 6 ? Math.round(avgOf(lastQ, 'hrr60') - avgOf(firstQ, 'hrr60')) : null;
+  const maxN = Math.max(1, ...months.map(m => m.n));
+  const MN = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  card.innerHTML = `<h3>Jahresrückblick <select id="yearPick" class="ysel">${years.map(y => `<option ${y === yearSel ? 'selected' : ''}>${y}</option>`).join('')}</select></h3>
+    <div class="grid three"><div class="stat"><div class="l">Trainings</div><div class="v">${ys.length}</div></div><div class="stat"><div class="l">Stunden</div><div class="v">${Math.round(sum('durationSec') / 360) / 10}</div></div><div class="stat"><div class="l">Kalorien</div><div class="v">${Math.round(sum('kcal') / 1000)}<small>k</small></div></div></div>
+    <div class="months">${months.map((m, i) => `<div class="mo"><div class="mb"><i style="height:${m.n / maxN * 100}%"></i></div><span>${m.n || ''}</span><small>${MN[i]}</small></div>`).join('')}</div>
+    <p class="hint">${Object.entries(types).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${esc(t)} ${n}×`).join(' · ')}</p>
+    ${rTrend != null ? `<p class="hint">Erholung erste vs. letzte 5 Trainings: <b style="color:${rTrend >= 0 ? 'var(--good)' : 'var(--bad)'}">${rTrend >= 0 ? '+' : ''}${rTrend} Schläge</b> ${rTrend >= 2 ? '– du bist fitter geworden 💪' : ''}</p>` : ''}`;
+  $('#yearPick').onchange = e => { yearSel = +e.target.value; renderYear(); };
+}
+
+// ---------- Profil ----------
+function fillProfileForm() {
+  const p = state.profile;
+  $('#pAge').value = p.age ?? ''; $('#pWeight').value = p.weight ?? ''; $('#pSex').value = p.sex; $('#pRest').value = p.rest ?? ''; $('#pMax').value = p.max ?? '';
+  $('#weightWarn').hidden = !!p.weight;
+}
+$('#pAge').oninput = () => { const a = parseInt($('#pAge').value); if (a > 0) $('#maxHint').textContent = `Schätzung: ${220 - a} bpm. Besser: höchster Wert aus einem harten Sparring/Sprint.`; };
+$('#saveProfile').onclick = async () => {
+  const num = id => { const v = parseFloat($(id).value); return v > 0 ? v : null; };
+  const p = { age: num('#pAge') || 25, weight: num('#pWeight'), sex: $('#pSex').value, rest: num('#pRest') || 60, max: num('#pMax') || 198 };
+  if (p.max <= p.rest + 40) { toast('Max-Puls muss deutlich über dem Ruhepuls liegen'); return; }
+  state.profile = p; await ready;
+  try { await store.saveProfile(p); toast('Profil gespeichert'); } catch (e) { toast('Speichern fehlgeschlagen'); }
+  fillProfileForm();
+};
+
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
+fillProfileForm();
+
+// ===================== LIVE-MODUS (Bluetooth-Brustgurt) =====================
+const live = {
+  dev: null, hr: null, hrAt: 0, bat: null, connected: false, wantConnected: false,
+  running: false, paused: false, startedAt: null, activeMs: 0, segStart: 0,
+  samples: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0,
+  type: 'Kickboxen', tick: null, wake: null, lastZone: -1, view: 'all'
+};
+const BT_OK = 'bluetooth' in navigator;
+
+function liveSec() { return Math.floor((live.activeMs + (live.running && !live.paused ? Date.now() - live.segStart : 0)) / 1000); }
+
+function liveStatus(txt, cls) { const el = $('#lvStatus'); el.textContent = txt; el.className = 'lvstatus ' + (cls || ''); }
+
+async function liveConnect() {
+  if (!BT_OK) { toast('Bluetooth geht nur in Chrome auf Android.'); return; }
+  try {
+    liveStatus('Suche Brustgurt …');
+    const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }], optionalServices: ['battery_service'] });
+    live.dev = dev; live.wantConnected = true;
+    dev.addEventListener('gattserverdisconnected', onLiveDisconnect);
+    await liveAttach();
+  } catch (e) {
+    if (e && e.name === 'NotFoundError') liveStatus('Kein Gurt ausgewählt.', 'warn');
+    else liveStatus('Verbindung fehlgeschlagen: ' + (e && e.message || e), 'bad');
+  }
+}
+
+async function liveAttach() {
+  liveStatus('Verbinde mit ' + (live.dev.name || 'Brustgurt') + ' …');
+  const server = await live.dev.gatt.connect();
+  const svc = await server.getPrimaryService('heart_rate');
+  const ch = await svc.getCharacteristic('heart_rate_measurement');
+  ch.addEventListener('characteristicvaluechanged', onHrValue);
+  await ch.startNotifications();
+  live.connected = true;
+  try {
+    const bs = await server.getPrimaryService('battery_service');
+    const bc = await bs.getCharacteristic('battery_level');
+    live.bat = (await bc.readValue()).getUint8(0);
+  } catch (e) { live.bat = null; }
+  liveStatus('✓ Verbunden: ' + (live.dev.name || 'Brustgurt') + (live.bat != null ? ` · Akku ${live.bat} %` : ''), 'good');
+  renderLiveButtons();
+}
+
+function onHrValue(ev) {
+  const dv = ev.target.value, flags = dv.getUint8(0);
+  const hr = flags & 1 ? dv.getUint16(1, true) : dv.getUint8(1);
+  if (hr < 25 || hr > 240) return;
+  live.hr = hr; live.hrAt = Date.now();
+  if (!live.running) renderLive();
+}
+
+async function onLiveDisconnect() {
+  live.connected = false; renderLiveButtons();
+  if (!live.wantConnected) { liveStatus('Getrennt.'); return; }
+  liveStatus('Verbindung weg – verbinde neu …', 'warn');
+  for (let i = 0; i < 20 && live.wantConnected && !live.connected; i++) {
+    await new Promise(r => setTimeout(r, Math.min(1000 * (i + 1), 5000)));
+    try { await liveAttach(); return; } catch (e) { }
+  }
+  if (!live.connected) liveStatus('Gurt nicht erreichbar. Sitzt er richtig und ist er feucht?', 'bad');
+}
+
+function liveDisconnect() {
+  live.wantConnected = false;
+  try { live.dev && live.dev.gatt.connected && live.dev.gatt.disconnect(); } catch (e) { }
+  live.connected = false; liveStatus('Getrennt.'); renderLiveButtons();
+}
+
+async function keepAwake(on) {
+  try {
+    if (on && 'wakeLock' in navigator) { live.wake = await navigator.wakeLock.request('screen'); }
+    else if (!on && live.wake) { await live.wake.release(); live.wake = null; }
+  } catch (e) { }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && live.running && !live.paused) keepAwake(true); });
+
+function liveStart() {
+  if (!live.connected) { toast('Erst den Brustgurt verbinden.'); return; }
+  Object.assign(live, { running: true, paused: false, startedAt: new Date(), activeMs: 0, segStart: Date.now(), samples: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0, lastZone: -1 });
+  clearInterval(live.tick); live.tick = setInterval(liveTick, 1000);
+  keepAwake(true); renderLiveButtons(); renderLive();
+}
+function livePause() {
+  if (!live.running) return;
+  if (live.paused) { live.paused = false; live.segStart = Date.now(); keepAwake(true); }
+  else { live.activeMs += Date.now() - live.segStart; live.paused = true; }
+  renderLiveButtons(); renderLive();
+}
+
+function liveTick() {
+  if (!live.running || live.paused) { renderLive(); return; }
+  const fresh = live.hr != null && Date.now() - live.hrAt < 5000;
+  if (fresh) {
+    const t = liveSec(), hr = live.hr, p = state.profile;
+    live.samples.push({ t, hr });
+    live.n++; live.sum += hr; if (hr > live.max) live.max = hr;
+    live.kcal += kcalPerMin(hr, p) / 60; live.trimp += trimpMin(hr, p) / 60;
+    const z = zoneOf(hr, p.max); live.zones[z]++;
+    if (z === 4 && live.lastZone !== 4 && navigator.vibrate) navigator.vibrate([120, 80, 120]);
+    live.lastZone = z;
+  }
+  if (live.samples.length % 15 === 0) saveDraft();
+  renderLive();
+}
+
+function saveDraft() {
+  try { localStorage.setItem('ta_live_draft', JSON.stringify({ startedAt: live.startedAt, type: live.type, note: $('#lvNote').value, samples: live.samples })); } catch (e) { }
+}
+function clearDraft() { try { localStorage.removeItem('ta_live_draft'); } catch (e) { } }
+
+async function samplesToSession(samples, startedAt, type, note) {
+  const arr = toSeries(samples);
+  if (arr.filter(x => x != null).length < 60) throw new Error('Zu kurz – unter 1 Minute Pulsdaten.');
+  const p = state.profile, res = analyzeSeries(arr, p);
+  return {
+    id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    date: new Date(startedAt).toISOString(), type, note: note || '', source: 'live',
+    ...res, kcalDevice: null,
+    prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
+    hr: { step: 5, v: downsample(arr, 5) }, ai: null, created: new Date().toISOString()
+  };
+}
+
+let stopArmed = false;
+async function liveStop(e) {
+  if (!live.running) return;
+  if (!stopArmed) { stopArmed = true; e.target.textContent = 'Wirklich beenden?'; e.target.classList.add('armed'); setTimeout(() => { stopArmed = false; renderLiveButtons(); }, 3000); return; }
+  stopArmed = false;
+  if (!live.paused) live.activeMs += Date.now() - live.segStart;
+  live.running = false; live.paused = false; clearInterval(live.tick); keepAwake(false);
+  renderLiveButtons(); renderLive();
+  try {
+    await ready;
+    const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim());
+    clearDraft(); $('#lvNote').value = '';
+    await saveAndOpen(s);
+  } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); }
+}
+
+function fmtClock(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return (h ? h + ':' + String(m).padStart(2, '0') : String(m).padStart(2, '0')) + ':' + String(s).padStart(2, '0'); }
+
+function renderLiveButtons() {
+  const b = $('#lvBtns');
+  if (!BT_OK) { b.innerHTML = ''; return; }
+  if (!live.connected && !live.running) { b.innerHTML = `<button class="btn" id="lvConn">Brustgurt verbinden</button>`; $('#lvConn').onclick = liveConnect; return; }
+  if (!live.running) {
+    b.innerHTML = `<button class="btn big" id="lvStart">▶ Training starten</button><button class="link lvsmall" id="lvDisc">Gurt trennen</button>`;
+    $('#lvStart').onclick = liveStart; $('#lvDisc').onclick = liveDisconnect; return;
+  }
+  b.innerHTML = `<div class="lvrow"><button class="btn ghost" id="lvPause">${live.paused ? '▶ Weiter' : '❚❚ Pause'}</button><button class="btn stop" id="lvStop">■ Beenden</button></div>`;
+  $('#lvPause').onclick = livePause; $('#lvStop').onclick = liveStop;
+}
+
+function renderLive() {
+  const p = state.profile, fresh = live.hr != null && Date.now() - live.hrAt < 5000;
+  const hr = fresh ? live.hr : null, z = hr != null ? zoneOf(hr, p.max) : -1;
+  $('#lvHr').textContent = hr ?? '--';
+  $('#lvHrBox').style.setProperty('--zc', z >= 0 ? ZONE_COLORS[z] : '#39414c');
+  $('#lvZone').textContent = hr != null ? `${ZONE_NAMES[z]} · ${Math.round(hr / p.max * 100)} %` : (live.connected ? 'warte auf Puls …' : 'nicht verbunden');
+  const sec = live.running || live.samples.length ? liveSec() : 0;
+  $('#lvTime').textContent = fmtClock(sec);
+  $('#lvTime').classList.toggle('paused', live.paused);
+  $('#lvAvg').textContent = live.n ? Math.round(live.sum / live.n) : '–';
+  $('#lvMax').textContent = live.max || '–';
+  $('#lvKcal').textContent = Math.round(live.kcal);
+  $('#lvLoad').textContent = Math.round(live.trimp);
+  const tot = live.zones.reduce((a, b) => a + b, 0) || 1;
+  $('#lvZones').innerHTML = live.zones.map((v, i) => `<div class="zrow"><span class="zl">${ZONE_NAMES[i]}</span><div class="zbar"><i style="width:${(v / tot * 100).toFixed(1)}%;background:${ZONE_COLORS[i]}"></i></div><span class="zv">${fmtClock(v)}</span></div>`).join('');
+  drawLiveChart();
+}
+
+function drawLiveChart() {
+  const cv = $('#lvChart'); if (!cv || !cv.clientWidth) return;
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 170;
+  cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const max = state.profile.max, now = liveSec();
+  const span = live.view === '5' ? 300 : Math.max(120, now);
+  const t0 = now - span;
+  const pts = live.samples.filter(s => s.t >= t0);
+  const lo = 50, hi = Math.max(max, live.max) + 5;
+  const L = 30, R = 6, T = 6, B = 20, pw = W - L - R, ph = H - T - B;
+  const y = v => T + ph - (Math.max(lo, v) - lo) / (hi - lo) * ph, x = t => L + (t - t0) / span * pw;
+  const bounds = [0, 0.6, 0.7, 0.8, 0.9, 2];
+  for (let zz = 0; zz < 5; zz++) { const a = Math.max(lo, bounds[zz] * max), b = Math.min(hi, bounds[zz + 1] * max); if (b <= a) continue; g.fillStyle = ZONE_COLORS[zz] + '22'; g.fillRect(L, y(b), pw, y(a) - y(b)); }
+  g.fillStyle = '#7d8590'; g.font = '11px Inter, sans-serif'; g.textAlign = 'right';
+  for (let v = 60; v <= hi; v += 20) g.fillText(v, L - 5, y(v) + 4);
+  g.textAlign = 'center';
+  const tick = span > 3600 ? 900 : span > 1200 ? 300 : 60;
+  for (let t = Math.ceil(Math.max(0, t0) / tick) * tick; t <= now; t += tick) g.fillText(Math.round(t / 60) + "'", x(t), H - 5);
+  if (pts.length > 1) {
+    g.strokeStyle = '#ff6b3d'; g.lineWidth = 2; g.lineJoin = 'round'; g.beginPath();
+    let prev = null;
+    for (const s of pts) { if (prev && s.t - prev.t > 10) g.moveTo(x(s.t), y(s.hr)); else if (!prev) g.moveTo(x(s.t), y(s.hr)); else g.lineTo(x(s.t), y(s.hr)); prev = s; }
+    g.stroke();
+  }
+}
+
+function initLive() {
+  $('#lvBt').hidden = BT_OK;
+  renderTypeChips($('#lvTypeChips'), live.type, t => { live.type = t; });
+  document.querySelectorAll('#lvView button').forEach(b => b.onclick = () => { live.view = b.dataset.r; document.querySelectorAll('#lvView button').forEach(x => x.classList.toggle('on', x === b)); drawLiveChart(); });
+  renderLiveButtons(); renderLive();
+  // Unterbrochenes Training wiederherstellen
+  let d = null; try { d = JSON.parse(localStorage.getItem('ta_live_draft') || 'null'); } catch (e) { }
+  if (d && d.samples && d.samples.length >= 60) {
+    const c = $('#lvDraft'); c.hidden = false;
+    c.innerHTML = `<p><b>Unterbrochenes Training gefunden</b> (${fmtDate(d.startedAt)}, ${fmtClock(d.samples[d.samples.length - 1].t)}).</p><div class="lvrow"><button class="btn" id="drSave">Speichern</button><button class="btn ghost" id="drDel">Verwerfen</button></div>`;
+    $('#drSave').onclick = async () => { try { await ready; const s = await samplesToSession(d.samples, d.startedAt, d.type || 'Sonstiges', d.note); clearDraft(); c.hidden = true; await saveAndOpen(s); } catch (e) { toast(e.message); } };
+    $('#drDel').onclick = () => { clearDraft(); c.hidden = true; };
+  } else if (d) clearDraft();
+  window.addEventListener('resize', drawLiveChart);
+}
+initLive();
+
+// ===================== Sicherung =====================
+$('#bkExport').onclick = async () => {
+  await ready;
+  const data = { app: 'trainings-app', version: 1, exported: new Date().toISOString(), profile: state.profile, sessions: state.sessions.map(clean) };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `trainings-sicherung-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(`${state.sessions.length} Trainings gesichert`);
+};
+$('#bkImportBtn').onclick = () => $('#bkFile').click();
+$('#bkFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || !Array.isArray(d.sessions)) throw new Error('Das ist keine Sicherung dieser App.');
+    await ready; let n = 0;
+    for (const s of d.sessions) { if (!s || !s.id || !s.date) continue; await store.saveSession(s); n++; }
+    if (d.profile) { state.profile = { ...DEFAULT_PROFILE, ...d.profile }; await store.saveProfile(state.profile); fillProfileForm(); }
+    state.sessions = (await store.loadSessions()).sort((a, b) => b.date.localeCompare(a.date));
+    renderHistory(); $('#storeInfo').textContent = `Gespeichert auf diesem Handy · ${state.sessions.length} Trainings.`;
+    toast(`${n} Trainings geladen`);
+  } catch (err) { toast(err.message || 'Sicherung konnte nicht gelesen werden.'); }
+};
+
+// ===================== App-Update (Service Worker) =====================
+const APP_VERSION = '2026.11.17-1610';
+$('#appVer').textContent = 'App-Version ' + APP_VERSION;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing; if (!nw) return;
+      nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller && !live.running) toast('Update installiert ✓'); });
+    });
+    setInterval(() => reg.update().catch(() => { }), 60 * 60 * 1000);
+  }).catch(() => { });
+}
+
+</script>
+</body>
+</html>
