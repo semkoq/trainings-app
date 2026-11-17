@@ -336,14 +336,72 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
 .fw b{color:var(--txt)}.fw .warn{color:#ffb020}.fw .ok{color:var(--good)}
 .fwbtn{margin-left:auto;flex:none;background:#ffffff14;border:0;color:var(--txt);border-radius:10px;padding:7px 10px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
 .fadd{display:block;width:100%;margin-top:12px;background:none;border:1.5px dashed #2c333c;color:var(--mut);border-radius:16px;padding:12px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
-#weekCard{display:block;margin-top:12px}#weekCard[hidden]{display:none!important}
+#weekCard{display:block;margin-top:12px}
+/* ===== Kompakt 2026-11 ===== */
+body{font-size:14.5px}
+.wrap{padding:0 12px}
+header{padding:10px 2px 0}
+.hdate{font:600 11px Inter,system-ui,sans-serif;color:var(--mut);letter-spacing:1px;text-transform:uppercase}
+h1{font-size:24px;text-transform:none;letter-spacing:.2px;margin-top:1px}
+.gear{width:38px;height:38px;font-size:20px}
+.card{padding:14px;margin-top:10px;border-radius:16px}
+h3{margin-bottom:10px;font-size:11px}
+/* Hero: Ring links, Text rechts */
+.hero{text-align:left;padding:14px;display:grid;grid-template-columns:auto 1fr;grid-template-areas:'h h' 'r t' 'p p';column-gap:14px;align-items:center}
+.hero>h3{grid-area:h;margin-bottom:8px!important}
+.hero .whring{grid-area:r;width:108px;height:108px;margin:0}
+.hero .whring::before{inset:9px}
+.hero .whring b{font-size:40px}.hero .whring small{font-size:9px}
+.hero .htxt{grid-area:t;min-width:0}
+.hlbl{font-size:22px;margin-top:0;line-height:1.05}
+.htip{font-size:13px;margin:4px 0 0;color:#aab2bd}
+.pgrid{grid-area:p;display:flex;gap:6px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+.pgrid::-webkit-scrollbar{display:none}
+.pt{flex:1 0 auto;min-width:64px;padding:7px 9px;border-radius:11px}
+.pt span{font-size:10px;letter-spacing:.3px}
+.pt b{font-size:18px;margin-top:1px;white-space:nowrap}
+.hero>.hint{grid-area:p}
+/* Fight kompakter */
+.fight{padding:13px 14px}
+.fname{font-size:21px}
+.fcd b{font-size:40px}
+.fw{margin-top:10px;padding-top:9px;font-size:12.5px}
+.fadd{margin-top:10px;padding:10px;font-size:13px}
+/* Leistung kompakt */
+.ptiles{gap:6px}
+.ptile{padding:8px 9px 6px;border-radius:11px}
+.ptile b{font-size:28px}.ptile i{font-size:12px;margin-top:4px;padding-top:4px}
+.ready{margin-top:8px;padding:10px 12px;border-radius:11px;display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center}
+.ready .rl{display:none}
+.ready .rv{font-size:19px;margin:0;grid-column:1}
+.ready .rbar{grid-column:2;margin-top:0}
+.ready .rlab{display:none}
+.ready .rtip{grid-column:1/3;font-size:12.5px;margin-top:6px;color:#aab2bd}
+.pmore{margin-top:10px}.pmore summary{font-size:13px}
+/* Woche kompakt */
+.wkbtn{width:32px;height:32px;font-size:18px}
+.seg.wkseg{margin:8px 0 2px}
+.wksum{margin:8px 0 2px}.wksum b{font-size:22px}.wksum span{font-size:11px}
+.wtype{font-size:13px;padding:5px 0}
+/* WHOOP-Zeile */
+.fold summary{font-size:14px}.fold summary em{font-size:19px}
+.wgrid{gap:6px;margin-top:10px}.wgrid div{padding:7px 9px;font-size:10px}.wgrid b{font-size:18px}
+/* Listen */
+.hitem{padding:10px 12px;margin-top:5px}
+.mhead{margin:14px 4px 4px}
+.tile{padding:10px 4px 8px;font-size:12px}.tile i{font-size:24px}
+.btn.go{padding:15px;font-size:22px}
+.kgrid b{font-size:23px}
+.cwhead b{font-size:38px}
+.kring .whring{width:112px;height:112px}.kring .whring b{font-size:30px}
+#weekCard[hidden]{display:none!important}
 .hv span{white-space:nowrap}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <div class="hrow"><h1>Trainings<span>-App</span></h1><button class="gear" id="gearBtn" aria-label="Einstellungen">⚙</button></div>
+  <div class="hrow"><div><div class="hdate" id="hDate"></div><h1>Hey <span>Semir</span> 👊</h1></div><button class="gear" id="gearBtn" aria-label="Einstellungen">⚙</button></div>
 </header>
 
 <nav class="tabs" id="mainTabs"><button class="tab on" data-v="overview"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Überblick</button><button class="tab" data-v="start"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Training</button><button class="tab" data-v="history"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>Verlauf</button><button class="tab" data-v="analyse"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analyse</button><button class="tab" data-v="cut"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 13h-11z"/><path d="M9 7a3 3 0 0 1 6 0"/><path d="M12 11v4l2 1.5"/></svg>Cut</button></nav>
@@ -463,7 +521,7 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
     <div class="wkhead"><button class="wkbtn" id="wkPrev">‹</button><h3 id="wkTitle">Diese Woche</h3><button class="wkbtn" id="wkNext">›</button></div>
     <div class="seg wkseg" id="wkMetric"><button data-m="dur" class="on">Dauer</button><button data-m="load">Belastung</button><button data-m="kcal">Kalorien</button></div>
     <div class="wksum" id="wkSum"></div>
-    <canvas id="wkChart" height="170"></canvas>
+    <canvas id="wkChart" height="140"></canvas>
     <div id="wkTypes"></div>
   </div>
   <p class="empty" id="ovEmpty" hidden>Noch keine Trainings. Wisch zu „Training“ und leg los – oder importier alte Trainings über ⚙.</p>
@@ -926,6 +984,7 @@ function showView(v, dir) {
   window.scrollTo(0, 0);
 }
 const MAIN = ['overview', 'start', 'history', 'analyse', 'cut'];
+(() => { const e = document.getElementById('hDate'); if (e) e.textContent = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }); })();
 document.querySelectorAll('#hSeg button').forEach(b => b.onclick = () => { const st = b.dataset.h === 'stats'; document.querySelectorAll('#hSeg button').forEach(x => x.classList.toggle('on', x === b)); $('#histList').hidden = st; $('#histStats').hidden = !st; $('#weekCard').hidden = !st; if (st) renderHistory(); });
 function goMain(v) { const d = MAIN.indexOf(v) - MAIN.indexOf(state.view); if (v !== 'start') renderHistory(); if (v === 'analyse') renderAnalyse(); if (v === 'cut') setTimeout(renderCut, 0); showView(v, d > 0 ? 1 : d < 0 ? -1 : 0); }
 document.querySelectorAll('#mainTabs .tab').forEach(t => t.onclick = () => goMain(t.dataset.v));
@@ -2000,7 +2059,7 @@ function renderWeek() {
   $('#wkTypes').innerHTML = Object.entries(byType).sort((a, b) => b[1].d - a[1].d).map(([ty, t]) => `<div class="wtype"><i style="background:${TYPE_COLORS[ty] || '#888'}"></i><span>${ty} <small style="min-width:0">${t.n}×</small></span><span>${fmtDur(t.d)}</span><small>${Math.round((wk.metric === 'load' ? t.l : t.d) / tot * 100)} %</small></div>`).join('') || '<p class="hint">Keine Trainings in dieser Woche.</p>';
 }
 function drawWeek(days) {
-  const cv = $('#wkChart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 170;
+  const cv = $('#wkChart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 140;
   if (!W) return;
   cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
   const T = 16, B = 22, ph = H - T - B, bw = W / 7;
@@ -2327,7 +2386,7 @@ function renderToday() {
   c.classList.add('hero');
   c.innerHTML = `<h3 style="margin:0">Bereitschaft heute</h3>
   <div class="whring" style="--p:${s};--rc:${col}"><b>${s}</b><small>von 100</small></div>
-  <div class="hlbl" style="color:${col}">${lbl}</div><p class="htip">${tip}</p>
+  <div class="htxt"><div class="hlbl" style="color:${col}">${lbl}</div><p class="htip">${tip}</p></div>
   <div class="pgrid">${r.parts.map(p => `<div class="pt"><span><i style="background:${p.k === 'Erholung' ? recCol(p.v) : pc(p.v)}"></i>${p.k}</span><b>${p.txt.replace(/ \(Ø.*\)/, '').split(' · ')[0]}</b></div>`).join('')}</div>
   ${r.whoop ? '' : '<p class="hint">Nur aus deinen Trainings – WHOOP über ⚙ verbinden für Schlaf &amp; Erholung.</p>'}`;
 }
@@ -2887,7 +2946,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2125';
+const APP_VERSION = '2026.11.17-2135';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
