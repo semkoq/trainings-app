@@ -1591,7 +1591,7 @@ function sPath(s) {
 }
 async function gh(method, path, body) {
   const c = sync.cfg;
-  const r = await fetch(`https://api.github.com/repos/${c.user}/${c.repo}/${path}`, {
+  const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(c.user)}/${encodeURIComponent(c.repo)}${path ? '/' + path : ''}`, {
     method, headers: { Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined, cache: 'no-store'
   });
@@ -1657,7 +1657,7 @@ $('#sySave').onclick = async () => {
     toast('Verbunden ✓'); syncInfo(); syncRun(syncPending());
   } catch (e) {
     sync.cfg = old;
-    syncStatus(e.status === 401 ? 'Token falsch oder abgelaufen.' : e.status === 404 ? 'Repository nicht gefunden – Name richtig? Hat der Token Zugriff darauf?' : 'Keine Verbindung zu GitHub.');
+    syncStatus(e.status === 401 ? 'Token falsch oder abgelaufen.' : e.status === 404 ? 'Repository nicht gefunden – Name richtig? Hat der Token Zugriff darauf?' : e.status ? 'GitHub-Fehler ' + e.status + '.' : 'Keine Verbindung zu GitHub (' + (e && e.message || e) + ').');
   }
 };
 $('#syAll').onclick = () => { if (!sync.cfg) { syncStatus('Erst verbinden.'); return; } syncRun(syncPending()); };
@@ -1939,7 +1939,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1658';
+const APP_VERSION = '2026.11.17-1714';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
