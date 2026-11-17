@@ -1,0 +1,14 @@
+{
+  "appId": "de.semkoq.trainingsapp",
+  "appName": "Trainings-App",
+  "webDir": "www",
+  "backgroundColor": "#0d1014",
+  "server": {
+    "url": "https://semkoq.github.io/trainings-app/",
+    "androidScheme": "https",
+    "allowNavigation": ["semkoq.github.io", "api.github.com", "*.whoop.com"]
+  },
+  "android": {
+    "backgroundColor": "#0d1014"
+  }
+}

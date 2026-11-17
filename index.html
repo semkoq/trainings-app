@@ -1178,14 +1178,18 @@ const live = {
   samples: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0,
   type: 'Kickboxen', tick: null, wake: null, lastZone: -1, view: 'all'
 };
-const BT_OK = 'bluetooth' in navigator;
+// In der Android-APK läuft alles über den nativen Dienst (Bluetooth + Aufzeichnung im Hintergrund)
+const isNative = () => !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+const HN = (() => { let p = null; return () => p || (p = (window.Capacitor && (Capacitor.Plugins && Capacitor.Plugins.HrNative || (Capacitor.registerPlugin && Capacitor.registerPlugin('HrNative')))) || null); })();
+const btOk = () => isNative() || 'bluetooth' in navigator;
 
 function liveSec() { return Math.floor((live.activeMs + (live.running && !live.paused ? Date.now() - live.segStart : 0)) / 1000); }
 
 function liveStatus(txt, cls) { for (const id of ['#lvStatus', '#stStatus']) { const el = $(id); if (el) { el.textContent = txt; el.className = 'lvstatus ' + (cls || ''); } } }
 
 async function liveConnect() {
-  if (!BT_OK) { toast('Bluetooth geht nur in Chrome auf Android.'); return; }
+  if (isNative()) return nativeConnect();
+  if (!btOk()) { toast('Bluetooth geht nur in Chrome auf Android.'); return; }
   try {
     liveStatus('Suche Brustgurt …');
     const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }], optionalServices: ['battery_service'] });
@@ -1240,6 +1244,7 @@ async function onLiveDisconnect() {
 }
 
 function liveDisconnect() {
+  if (isNative()) { try { HN().disconnect(); } catch (e) { } localStorage.removeItem('ta_dev'); }
   live.wantConnected = false;
   try { live.dev && live.dev.gatt.connected && live.dev.gatt.disconnect(); } catch (e) { }
   live.connected = false; liveStatus('Getrennt.'); renderLiveButtons();
@@ -1255,12 +1260,14 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 function liveStart() {
   if (!live.connected) { toast('Erst den Brustgurt verbinden.'); return; }
+  if (isNative()) HN().start({ type: live.type }).catch(() => { });
   Object.assign(live, { running: true, paused: false, startedAt: new Date(), activeMs: 0, segStart: Date.now(), samples: [], rr: [], rrT: [], rounds: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0, lastZone: -1 });
   clearInterval(live.tick); live.tick = setInterval(liveTick, 1000);
   keepAwake(true); renderLiveButtons(); renderLive();
 }
 function livePause() {
   if (!live.running) return;
+  if (isNative()) HN().pause({ paused: !live.paused }).catch(() => { });
   if (live.paused) { live.paused = false; live.segStart = Date.now(); keepAwake(true); }
   else { live.activeMs += Date.now() - live.segStart; live.paused = true; }
   renderLiveButtons(); renderLive();
@@ -1345,7 +1352,8 @@ async function liveStop(e) {
   try {
     await ready;
     if (iv.on) ivStop(true);
-    const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim(), live.rounds, live.rr, live.rrT);
+    const nd = isNative() ? await HN().stop() : null;
+    const s = await samplesToSession(nd ? nd.samples : live.samples, nd ? new Date(nd.startedAt) : live.startedAt, live.type, $('#lvNote').value.trim(), nd ? nd.rounds : live.rounds, nd ? nd.rr : live.rr, nd ? nd.rrT : live.rrT);
     clearDraft(); $('#lvNote').value = '';
     await saveAndOpen(s); openRate(s);
   } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); showView('start'); }
@@ -1355,9 +1363,9 @@ function fmtClock(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec % 
 
 function renderLiveButtons() {
   const cb = $('#stConnBox');
-  if (!BT_OK) cb.innerHTML = '';
+  if (!btOk()) cb.innerHTML = '';
   $('#stStatus').hidden = live.connected;
-  if (!BT_OK) { }
+  if (!btOk()) { }
   else if (live.connected) { cb.innerHTML = `<div class="gurt">✓ ${esc(live.dev && live.dev.name || 'Brustgurt')} verbunden${live.bat != null ? ` · Akku ${live.bat} %` : ''}</div><button class="link lvsmall" id="lvDisc">Gurt trennen</button>`; $('#lvDisc').onclick = liveDisconnect; }
   else { cb.innerHTML = `<button class="btn ghost" id="lvConn">🔗 Brustgurt verbinden</button>`; $('#lvConn').onclick = liveConnect; }
   $('#stGo').disabled = !live.connected;
@@ -1425,7 +1433,7 @@ function drawLiveChart() {
 }
 
 function initLive() {
-  $('#lvBt').hidden = BT_OK;
+  $('#lvBt').hidden = btOk();
   try { const lt = localStorage.getItem('ta_last_type'); if (lt && TYPES.includes(lt)) live.type = lt; } catch (e) { }
   renderTiles(); $('#stGo').onclick = countdownStart;
   document.querySelectorAll('#lvView button').forEach(b => b.onclick = () => { live.view = b.dataset.r; document.querySelectorAll('#lvView button').forEach(x => x.classList.toggle('on', x === b)); drawLiveChart(); });
@@ -1493,6 +1501,13 @@ function ivLog() {
   }
 }
 function ivStart() {
+  if (isNative() && live.connected) {
+    iv.native = true; iv.on = true; iv.paused = false;
+    $('#ivSetup').hidden = true; $('#ivRun').hidden = false; $('#ivRun').className = 'work';
+    HN().ivStart({ rounds: iv.cfg.rounds, work: iv.cfg.work, rest: iv.cfg.rest }).catch(() => { iv.native = false; });
+    keepAwake(true); return;
+  }
+  iv.native = false;
   audio(); beep(1, 1400, 0.35);
   iv.on = true; iv.paused = false;
   $('#ivSetup').hidden = true; $('#ivRun').hidden = false;
@@ -1516,6 +1531,7 @@ function ivDone() {
   if (!live.running) keepAwake(false);
 }
 function ivStop(silent) {
+  if (iv.native) { try { HN().ivStop(); } catch (e) { } iv.native = false; iv.on = false; }
   if (iv.on) ivLog();
   clearInterval(iv.timer); iv.on = false; iv.paused = false;
   $('#ivSetup').hidden = false; $('#ivRun').hidden = true; $('#ivPause').hidden = false; $('#ivSkip').hidden = false;
@@ -1548,11 +1564,12 @@ function ivTick() {
 $('#ivStart').onclick = ivStart;
 $('#ivPause').onclick = () => {
   if (!iv.on) return;
+  if (iv.native) { HN().ivPause({ paused: !iv.paused }); return; }
   if (iv.paused) { iv.paused = false; iv.end = Date.now() + iv.left * 1000; iv.lastSec = Math.ceil(iv.left); $('#ivPause').textContent = '❚❚ Pause'; }
   else { iv.left = (iv.end - Date.now()) / 1000; iv.paused = true; $('#ivPause').textContent = '▶ Weiter'; }
   ivTick();
 };
-$('#ivSkip').onclick = () => { if (iv.on) { beep(1, 1200); ivNext(); } };
+$('#ivSkip').onclick = () => { if (!iv.on) return; if (iv.native) { HN().ivSkip(); return; } beep(1, 1200); ivNext(); };
 $('#ivStop').onclick = () => ivStop();
 ivRenderSetup();
 
@@ -1806,6 +1823,97 @@ $('#rateSave').onclick = async () => {
 };
 document.addEventListener('click', e => { if (e.target && e.target.id === 'rateEdit' && state.current) openRate(state.current); });
 
+// ===================== NATIVE (APK) =====================
+async function nativeConnect(prefId) {
+  const P = HN(); if (!P) return;
+  try {
+    const pr = await P.requestPerms();
+    if (!pr.granted) { liveStatus('Bluetooth-Berechtigung fehlt. In den App-Einstellungen erlauben.', 'bad'); return; }
+    let id = prefId;
+    if (!id) {
+      liveStatus('Suche Brustgurt … (Gurt anfeuchten und anlegen)');
+      const r = await P.scan({ ms: 4000 });
+      const ds = r.devices || [];
+      if (!ds.length) { liveStatus('Kein Gurt gefunden. Gurt anlegen, Kontakte anfeuchten, Wahoo schließen und nochmal versuchen.', 'warn'); return; }
+      if (ds.length > 1) {
+        const cb = $('#stConnBox');
+        cb.innerHTML = '<p class="hint" style="margin-top:0">Welcher Gurt?</p>' + ds.map(d => `<button class="btn ghost devpick" data-id="${esc(d.id)}">${esc(d.name)}</button>`).join('');
+        cb.querySelectorAll('.devpick').forEach(b => b.onclick = () => nativeConnect(b.dataset.id));
+        liveStatus(''); return;
+      }
+      id = ds[0].id;
+    }
+    localStorage.setItem('ta_dev', id);
+    liveStatus('Verbinde …'); live.wantConnected = true;
+    await P.connect({ id });
+  } catch (e) { liveStatus('Fehler: ' + (e && e.message || e), 'bad'); }
+}
+function nativeRecompute(samples) {
+  const p = state.profile;
+  Object.assign(live, { samples: samples || [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0 });
+  for (const x of live.samples) { live.n++; live.sum += x.hr; if (x.hr > live.max) live.max = x.hr; live.kcal += kcalPerMin(x.hr, p) / 60; live.trimp += trimpMin(x.hr, p) / 60; live.zones[zoneOf(x.hr, p.max)]++; }
+}
+async function nativeResync() {
+  const P = HN(); if (!P || !live.running) return;
+  try {
+    const d = await P.snapshot(); if (!d || d.sec == null) return;
+    nativeRecompute(d.samples);
+    live.activeMs = d.sec * 1000; live.segStart = Date.now(); live.paused = !!d.paused;
+    renderLive(); renderLiveButtons();
+  } catch (e) { }
+}
+function ivRenderNative(d) {
+  if (!iv.native) return;
+  if (!d.on) { if (iv.on) { iv.on = false; ivDone(); } return; }
+  iv.on = true; iv.paused = !!d.paused; iv.phase = d.phase; iv.round = d.round;
+  $('#ivSetup').hidden = true; $('#ivRun').hidden = false; $('#ivRun').className = d.phase;
+  $('#ivPhase').textContent = d.paused ? 'PAUSIERT' : d.phase === 'work' ? 'BELASTUNG' : 'PAUSE';
+  $('#ivRound').textContent = d.phase === 'work' ? `Runde ${d.round} / ${d.rounds}` : `Pause · gleich Runde ${d.round + 1} / ${d.rounds}`;
+  $('#ivClock').textContent = ivFmt(d.left / 1000);
+  $('#ivClock').classList.toggle('last', !d.paused && d.left <= 3050);
+  $('#ivProg').style.width = (100 - Math.max(0, d.left) / d.dur * 100).toFixed(1) + '%';
+  $('#ivPause').textContent = d.paused ? '▶ Weiter' : '❚❚ Pause';
+  const fresh = live.hr != null && Date.now() - live.hrAt < 5000;
+  $('#ivHrV').textContent = fresh ? live.hr : '--';
+  $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile.max)] : '';
+}
+async function nativeInit() {
+  const P = HN(); if (!P) return;
+  P.addListener('hr', d => { if (d.hr) { live.hr = d.hr; live.hrAt = Date.now(); } if (!live.running && state.view === 'start') renderLive(); });
+  P.addListener('iv', ivRenderNative);
+  P.addListener('state', d => {
+    live.connected = !!d.connected; live.dev = { name: d.name }; live.bat = d.battery >= 0 ? d.battery : null;
+    if (d.connected) liveStatus('✓ Verbunden: ' + (d.name || 'Brustgurt') + (live.bat != null ? ` · Akku ${live.bat} %` : ''), 'good');
+    else if (d.want) liveStatus('Verbindung weg – verbinde neu …', 'warn'); else liveStatus('Getrennt.');
+    renderLiveButtons();
+  });
+  P.addListener('url', d => handleAppUrl(d.url));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') nativeResync(); });
+  try {
+    const info = await P.info();
+    window.__apk = info;
+    if (info.url) handleAppUrl(info.url);
+    if (info.connected) { live.connected = true; live.dev = { name: info.name }; live.bat = info.battery >= 0 ? info.battery : null; liveStatus('✓ Verbunden: ' + (info.name || 'Brustgurt'), 'good'); renderLiveButtons(); }
+    else { const last = localStorage.getItem('ta_dev'); if (last && info.permissions) nativeConnect(last); }
+    if (!info.batteryUnrestricted) { const n = document.createElement('div'); n.className = 'card'; n.id = 'battHint'; n.innerHTML = '<b>Für den Sperrbildschirm:</b><p class="hint">Damit Android die Aufzeichnung nicht stoppt, Akku-Optimierung für die App ausschalten.</p><button class="btn ghost" id="battBtn">Akku-Optimierung ausschalten</button>'; $('#view-start').insertBefore(n, $('#stGo')); $('#battBtn').onclick = async () => { await P.batterySettings(); n.remove(); }; }
+    checkApkUpdate(info.versionCode);
+  } catch (e) { }
+}
+async function checkApkUpdate(cur) {
+  try {
+    const r = await fetch('https://api.github.com/repos/semkoq/trainings-app/releases/latest', { cache: 'no-store' });
+    if (!r.ok) return; const j = await r.json(); const n = parseInt(String(j.tag_name || '').replace('apk-', ''));
+    if (!(n > cur)) return;
+    const a = (j.assets || []).find(x => x.name.endsWith('.apk')); if (!a) return;
+    const b = document.createElement('div'); b.className = 'card'; b.style.borderColor = 'var(--acc)';
+    b.innerHTML = `<b>App-Update verfügbar (1.${n})</b><p class="hint">Einmal herunterladen und installieren – deine Trainings bleiben erhalten.</p><button class="btn" id="apkUpd">Update installieren</button>`;
+    $('#view-overview').prepend(b); $('#apkUpd').onclick = () => HN().openUrl({ url: a.browser_download_url });
+  } catch (e) { }
+}
+function handleAppUrl(url) { if (!url) return; window.__lastAppUrl = url; if (window.onAppUrl) window.onAppUrl(url); }
+if (isNative()) nativeInit();
+else window.addEventListener('load', () => { if (isNative()) nativeInit(); });
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -1831,7 +1939,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1646';
+const APP_VERSION = '2026.11.17-1658';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
