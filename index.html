@@ -484,6 +484,7 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
     <div class="row"><label>Größe (cm)<input id="cH" type="text" inputmode="numeric" placeholder="175"></label><label>Alltag<select id="cAct"><option value="1.3">Viel sitzen</option><option value="1.45">Normal / leicht aktiv</option><option value="1.6">Körperlich aktiv (Job)</option></select></label></div>
     <div class="row"><label>Tempo<select id="cRate"><option value="auto">Automatisch (Kampf)</option><option value="0">Gewicht halten</option><option value="0.25">−0,25 kg/Woche</option><option value="0.5">−0,5 kg/Woche</option><option value="0.75">−0,75 kg/Woche</option></select></label><label>Eiweiß (g pro kg)<select id="cProt"><option>1.6</option><option>1.8</option><option selected>2.0</option><option>2.2</option><option>2.5</option></select></label></div>
     <button class="btn" id="cSave">Speichern</button>
+    <p class="hint" id="cWh"></p>
     <p class="hint">Ziel-Kalorien = Grundumsatz × Alltag + Training des Tages (aus deinem Puls) − Defizit. Defizit max. 750 kcal/Tag und nie unter deinen Grundumsatz. Das Wasser-Machen in den letzten Tagen vor dem Wiegen gehört nicht in diese Rechnung – das bitte mit deinem Trainer planen.</p>
   </details>
 </section>
@@ -2249,6 +2250,7 @@ async function whFetch(days = 7) {
       Object.assign(D[k] = D[k] || {}, { recovery: sc.recovery_score ?? null, hrv: sc.hrv_rmssd_milli != null ? Math.round(sc.hrv_rmssd_milli) : null, rhr: sc.resting_heart_rate ?? null, spo2: sc.spo2_percentage != null ? Math.round(sc.spo2_percentage * 10) / 10 : null, skinTemp: sc.skin_temp_celsius != null ? Math.round(sc.skin_temp_celsius * 10) / 10 : null });
     }
     for (const c of cy) { const sc = c.score || {}; if (sc.strain == null) continue; const k = dayKey(c.start); Object.assign(D[k] = D[k] || {}, { strain: Math.round(sc.strain * 10) / 10, kj: sc.kilojoule != null ? Math.round(sc.kilojoule) : null }); }
+    try { const bm = await whReq('GET', `${WH_API}/user/measurement/body`, { headers: { Authorization: 'Bearer ' + await whToken() } }); if (bm && bm.weight_kilogram) WH.data.body = { kg: Math.round(bm.weight_kilogram * 10) / 10, h: bm.height_meter ? Math.round(bm.height_meter * 100) : null }; } catch (e) { }
     WH.data.last = Date.now(); await kvSet('whoopData', WH.data);
     // Ruhepuls im Profil automatisch nachführen (Ø der letzten 7 Tage)
     const rh = Object.keys(D).sort().slice(-7).map(k => D[k].rhr).filter(x => x);
@@ -2648,7 +2650,7 @@ async function cutSave() { await kvSet('cut', { cfg: CUT.cfg, days: CUT.days, we
 const n1 = x => (Math.round(x * 10) / 10).toString().replace('.', ',');
 const pnum = v => parseFloat(String(v || '').replace(',', '.'));
 function curWeight() { const w = CUT.weights; return w.length ? w[w.length - 1] : (state.profile.weight ? { kg: state.profile.weight, d: null } : null); }
-function bmr() { const w = curWeight(), p = state.profile; if (!w) return null; return 10 * w.kg + 6.25 * (CUT.cfg.h || 175) - 5 * (p.age || 23) + (p.sex === 'f' ? -161 : 5); }
+function bmr() { const w = curWeight(), p = state.profile; if (!w) return null; return 10 * w.kg + 6.25 * (CUT.cfg.h || (WH.data && WH.data.body && WH.data.body.h) || 175) - 5 * (p.age || 23) + (p.sex === 'f' ? -161 : 5); }
 function cutRate() {
   if (CUT.cfg.rate !== 'auto') return { r: +CUT.cfg.rate, why: CUT.cfg.rate === '0' ? 'Gewicht halten' : `−${n1(+CUT.cfg.rate)} kg/Woche (eingestellt)` };
   const f = FC.f, w = curWeight();
@@ -2661,13 +2663,28 @@ function cutRate() {
   }
   return { r: 0, why: 'Kein Kampf eingetragen – Gewicht halten' };
 }
+function weightAt(dk) { const w = CUT.weights.filter(x => x.d <= dk); return w.length ? w[w.length - 1].kg : (CUT.weights[0] ? CUT.weights[0].kg : state.profile.weight); }
+function whBurn(dk) { // echter Tagesverbrauch laut WHOOP, auf dein echtes Gewicht korrigiert
+  if (typeof WH === 'undefined' || !WH.data || dk >= dayKey(new Date())) return null;
+  const d = WH.data.days[dk]; if (!d || !d.kj) return null;
+  const wb = WH.data.body && WH.data.body.kg, me = weightAt(dk), f = wb && me ? me / wb : 1;
+  const kcal = d.kj / 4.184 * f, b = bmr();
+  return b && kcal < b * 1.15 ? null : Math.round(kcal);   // zu niedrig = Band nicht den ganzen Tag getragen
+}
+function calib() {
+  const r = []; for (let i = 1; i <= 28; i++) { const k = dayKey(Date.now() - i * 864e5), wb = whBurn(k), b = bmr(); if (wb && b && trainKcal(k) < 100) r.push(wb / (b * CUT.cfg.act)); }
+  if (r.length < 4) return { f: 1, n: r.length };
+  r.sort((a, b) => a - b); const m = r[Math.floor(r.length / 2)];
+  return { f: Math.max(0.8, Math.min(1.25, m)), n: r.length };
+}
 function trainKcal(dk) { return state.sessions.filter(s => dayKey(s.date) === dk).reduce((a, s) => a + (s.kcal || 0), 0); }
 function dayTarget(dk) {
   const b = bmr(); if (!b) return null;
-  const base = b * CUT.cfg.act, tr = trainKcal(dk), rt = cutRate(), def = Math.min(750, rt.r * 7700 / 7);
-  let kcal = base + tr - def, floor = false; if (kcal < b) { kcal = b; floor = true; }
+  const tr = trainKcal(dk), rt = cutRate(), def = Math.min(750, rt.r * 7700 / 7), cal = CUT._cal || (CUT._cal = calib()), wb = tr < 100 ? whBurn(dk) : null;
+  const base = b * CUT.cfg.act * cal.f, burn = wb || base + tr, src = wb ? 'whoop' : cal.n >= 4 ? 'calib' : 'formel';
+  let kcal = burn - def, floor = false; if (kcal < b) { kcal = b; floor = true; }
   const w = curWeight().kg, prot = w * CUT.cfg.prot, fat = Math.max(w * 0.8, kcal * 0.22 / 9), carb = Math.max(0, (kcal - prot * 4 - fat * 9) / 4);
-  return { kcal: Math.round(kcal), b: Math.round(b), base: Math.round(base), tr: Math.round(tr), def: Math.round(def), floor, prot: Math.round(prot), fat: Math.round(fat), carb: Math.round(carb), water: Math.round(w * 37 / 250) * 250 + (tr > 300 ? 500 : 0), rt };
+  return { kcal: Math.round(kcal), burn: Math.round(burn), src, cal, b: Math.round(b), base: Math.round(base), tr: Math.round(tr), def: Math.round(def), floor, prot: Math.round(prot), fat: Math.round(fat), carb: Math.round(carb), water: Math.round(w * 37 / 250) * 250 + (tr > 300 ? 500 : 0), rt };
 }
 function dayTot(dk) { const d = CUT.days[dk] || {}; const f = d.food || []; return { k: f.reduce((a, x) => a + x.k, 0), p: f.reduce((a, x) => a + (x.p || 0), 0), c: f.reduce((a, x) => a + (x.c || 0), 0), f: f.reduce((a, x) => a + (x.f || 0), 0), w: d.water || 0, food: f }; }
 async function logWeight(kg) {
@@ -2677,7 +2694,7 @@ async function logWeight(kg) {
   await cutSave(); renderFight(); if (state.view === 'cut') renderCut();
 }
 function renderCut() {
-  const dk = CUT.day || dayKey(new Date()); CUT.day = dk;
+  const dk = CUT.day || dayKey(new Date()); CUT.day = dk; CUT._cal = null;
   // Gewicht
   const w = curWeight(), ws = CUT.weights, f = FC.f;
   const wk = ws.length ? ws.filter(x => x.d <= dayKey(Date.now() - 7 * 864e5)).pop() : null;
@@ -2700,7 +2717,7 @@ function renderCut() {
     <div><div class="kline"><span>Ziel</span><b>${T.kcal} kcal</b></div><div class="kline"><span>Gegessen</span><b>${D.k} kcal</b></div><div class="kline"><span>Training</span><b>+${T.tr} kcal</b></div><div class="kline"><span>Defizit</span><b>−${T.def} kcal</b></div></div></div>
     ${bar('Eiweiß', D.p, T.prot, '#3fa7ff')}${bar('Kohlenhydrate', D.c, T.carb, '#ffb020')}${bar('Fett', D.f, T.fat, '#ff4d9a')}${bar('Wasser', D.w, T.water, '#5ad1ff', 'ml')}
     <div class="wbtns"><button class="minibtn" data-w="250">+ 250 ml</button><button class="minibtn" data-w="500">+ 500 ml</button><button class="minibtn" data-w="-250">− 250</button></div>
-    <p class="hint">${esc(T.rt.why)}. Verbrauch heute ≈ ${T.base + T.tr} kcal (Grundumsatz ${T.b} × Alltag + Training).${T.floor ? ' <b style="color:#ffb020">Ziel auf Grundumsatz angehoben – weniger essen wäre zu wenig.</b>' : ''}${CUT.cfg.h ? '' : ' <b>Trag unten deine Größe ein für genauere Werte.</b>'}</p>`;
+    <p class="hint">${esc(T.rt.why)}. Verbrauch ${isToday ? 'heute' : 'an dem Tag'} ≈ <b>${T.burn} kcal</b> – ${T.src === 'whoop' ? 'gemessen von WHOOP (auf dein Gewicht korrigiert)' : T.src === 'calib' ? `Alltag an deine WHOOP-Ruhetage angepasst (×${T.cal.f.toFixed(2).replace(".", ",")}, ${T.cal.n} Tage) + Training vom Brustgurt` : `Schätzung (Grundumsatz ${T.b} × Alltag + Training)${WH.tok ? ` – wird genauer, sobald ${Math.max(0, 4 - T.cal.n)} weitere Ruhetage mit WHOOP da sind` : ''}`}.${T.floor ? ' <b style="color:#ffb020">Ziel auf Grundumsatz angehoben – weniger essen wäre zu wenig.</b>' : ''}${CUT.cfg.h || (WH.data && WH.data.body && WH.data.body.h) ? '' : ' <b>Trag unten deine Größe ein für genauere Werte.</b>'}</p>`;
     $('#cdPrev').onclick = () => { CUT.day = dayKey(new Date(dk + 'T12:00').getTime() - 864e5); renderCut(); };
     $('#cdNext').onclick = () => { if (!isToday) { CUT.day = dayKey(new Date(dk + 'T12:00').getTime() + 864e5); renderCut(); } };
     $('#cutDay').querySelectorAll('[data-w]').forEach(b => b.onclick = async () => { const d = CUT.days[dk] = CUT.days[dk] || {}; d.water = Math.max(0, (d.water || 0) + +b.dataset.w); await cutSave(); renderCut(); });
@@ -2714,7 +2731,7 @@ function renderCut() {
   const days7 = []; for (let i = 6; i >= 0; i--) days7.push(dayKey(Date.now() - i * 864e5));
   const rows = days7.map(k => ({ k, t: dayTarget(k), d: dayTot(k) })).filter(x => x.t);
   const tdk = dayKey(new Date()), logged = rows.filter(x => x.d.k > 0 && x.k !== tdk), avgIn = logged.length ? Math.round(logged.reduce((a, x) => a + x.d.k, 0) / logged.length) : null;
-  const avgDef = logged.length ? Math.round(logged.reduce((a, x) => a + (x.t.base + x.t.tr - x.d.k), 0) / logged.length) : null;
+  const avgDef = logged.length ? Math.round(logged.reduce((a, x) => a + (x.t.burn - x.d.k), 0) / logged.length) : null;
   const w14 = ws.filter(x => x.d >= dayKey(Date.now() - 14 * 864e5)); let real = null;
   if (w14.length >= 3) { const a = w14[0], b = w14[w14.length - 1], dd = (new Date(b.d) - new Date(a.d)) / 864e5; if (dd >= 5) real = (b.kg - a.kg) / dd * 7; }
   const mx = Math.max(1, ...rows.map(x => Math.max(x.d.k, x.t.kcal)));
@@ -2722,6 +2739,8 @@ function renderCut() {
     <div class="months" style="grid-template-columns:repeat(7,1fr)">${days7.map(k => { const r = rows.find(x => x.k === k); const v = r ? r.d.k : 0, z = r ? r.t.kcal : 0; return `<div class="mo"><div class="mb" style="position:relative"><i style="height:${v / mx * 100}%;background:${v > z + 150 ? '#ff4d4d' : v ? '#3ddc84' : 'transparent'}"></i>${z ? `<em style="position:absolute;left:0;right:0;bottom:${z / mx * 100}%;border-top:2px dashed #ffffff55"></em>` : ''}</div><span>${v ? Math.round(v / 100) / 10 + 'k' : ''}</span><small>${new Date(k + 'T12:00').toLocaleDateString('de-DE', { weekday: 'short' }).slice(0, 2)}</small></div>`; }).join('')}</div>
     <p class="hint">${avgDef != null ? `Bei Ø ${avgDef > 0 ? avgDef : 0} kcal Defizit wären ≈ ${n1(Math.max(0, avgDef) * 7 / 7700)} kg/Woche zu erwarten.` : 'Trag ein paar Tage dein Essen ein, dann siehst du hier deinen Schnitt (der laufende Tag zählt erst ab morgen mit).'}${real != null ? ` Deine Waage sagt ${n1(real)} kg/Woche.` : ''} Gestrichelt = Ziel.</p>`;
   // Einstellungen
+  const bd = WH.data && WH.data.body, me = curWeight();
+  $('#cWh').innerHTML = bd ? `WHOOP rechnet mit <b>${n1(bd.kg)} kg</b>${bd.h ? ` und ${bd.h} cm` : ''}.${me && Math.abs(me.kg - bd.kg) >= 1 ? ` Du wiegst ${n1(me.kg)} kg – die App korrigiert WHOOPs Kalorien darauf. Trag dein Gewicht trotzdem in der WHOOP-App nach, dann stimmen auch dort Strain &amp; Kalorien.` : ' Passt zu deinem Gewicht ✓'}` : (WH.tok ? 'WHOOP-Gewicht wird beim nächsten Aktualisieren geladen.' : '');
   $('#cH').value = CUT.cfg.h || ''; $('#cAct').value = String(CUT.cfg.act); $('#cRate').value = String(CUT.cfg.rate); $('#cProt').value = String(CUT.cfg.prot.toFixed(1));
 }
 $('#cSave').onclick = async () => { const h = pnum($('#cH').value); CUT.cfg = { h: h > 120 && h < 230 ? h : null, act: +$('#cAct').value, rate: $('#cRate').value, prot: +$('#cProt').value }; await cutSave(); $('#cutSet').open = false; renderCut(); toast('Gespeichert ✓'); };
@@ -2863,7 +2882,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2113';
+const APP_VERSION = '2026.11.17-2123';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
