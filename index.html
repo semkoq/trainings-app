@@ -127,7 +127,8 @@ h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing
 .wtype i{width:12px;height:12px;border-radius:3px}
 .wtype small{color:var(--mut);min-width:38px;text-align:right}
 /* bewertung */
-#rateSheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+#rateSheet,#pastSheet{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+#pastSheet select,#pastSheet input{width:100%;background:#0f1216;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:14px Inter}
 .sheet{background:var(--card);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:720px;animation:up .25s ease-out}
 @keyframes up{from{transform:translateY(40%)}}
 .rpe{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
@@ -364,6 +365,7 @@ body{padding-top:env(safe-area-inset-top)}
 </section>
 
 <section class="view" id="view-analyse" hidden>
+  <button class="btn ghost" id="pastBtn" style="margin-top:14px">+ Vergangene Trainings hinzufügen</button>
   <div class="chips anachips" id="anaTabs"></div>
   <div id="anaBody"></div>
 </section>
@@ -425,6 +427,16 @@ body{padding-top:env(safe-area-inset-top)}
 </section>
 </div>
 <div id="toast"></div>
+<div id="pastSheet" hidden>
+  <div class="sheet" style="max-height:88vh;display:flex;flex-direction:column">
+    <h3>Vergangene Trainings hinzufügen</h3>
+    <div class="lvrow" style="grid-template-columns:1fr 1fr"><select id="pastType"></select><input id="pastQ" placeholder="Suche in Notiz, z.B. sparring"></div>
+    <div class="alist" id="pastList" style="overflow-y:auto;flex:1;min-height:120px;margin-top:6px"></div>
+    <div class="lbl" style="margin-top:10px">In Kategorie: <b id="pastN">0 ausgewählt</b></div>
+    <select id="pastCat" style="margin-top:6px"></select>
+    <div class="lvrow" style="margin-top:10px"><button class="btn ghost" id="pastClose">Schließen</button><button class="btn" id="pastAdd">Hinzufügen</button></div>
+  </div>
+</div>
 <div id="rateSheet" hidden>
   <div class="sheet"><div id="rateStep1">
     <h3>Wie war dein Training?</h3>
@@ -2279,6 +2291,42 @@ function renderCompare() {
   });
 }
 
+// ---- Vergangene Trainings gesammelt zur Analyse hinzufügen ----
+const past = { sel: new Set() };
+function openPast() {
+  past.sel = new Set();
+  const types = [...new Set(state.sessions.map(s => s.type))].sort();
+  $('#pastType').innerHTML = '<option value="">Alle Arten</option>' + types.map(x => `<option>${esc(x)}</option>`).join('');
+  $('#pastCat').innerHTML = anaCats.map(c => `<option>${esc(c)}</option>`).join('') + '<option value="__new">+ Neue Kategorie …</option>' + '<option value="__none">– aus der Analyse entfernen –</option>';
+  if (ana.cat && anaCats.includes(ana.cat)) $('#pastCat').value = ana.cat;
+  $('#pastQ').value = ''; renderPast(); $('#pastSheet').hidden = false;
+}
+function renderPast() {
+  const ty = $('#pastType').value, q = $('#pastQ').value.trim().toLowerCase();
+  const list = state.sessions.filter(s => (!ty || s.type === ty) && (!q || (s.note || '').toLowerCase().includes(q) || (s.type || '').toLowerCase().includes(q))).slice(0, 300);
+  $('#pastList').innerHTML = list.map(s => `<label><input type="checkbox" value="${s.id}" ${past.sel.has(s.id) ? 'checked' : ''}><span>${fmtDate(s.date)} · ${esc(s.type)}${s.note ? ' · <small>' + esc(s.note) + '</small>' : ''}</span><small>${s.anaCat ? '📊 ' + esc(s.anaCat) : fmtDur(s.durationSec)}</small></label>`).join('') || '<p class="hint">Nichts gefunden.</p>';
+  $('#pastList').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? past.sel.add(i.value) : past.sel.delete(i.value); $('#pastN').textContent = past.sel.size + ' ausgewählt'; });
+  $('#pastN').textContent = past.sel.size + ' ausgewählt';
+}
+$('#pastBtn').onclick = openPast;
+$('#pastType').onchange = renderPast; $('#pastQ').oninput = renderPast;
+$('#pastClose').onclick = () => { $('#pastSheet').hidden = true; };
+$('#pastSheet').onclick = e => { if (e.target.id === 'pastSheet') $('#pastSheet').hidden = true; };
+$('#pastCat').onchange = async () => {
+  if ($('#pastCat').value !== '__new') return;
+  const v = (prompt('Name der neuen Kategorie:') || '').trim();
+  if (v && !anaCats.includes(v)) { anaCats.push(v); await kvSet('anaCats', anaCats); }
+  $('#pastCat').innerHTML = anaCats.map(c => `<option>${esc(c)}</option>`).join('') + '<option value="__new">+ Neue Kategorie …</option><option value="__none">– aus der Analyse entfernen –</option>';
+  if (v) $('#pastCat').value = v;
+};
+$('#pastAdd').onclick = async () => {
+  if (!past.sel.size) { toast('Erst Trainings anhaken.'); return; }
+  const c = $('#pastCat').value; if (c === '__new') return;
+  for (const id of past.sel) { const s = state.sessions.find(x => x.id === id); if (!s) continue; if (c === '__none') delete s.anaCat; else s.anaCat = c; await store.saveSession(s); }
+  toast(c === '__none' ? `${past.sel.size} aus der Analyse entfernt` : `${past.sel.size} Trainings zu „${c}“ hinzugefügt ✓`);
+  $('#pastSheet').hidden = true; if (c !== '__none') ana.cat = c; renderAnalyse();
+};
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -2304,7 +2352,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2114';
+const APP_VERSION = '2026.11.17-2118';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
