@@ -99,6 +99,33 @@ table.cmp{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeri
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#2a313b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:400px){.hv span:not(.load):first-child{display:none}}
+/* leistung + woche */
+h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing:0;margin-left:6px}
+.ptiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ptile{border:1.5px solid var(--line);border-radius:12px;padding:10px 10px 8px;position:relative}
+.ptile b{font:700 34px/1 'Barlow Condensed';display:inline-block}
+.ptile span{font-size:13px;margin-left:4px}
+.ptile i{display:block;font-style:normal;font-size:13px;margin-top:6px;padding-top:6px;border-top:2px solid currentColor}
+.ptile.fit{color:#3fa7ff}.ptile.form{color:#ff8a3d;border-color:#ff8a3d}.ptile.fat{color:#ff4d9a}
+.ready{margin-top:12px;background:#0f1216;border-radius:12px;padding:12px}
+.rl{color:var(--mut);font-size:13px}.rv{font:700 26px 'Barlow Condensed';color:#ff8a3d;margin-top:2px}
+.rbar{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:14px;position:relative}
+.rbar i{height:8px;border-radius:4px}
+.rbar i:nth-child(1){background:#ff4d4d}.rbar i:nth-child(2){background:#ff8a3d}.rbar i:nth-child(3){background:#ffb020}.rbar i:nth-child(4){background:#3ddc84}.rbar i:nth-child(5){background:#3fa7ff}
+.rbar em{position:absolute;top:-11px;width:0;height:0;border:7px solid transparent;border-top-color:#fff;transform:translateX(-7px);transition:left .4s}
+.rlab{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:6px}
+.rtip{font-size:14px;margin-top:10px}
+.pmore{margin-top:12px}.pmore canvas{margin-top:10px}
+.wkhead{display:flex;align-items:center;justify-content:space-between}
+.wkhead h3{margin:0;text-align:center;flex:1}
+.wkbtn{background:#1d222a;border:0;color:var(--txt);width:36px;height:36px;border-radius:10px;font-size:20px;cursor:pointer}
+.wkbtn:disabled{opacity:.3}
+.seg.wkseg{float:none;display:flex;margin:10px 0 4px}.seg.wkseg button{flex:1;padding:7px 10px}
+.wksum{display:flex;justify-content:space-around;margin:10px 0 4px;text-align:center}
+.wksum b{display:block;font:700 26px 'Barlow Condensed'}.wksum span{font-size:12px;color:var(--mut)}
+.wtype{display:grid;grid-template-columns:14px 1fr auto auto;gap:8px;align-items:center;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+.wtype i{width:12px;height:12px;border-radius:3px}
+.wtype small{color:var(--mut);min-width:38px;text-align:right}
 /* navigation & start */
 [hidden]{display:none!important}
 .hrow{display:flex;justify-content:space-between;align-items:center}
@@ -265,7 +292,29 @@ body{padding-top:env(safe-area-inset-top)}
 <section class="view" id="view-session" hidden></section>
 
 <section class="view" id="view-history">
-  <div class="card"><h3>Diese Woche</h3><div id="weekCard"></div></div>
+  <div class="card" id="perfCard" hidden>
+    <h3>Leistung <small>aus deinem Puls berechnet</small></h3>
+    <div class="ptiles">
+      <div class="ptile fit"><b id="pFit">–</b><span id="pFitD"></span><i>Fitness</i></div>
+      <div class="ptile form"><b id="pForm">–</b><span id="pFormD"></span><i>Form</i></div>
+      <div class="ptile fat"><b id="pFat">–</b><span id="pFatD"></span><i>Ermüdung</i></div>
+    </div>
+    <div class="ready"><div class="rl">Heutige Trainingsbereitschaft</div><div class="rv" id="rdState">–</div>
+      <div class="rbar"><i></i><i></i><i></i><i></i><i></i><em id="rdMark"></em></div>
+      <div class="rlab"><span>Überlastung</span><span>Regeneration</span></div>
+      <p class="rtip" id="rdTip"></p></div>
+    <details class="pmore"><summary>Verlauf der letzten 90 Tage</summary><canvas id="pmcChart" height="180"></canvas>
+      <div class="legend"><span><i style="background:#3fa7ff"></i>Fitness</span><span><i style="background:#ff4d9a"></i>Ermüdung</span><span><i style="background:#ff8a3d"></i>Form</span></div>
+      <p class="hint">Fitness = Ø Belastung der letzten 6 Wochen · Ermüdung = Ø der letzten 7 Tage · Form = Fitness − Ermüdung (vom Vortag). Wie bei TrainingPeaks, nur mit deiner Puls-Belastung statt Watt.</p></details>
+  </div>
+  <div class="card" id="wkCard">
+    <div class="wkhead"><button class="wkbtn" id="wkPrev">‹</button><h3 id="wkTitle">Diese Woche</h3><button class="wkbtn" id="wkNext">›</button></div>
+    <div class="seg wkseg" id="wkMetric"><button data-m="dur" class="on">Dauer</button><button data-m="load">Belastung</button><button data-m="kcal">Kalorien</button></div>
+    <div class="wksum" id="wkSum"></div>
+    <canvas id="wkChart" height="170"></canvas>
+    <div id="wkTypes"></div>
+  </div>
+  <div id="weekCard" hidden></div>
   <div id="histList"></div>
   <div class="card" id="trendCard" hidden><h3>Trend</h3><canvas id="trendChart" height="170"></canvas>
     <div class="legend"><span><i style="background:#ff6b3d88"></i>Belastung</span><span><i style="background:#3ddc84"></i>Erholung (höher = fitter)</span></div></div>
@@ -620,7 +669,7 @@ $('#impBack').onclick = () => showView('profile');
 // Wischen zwischen Verlauf und Training
 (() => {
   let x0 = null, y0 = null;
-  document.addEventListener('touchstart', e => { if (state.view !== 'history' && state.view !== 'start') { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.pager')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchstart', e => { if (state.view !== 'history' && state.view !== 'start') { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.pager,#wkCard')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchend', e => {
     if (x0 == null) return;
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
@@ -1568,6 +1617,116 @@ $('#syAll').onclick = () => { if (!sync.cfg) { syncStatus('Erst verbinden.'); re
   window.addEventListener('online', () => syncRun(syncPending()));
 })();
 
+// ===================== LEISTUNG (Fitness / Ermüdung / Form) =====================
+const TYPE_COLORS = { Kickboxen: '#ff6b3d', Sparring: '#ff4d4d', Pratzen: '#ffb020', Sandsack: '#c47a12', Intervalle: '#ff4d9a', Laufen: '#3fa7ff', Rudern: '#2ec4c4', Kraft: '#a974ff', Mobility: '#3ddc84', Sonstiges: '#8a94a6' };
+const dayKey = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+function pmcSeries() {
+  const ss = state.sessions; if (!ss.length) return null;
+  const load = {}; ss.forEach(s => { const k = dayKey(s.date); load[k] = (load[k] || 0) + (s.trimp || 0); });
+  const first = new Date(ss[ss.length - 1].date); first.setHours(12, 0, 0, 0);
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const out = []; let ctl = 0, atl = 0;
+  for (let d = new Date(first); d <= today; d.setDate(d.getDate() + 1)) {
+    const tsb = ctl - atl, l = load[dayKey(d)] || 0;
+    ctl += (l - ctl) / 42; atl += (l - atl) / 7;
+    out.push({ k: dayKey(d), load: l, ctl, atl, tsb });
+  }
+  return out;
+}
+function readiness(tsb) {
+  if (tsb < -30) return ['Überlastung', 0.06, '#ff4d4d', 'Du bist richtig im Minus. Heute locker machen oder Pause – sonst steigt das Verletzungsrisiko.'];
+  if (tsb < -10) return ['Aufbau', 0.28, '#ff8a3d', 'Optimaler Trainingsbereich: Du baust Fitness auf. Normales bis hartes Training ist okay, Schlaf und Essen beachten.'];
+  if (tsb < 5) return ['Neutral', 0.5, '#ffb020', 'Ausgeglichen. Gut für ein normales Training oder eine harte Einheit.'];
+  if (tsb < 25) return ['Frisch', 0.72, '#3ddc84', 'Du bist erholt – perfekt für ein hartes Training, Sparring oder einen Test.'];
+  return ['Regeneration', 0.94, '#3fa7ff', 'Sehr ausgeruht. Wenn das länger so bleibt, geht Fitness verloren – Zeit wieder Gas zu geben.'];
+}
+function arrow(v) { return v > 0.5 ? '↑' : v < -0.5 ? '↓' : '→'; }
+function renderPerf() {
+  const pm = pmcSeries(), card = $('#perfCard');
+  if (!pm || pm.length < 7) { card.hidden = true; return; }
+  card.hidden = false;
+  const n = pm[pm.length - 1], w = pm[Math.max(0, pm.length - 8)];
+  $('#pFit').textContent = Math.round(n.ctl); $('#pFitD').textContent = arrow(n.ctl - w.ctl);
+  $('#pFat').textContent = Math.round(n.atl); $('#pFatD').textContent = arrow(n.atl - w.atl);
+  $('#pForm').textContent = Math.round(n.tsb); $('#pFormD').textContent = arrow(n.tsb - w.tsb);
+  const [lbl, pos, col, tip] = readiness(n.tsb);
+  $('#rdState').textContent = lbl; $('#rdState').style.color = col; $('#rdMark').style.left = (pos * 100) + '%'; $('#rdTip').textContent = tip;
+  const det = card.querySelector('details');
+  det.ontoggle = () => { if (det.open) drawPMC(pm.slice(-90)); };
+  if (det.open) drawPMC(pm.slice(-90));
+}
+function drawPMC(pm) {
+  const cv = $('#pmcChart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 180;
+  cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const L = 30, R = 6, T = 8, B = 20, pw = W - L - R, ph = H - T - B;
+  const vals = pm.flatMap(p => [p.ctl, p.atl, p.tsb]);
+  const lo = Math.min(-10, ...vals), hi = Math.max(20, ...vals);
+  const y = v => T + ph - (v - lo) / (hi - lo) * ph, x = i => L + i / (pm.length - 1) * pw;
+  g.font = '11px Inter, sans-serif'; g.fillStyle = '#7d8590'; g.textAlign = 'right';
+  const st = (hi - lo) > 120 ? 40 : 20;
+  for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) { g.fillText(v, L - 5, y(v) + 4); g.strokeStyle = v === 0 ? '#ffffff30' : '#ffffff10'; g.beginPath(); g.moveTo(L, y(v)); g.lineTo(W - R, y(v)); g.stroke(); }
+  // Tagesbelastung als Balken
+  const maxL = Math.max(1, ...pm.map(p => p.load));
+  pm.forEach((p, i) => { if (!p.load) return; const h = p.load / maxL * ph * 0.35; g.fillStyle = '#ffffff22'; g.fillRect(x(i) - 1.5, T + ph - h, 3, h); });
+  [['ctl', '#3fa7ff'], ['atl', '#ff4d9a'], ['tsb', '#ff8a3d']].forEach(([k, c]) => { g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); pm.forEach((p, i) => i ? g.lineTo(x(i), y(p[k])) : g.moveTo(x(i), y(p[k]))); g.stroke(); });
+  g.fillStyle = '#7d8590'; g.textAlign = 'center';
+  [0, Math.floor(pm.length / 2), pm.length - 1].forEach(i => { const [yy, mm, dd] = pm[i].k.split('-'); g.fillText(dd + '.' + mm + '.', x(i), H - 5); });
+}
+
+// ===================== WOCHENÜBERSICHT =====================
+const wk = { off: 0, metric: 'dur' };
+function weekStart(off) { const d = new Date(); d.setHours(0, 0, 0, 0); const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd + off * 7); return d; }
+function weekData(off) {
+  const s0 = weekStart(off), s1 = new Date(s0); s1.setDate(s1.getDate() + 7);
+  const list = state.sessions.filter(s => { const d = new Date(s.date); return d >= s0 && d < s1; });
+  const days = Array.from({ length: 7 }, () => ({}));
+  const val = s => wk.metric === 'dur' ? s.durationSec / 60 : wk.metric === 'load' ? (s.trimp || 0) : (s.kcal || 0);
+  list.forEach(s => { const i = (new Date(s.date).getDay() + 6) % 7; days[i][s.type] = (days[i][s.type] || 0) + val(s); });
+  return { s0, list, days };
+}
+function renderWeek() {
+  const { s0, list, days } = weekData(wk.off), prev = weekData(wk.off - 1).list;
+  const e = new Date(s0); e.setDate(e.getDate() + 6);
+  const f = d => d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  $('#wkTitle').textContent = wk.off === 0 ? 'Diese Woche' : wk.off === -1 ? 'Letzte Woche' : `${f(s0)} – ${f(e)}`;
+  $('#wkNext').disabled = wk.off >= 0;
+  const oldest = state.sessions.length ? new Date(state.sessions[state.sessions.length - 1].date) : new Date();
+  $('#wkPrev').disabled = s0 <= oldest;
+  const sum = (l, k) => l.reduce((a, s) => a + (s[k] || 0), 0);
+  const dur = sum(list, 'durationSec'), ld = sum(list, 'trimp'), kc = sum(list, 'kcal');
+  const pd = sum(prev, 'trimp');
+  const dd = pd ? Math.round((ld - pd) / pd * 100) : null;
+  $('#wkSum').innerHTML = `<div><b>${list.length}</b><span>Trainings</span></div><div><b>${Math.floor(dur / 3600)}h ${String(Math.round(dur % 3600 / 60)).padStart(2, '0')}m</b><span>Dauer</span></div><div><b>${Math.round(ld)}</b><span>Belastung${dd != null ? ` <em style="color:${dd > 30 ? 'var(--bad)' : dd < -30 ? '#3fa7ff' : 'var(--good)'};font-style:normal">${dd > 0 ? '+' : ''}${dd} %</em>` : ''}</span></div><div><b>${Math.round(kc)}</b><span>kcal</span></div>`;
+  drawWeek(days);
+  const byType = {}; list.forEach(s => { const t = byType[s.type] = byType[s.type] || { n: 0, d: 0, l: 0 }; t.n++; t.d += s.durationSec; t.l += s.trimp || 0; });
+  const tot = Object.values(byType).reduce((a, t) => a + (wk.metric === 'load' ? t.l : t.d), 0) || 1;
+  $('#wkTypes').innerHTML = Object.entries(byType).sort((a, b) => b[1].d - a[1].d).map(([ty, t]) => `<div class="wtype"><i style="background:${TYPE_COLORS[ty] || '#888'}"></i><span>${ty} <small style="min-width:0">${t.n}×</small></span><span>${fmtDur(t.d)}</span><small>${Math.round((wk.metric === 'load' ? t.l : t.d) / tot * 100)} %</small></div>`).join('') || '<p class="hint">Keine Trainings in dieser Woche.</p>';
+}
+function drawWeek(days) {
+  const cv = $('#wkChart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 170;
+  if (!W) return;
+  cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const T = 16, B = 22, ph = H - T - B, bw = W / 7;
+  const totals = days.map(d => Object.values(d).reduce((a, b) => a + b, 0));
+  const mx = Math.max(1, ...totals);
+  const todayIdx = wk.off === 0 ? (new Date().getDay() + 6) % 7 : -1;
+  g.font = '12px Inter, sans-serif'; g.textAlign = 'center';
+  ['M', 'D', 'M', 'D', 'F', 'S', 'S'].forEach((l, i) => {
+    let yb = T + ph;
+    Object.entries(days[i]).forEach(([ty, v]) => { const h = v / mx * ph; g.fillStyle = TYPE_COLORS[ty] || '#888'; g.fillRect(i * bw + bw * 0.18, yb - h, bw * 0.64, h); yb -= h; });
+    if (totals[i]) { g.fillStyle = '#c9d1d9'; g.font = '11px Inter, sans-serif'; g.fillText(wk.metric === 'dur' ? (totals[i] >= 60 ? (totals[i] / 60).toFixed(1) + 'h' : Math.round(totals[i]) + "'") : Math.round(totals[i]), i * bw + bw / 2, yb - 4); }
+    g.font = (i === todayIdx ? '700 ' : '') + '12px Inter, sans-serif'; g.fillStyle = i === todayIdx ? '#ff6b3d' : '#7d8590'; g.fillText(l, i * bw + bw / 2, H - 5);
+  });
+  g.strokeStyle = '#ffffff20'; g.beginPath(); g.moveTo(0, T + ph + 0.5); g.lineTo(W, T + ph + 0.5); g.stroke();
+}
+$('#wkPrev').onclick = () => { wk.off--; renderWeek(); };
+$('#wkNext').onclick = () => { if (wk.off < 0) { wk.off++; renderWeek(); } };
+$('#wkMetric').querySelectorAll('button').forEach(b => b.onclick = () => { wk.metric = b.dataset.m; $('#wkMetric').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderWeek(); });
+(() => { let x0 = null; const c = $('#wkCard'); c.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true }); c.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) < 60) return; if (dx > 0 && !$('#wkPrev').disabled) { wk.off--; renderWeek(); } else if (dx < 0 && wk.off < 0) { wk.off++; renderWeek(); } }, { passive: true }); })();
+const _rh = renderHistory;
+renderHistory = function () { _rh(); requestAnimationFrame(() => { renderPerf(); renderWeek(); }); };
+window.addEventListener('resize', () => { if (state.view === 'history') { renderWeek(); } });
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -1593,7 +1752,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1634';
+const APP_VERSION = '2026.11.17-1640';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
