@@ -1593,10 +1593,12 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1633';
+const APP_VERSION = '2026.11.17-1634';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(reg => {
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || live.running) return; reloaded = true; location.reload(); });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
     reg.addEventListener('updatefound', () => {
       const nw = reg.installing; if (!nw) return;
       nw.addEventListener('statechange', () => { if (nw.state === 'installed' && navigator.serviceWorker.controller && !live.running) toast('Update installiert ✓'); });
