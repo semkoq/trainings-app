@@ -148,6 +148,8 @@ h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing
 .whstats{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
 .whstats div{font-size:12px;color:var(--mut)}.whstats b{display:block;font:700 20px 'Barlow Condensed';color:var(--txt)}
 .whnote{font-size:14px;margin-top:10px}
+.rparts{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:12px;font-size:13px;color:var(--mut)}
+.rparts span{display:flex;align-items:center;gap:5px}.rparts i{width:8px;height:8px;border-radius:50%}.rparts b{color:var(--txt);font-weight:600}
 /* navigation & start */
 [hidden]{display:none!important}
 .hrow{display:flex;justify-content:space-between;align-items:center}
@@ -314,6 +316,7 @@ body{padding-top:env(safe-area-inset-top)}
 <section class="view" id="view-session" hidden></section>
 
 <section class="view" id="view-overview">
+  <div class="card" id="todayCard" hidden></div>
   <div class="card" id="whToday" hidden></div>
   <div class="card" id="perfCard" hidden>
     <h3>Leistung <small>aus deinem Puls berechnet</small></h3>
@@ -322,7 +325,7 @@ body{padding-top:env(safe-area-inset-top)}
       <div class="ptile form"><b id="pForm">–</b><span id="pFormD"></span><i>Form</i></div>
       <div class="ptile fat"><b id="pFat">–</b><span id="pFatD"></span><i>Ermüdung</i></div>
     </div>
-    <div class="ready"><div class="rl">Heutige Trainingsbereitschaft</div><div class="rv" id="rdState">–</div>
+    <div class="ready"><div class="rl">Form-Status aus deinen Trainings</div><div class="rv" id="rdState">–</div>
       <div class="rbar"><i></i><i></i><i></i><i></i><i></i><em id="rdMark"></em></div>
       <div class="rlab"><span>Überlastung</span><span>Regeneration</span></div>
       <p class="rtip" id="rdTip"></p></div>
@@ -1800,7 +1803,7 @@ $('#wkNext').onclick = () => { if (wk.off < 0) { wk.off++; renderWeek(); } };
 $('#wkMetric').querySelectorAll('button').forEach(b => b.onclick = () => { wk.metric = b.dataset.m; $('#wkMetric').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderWeek(); });
 (() => { let x0 = null; const c = $('#wkCard'); c.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true }); c.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) < 60) return; if (dx > 0 && !$('#wkPrev').disabled) { wk.off--; renderWeek(); } else if (dx < 0 && wk.off < 0) { wk.off++; renderWeek(); } }, { passive: true }); })();
 const _rh = renderHistory;
-renderHistory = function () { _rh(); if (window.renderWhoop) try { renderWhoop(); } catch (e) { } $('#ovEmpty').hidden = state.sessions.length > 0; $('#wkCard').hidden = !state.sessions.length; requestAnimationFrame(() => { renderPerf(); renderWeek(); }); };
+renderHistory = function () { _rh(); if (window.renderWhoop) try { renderWhoop(); renderToday(); } catch (e) { } $('#ovEmpty').hidden = state.sessions.length > 0; $('#wkCard').hidden = !state.sessions.length; requestAnimationFrame(() => { renderPerf(); renderWeek(); }); };
 window.addEventListener('resize', () => { if (state.view === 'overview') { renderWeek(); } });
 
 // ===================== BEWERTUNG NACH DEM TRAINING (RPE + Gefühl) =====================
@@ -2030,12 +2033,12 @@ async function whFetch(days = 7) {
     // Ruhepuls im Profil automatisch nachführen (Ø der letzten 7 Tage)
     const rh = Object.keys(D).sort().slice(-7).map(k => D[k].rhr).filter(x => x);
     if (rh.length >= 3) { const avg = Math.round(rh.reduce((a, b) => a + b, 0) / rh.length); if (avg !== state.profile.rest) { state.profile.rest = avg; await store.saveProfile(state.profile); fillProfileForm(); } }
-    whUi(); renderWhoop(); renderPerf(); if (sync.cfg) syncRun(syncPending());
+    whUi(); renderWhoop(); renderPerf(); renderToday(); if (sync.cfg) syncRun(syncPending());
   } catch (e) { whStatus('WHOOP-Fehler: ' + e.message); if (e.status === 401) { WH.tok = null; await kvSet('whoopTok', null); whUi(); whStatus('WHOOP-Zugang abgelaufen – bitte neu verbinden.'); } }
   finally { WH.busy = false; }
 }
 $('#whRefresh').onclick = () => whFetch(14);
-$('#whOff').onclick = async () => { WH.tok = null; await kvSet('whoopTok', null); whUi(); renderWhoop(); whStatus('Getrennt.'); };
+$('#whOff').onclick = async () => { WH.tok = null; await kvSet('whoopTok', null); whUi(); renderWhoop(); renderToday(); whStatus('Getrennt.'); };
 function whToday() { const ks = Object.keys(WH.data.days).sort(); for (let i = ks.length - 1; i >= 0; i--) { const d = WH.data.days[ks[i]]; if (d.recovery != null || d.sleepH != null) return [ks[i], d]; } return null; }
 function recCol(r) { return r == null ? '#7d8590' : r >= 67 ? '#3ddc84' : r >= 34 ? '#ffb020' : '#ff4d4d'; }
 function renderWhoop() {
@@ -2056,31 +2059,64 @@ function renderWhoop() {
   </div></div>
   <div class="whstats" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
     <div>Tiefschlaf<b>${d.deepH ?? '–'}<small> h</small></b></div><div>REM<b>${d.remH ?? '–'}<small> h</small></b></div>
-    <div>SpO2<b>${d.spo2 ?? '–'}<small> %</small></b></div><div>Strain gestern<b>${(WH.data.days[dayKey(new Date(new Date(k).getTime() - 86400000))] || {}).strain ?? '–'}</b></div>
+    <div>SpO2<b>${d.spo2 ?? '–'}<small> %</small></b></div><div>Effizienz<b>${d.sleepEff ?? '–'}<small> %</small></b></div>
   </div>
   <p class="whnote">${whAdvice(d)}</p>`;
 }
 function whAdvice(d) {
   const r = d.recovery;
   if (r == null) return 'Erholung wird von WHOOP noch berechnet.';
-  if (r >= 67) return '🟢 Gut erholt – heute ist ein hartes Training drin.';
-  if (r >= 34) return '🟡 Mittel erholt – normales Training, nicht ans Limit.';
-  return '🔴 Schlecht erholt – heute locker (Technik, Mobility, Zone 2) oder Pause.';
+  if (r >= 67) return '🟢 WHOOP: gut erholt.';
+  if (r >= 34) return '🟡 WHOOP: mittel erholt.';
+  return '🔴 WHOOP: schlecht erholt.';
 }
-// Bereitschaft: WHOOP-Erholung fließt in die Empfehlung ein
-const _rp = renderPerf;
-renderPerf = function () {
-  _rp(); const t = WH.tok && whToday(); if (!t || $('#perfCard').hidden) return;
-  const r = t[1].recovery; if (r == null) return;
-  const tip = $('#rdTip');
-  if (r < 34) { $('#rdState').textContent += ' · WHOOP rot'; tip.textContent = 'Deine Trainingsbelastung wäre okay, aber WHOOP zeigt schlechte Erholung (' + r + ' %). Heute lieber locker.'; }
-  else if (r >= 67 && /Neutral|Frisch|Aufbau/.test($('#rdState').textContent)) tip.textContent += ' WHOOP bestätigt: gut erholt (' + r + ' %).';
-  else tip.textContent += ' WHOOP: ' + r + ' % Erholung.';
-};
+// ===================== BEREITSCHAFT HEUTE (WHOOP-Erholung + Form aus Training) =====================
+function baseline(field, days = 28) {
+  const ks = Object.keys(WH.data.days).sort(), today = dayKey(new Date());
+  const v = ks.filter(k => k < today).slice(-days).map(k => WH.data.days[k][field]).filter(x => x != null);
+  return v.length >= 5 ? v.reduce((a, b) => a + b, 0) / v.length : null;
+}
+const clamp = (x, a = 0, b = 100) => Math.max(a, Math.min(b, x));
+function formScore(tsb) {
+  const P = [[-40, 5], [-30, 20], [-10, 55], [0, 70], [10, 85], [20, 90], [30, 80], [45, 70]];
+  if (tsb <= P[0][0]) return P[0][1]; if (tsb >= P[P.length - 1][0]) return P[P.length - 1][1];
+  for (let i = 1; i < P.length; i++) if (tsb <= P[i][0]) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y0 + (y1 - y0) * (tsb - x0) / (x1 - x0); }
+}
+function readinessToday() {
+  const parts = [];
+  const pm = pmcSeries(); const n = pm && pm.length >= 7 ? pm[pm.length - 1] : null;
+  const w = WH.tok && whToday(); const d = w && w[0] >= dayKey(new Date(Date.now() - 36 * 3600000)) ? w[1] : null;
+  if (d && d.recovery != null) parts.push({ k: 'Erholung', v: d.recovery, w: 0.40, txt: d.recovery + ' %' });
+  if (d && d.sleepPerf != null) parts.push({ k: 'Schlaf', v: d.sleepPerf, w: 0.15, txt: (d.sleepH != null ? Math.floor(d.sleepH) + 'h' + String(Math.round(d.sleepH % 1 * 60)).padStart(2, '0') + ' · ' : '') + d.sleepPerf + ' %' });
+  const bh = baseline('hrv'), br = baseline('rhr');
+  if (d && d.hrv != null && bh) parts.push({ k: 'HRV', v: clamp(60 + (d.hrv / bh - 1) * 200), w: 0.10, txt: `${d.hrv} ms (Ø ${Math.round(bh)})` });
+  if (d && d.rhr != null && br) parts.push({ k: 'Ruhepuls', v: clamp(60 - (d.rhr - br) * 8), w: 0.05, txt: `${d.rhr} (Ø ${Math.round(br)})` });
+  if (n) parts.push({ k: 'Form', v: formScore(n.tsb), w: d ? 0.30 : 1, txt: (n.tsb > 0 ? '+' : '') + Math.round(n.tsb) });
+  if (!parts.length) return null;
+  const W = parts.reduce((a, p) => a + p.w, 0);
+  let score = Math.round(parts.reduce((a, p) => a + p.v * p.w, 0) / W);
+  if (d && d.recovery != null && d.recovery < 34) score = Math.min(score, 45);   // WHOOP rot bremst immer
+  return { score, parts, whoop: !!d };
+}
+function renderToday() {
+  const c = $('#todayCard'), r = readinessToday();
+  if (!r) { c.hidden = true; return; }
+  const s = r.score;
+  const [lbl, col, tip] = s >= 75 ? ['Bereit für hart', '#3ddc84', 'Gute Voraussetzungen: Sparring, harte Pratzen-Runden oder Intervalle sind heute drin.']
+    : s >= 55 ? ['Normales Training', '#ffb020', 'Normales Training passt. Technik und mittlere Intensität, nicht komplett ans Limit.']
+    : s >= 35 ? ['Eher locker', '#ff8a3d', 'Heute lieber locker: Technik, Footwork, Zone 2 oder Mobility.']
+    : ['Erholung', '#ff4d4d', 'Dein Körper braucht Erholung. Pause, Spaziergang oder leichte Mobility – und früh schlafen.'];
+  const pc = v => v >= 67 ? '#3ddc84' : v >= 45 ? '#ffb020' : '#ff4d4d';
+  c.hidden = false;
+  c.innerHTML = `<h3>Bereitschaft heute <small>${r.whoop ? 'WHOOP + Training' : 'nur aus Training – WHOOP über ⚙ verbinden'}</small></h3>
+  <div class="whgrid"><div class="whring" style="--p:${s};--rc:${col}"><b>${s}</b><small>von 100</small></div>
+  <div><div class="rv" style="color:${col};margin:0">${lbl}</div><p class="rtip" style="margin-top:4px">${tip}</p></div></div>
+  <div class="rparts">${r.parts.map(p => `<span><i style="background:${p.k === 'Erholung' ? recCol(p.v) : pc(p.v)}"></i>${p.k}: <b>${p.txt}</b></span>`).join('')}</div>`;
+}
 (async () => {
   await ready;
   try { WH.cfg = await kvGet('whoopCfg') || null; WH.tok = await kvGet('whoopTok') || null; WH.data = await kvGet('whoopData') || { days: {}, last: 0 }; } catch (e) { }
-  whUi(); renderWhoop(); renderPerf();
+  whUi(); renderWhoop(); renderPerf(); renderToday();
   if (window.__lastAppUrl) window.onAppUrl(window.__lastAppUrl);
   if (WH.tok && Date.now() - WH.data.last > 60 * 60 * 1000) setTimeout(() => whFetch(7), 1500);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && WH.tok && Date.now() - WH.data.last > 60 * 60 * 1000) whFetch(7); });
@@ -2111,7 +2147,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2051';
+const APP_VERSION = '2026.11.17-2107';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
