@@ -337,6 +337,15 @@ h3 small{font-size:11px;letter-spacing:0;color:#5f6773}
 .fwbtn{margin-left:auto;flex:none;background:#ffffff14;border:0;color:var(--txt);border-radius:10px;padding:7px 10px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
 .fadd{display:block;width:100%;margin-top:12px;background:none;border:1.5px dashed #2c333c;color:var(--mut);border-radius:16px;padding:12px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
 #weekCard{display:block;margin-top:12px}
+.coachT{display:flex;gap:12px;align-items:center;cursor:pointer;background:linear-gradient(135deg,#14202b,#13171c 70%)}
+.coachT .ci{flex:none;width:42px;height:42px;border-radius:12px;background:#3fa7ff22;display:flex;align-items:center;justify-content:center;font-size:22px}
+.coachT .ct{min-width:0;flex:1}.coachT b{display:block;font-size:14px}.coachT p{font-size:12.5px;color:#aab2bd;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.coachT em{font-style:normal;font-size:10px;font-weight:700;background:var(--acc);color:#fff;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:1px}
+.coachT .arr{color:var(--mut);font-size:22px}
+.rep h4{font:700 15px Inter,system-ui,sans-serif;color:var(--txt);margin-top:14px;text-transform:none;letter-spacing:0}
+.rep h4:first-child{margin-top:0;font:700 20px 'Barlow Condensed','Arial Narrow',sans-serif;text-transform:uppercase}
+.rep p,.rep li{margin-top:6px;font-size:14px;color:#d5dae1}.rep ul{padding-left:18px}
+.ccask{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 /* ===== Kompakt 2026-11 ===== */
 body{font-size:14.5px}
 .wrap{padding:0 12px}
@@ -501,6 +510,7 @@ h3{margin-bottom:10px;font-size:11px}
 <section class="view" id="view-overview">
   <div id="fightBox"></div>
   <div class="card" id="todayCard" hidden></div>
+  <div id="coachTeaser"></div>
   <div class="card" id="whToday" hidden></div>
   <div class="card" id="perfCard" hidden>
     <h3>Leistung <small>aus deinem Puls berechnet</small></h3>
@@ -545,6 +555,14 @@ h3{margin-bottom:10px;font-size:11px}
     <p class="hint" id="cWh"></p>
     <p class="hint">Ziel-Kalorien = Grundumsatz × Alltag + Training des Tages (aus deinem Puls) − Defizit. Defizit max. 750 kcal/Tag und nie unter deinen Grundumsatz. Das Wasser-Machen in den letzten Tagen vor dem Wiegen gehört nicht in diese Rechnung – das bitte mit deinem Trainer planen.</p>
   </details>
+</section>
+
+<section class="view" id="view-coach" hidden>
+  <button class="back" id="coachBack">‹ Überblick</button>
+  <div class="card coachhead"><h3 style="margin-bottom:4px">Dein Coach</h3><p class="hint" style="margin:0">Jeden Sonntagabend schaut Claude sich deine Woche an – Trainings, Erholung, Schlaf, Gewicht, Essen und Kampf-Countdown – und schreibt dir hier den Bericht. Am Monatsanfang kommt der Monatsbericht.</p></div>
+  <div id="coachList"></div>
+  <div class="card"><h3>Selber fragen</h3><p class="hint" style="margin:0 0 8px">Kopiert deine Daten und öffnet Claude – einfach einfügen.</p>
+    <div class="ccask"><button class="minibtn" data-d="7">Woche</button><button class="minibtn" data-d="30">Monat</button><button class="minibtn" data-d="182">6 Monate</button><button class="minibtn" data-d="365">Jahr</button></div></div>
 </section>
 
 <section class="view" id="view-history" hidden>
@@ -2876,6 +2894,55 @@ $('#fdAdd').onclick = async () => {
   await cutSave(); $('#foodSheet').hidden = true; renderCut(); toast(`${it.k} kcal eingetragen ✓`);
 };
 
+// ===================== COACH: Berichte von Claude aus dem Daten-Repo =====================
+const CO = { reps: [], seen: null };
+(async () => { await ready; try { CO.reps = await kvGet('coachReps') || []; CO.seen = await kvGet('coachSeen') || null; } catch (e) { } renderCoachTeaser(); setTimeout(coachFetch, 5000); })();
+async function coachFetch() {
+  if (!sync.cfg) return;
+  try {
+    const list = await gh('GET', 'contents/reports').catch(() => null); if (!Array.isArray(list)) return;
+    const files = list.filter(f => /\.md$/.test(f.name)).sort((a, b) => b.name.localeCompare(a.name)).slice(0, 20);
+    const old = Object.fromEntries(CO.reps.map(r => [r.name, r])), out = [];
+    for (const f of files) {
+      if (old[f.name] && old[f.name].sha === f.sha) { out.push(old[f.name]); continue; }
+      const c = await gh('GET', 'contents/' + f.path); const bin = atob((c.content || '').replace(/\n/g, '')); const by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i);
+      out.push({ name: f.name, sha: f.sha, text: new TextDecoder().decode(by) });
+    }
+    CO.reps = out; await kvSet('coachReps', out); renderCoachTeaser(); if (state.view === 'coach') renderCoach();
+  } catch (e) { }
+}
+function repTitle(r) { const m = (r.text.match(/^#\s*(.+)$/m) || [])[1]; return m || r.name.replace(/\.md$/, ''); }
+function repShort(r) { const m = r.text.match(/\*\*Kurz:?\*\*:?\s*(.+)/); if (m) return m[1].replace(/\*\*/g, ''); const l = r.text.split('\n').find(x => x.trim() && !/^#/.test(x)); return (l || '').replace(/\*\*/g, ''); }
+function renderCoachTeaser() {
+  const b = $('#coachTeaser'), r = CO.reps[0];
+  if (!r) { b.innerHTML = sync.cfg ? `<div class="card coachT" id="coachOpen"><div class="ci">🧠</div><div class="ct"><b>Coach</b><p>Dein erster Wochenbericht von Claude kommt am Sonntagabend.</p></div><span class="arr">›</span></div>` : ''; }
+  else b.innerHTML = `<div class="card coachT" id="coachOpen"><div class="ci">🧠</div><div class="ct"><b>${esc(repTitle(r))}${CO.seen !== r.sha ? '<em>NEU</em>' : ''}</b><p>${esc(repShort(r))}</p></div><span class="arr">›</span></div>`;
+  const o = $('#coachOpen'); if (o) o.onclick = () => { renderCoach(); showView('coach'); };
+}
+function renderCoach() {
+  const L = $('#coachList');
+  L.innerHTML = CO.reps.length ? CO.reps.map((r, i) => i === 0 ? `<div class="card rep">${md(r.text)}</div>` : `<details class="card fold rep"><summary><div>${esc(repTitle(r))}<small>${esc(repShort(r)).slice(0, 90)}</small></div></summary><div style="margin-top:10px">${md(r.text.replace(/^#.*\n/, ''))}</div></details>`).join('') : '<p class="empty">Noch keine Berichte. Der erste kommt am Sonntagabend.</p>';
+  if (CO.reps[0] && CO.seen !== CO.reps[0].sha) { CO.seen = CO.reps[0].sha; kvSet('coachSeen', CO.seen); renderCoachTeaser(); }
+  coachFetch();
+}
+$('#coachBack').onclick = () => goMain('overview');
+document.querySelectorAll('.ccask [data-d]').forEach(b => b.onclick = () => coachAsk(+b.dataset.d, b.textContent));
+async function coachAsk(days, lbl) {
+  const from = new Date(Date.now() - days * 864e5).toISOString(), ss = state.sessions.filter(s => s.date >= from).slice().reverse();
+  const big = days > 40;
+  const rows = ss.map(s => [s.date.slice(0, 10), s.type, s.note || '', Math.round(s.durationSec / 60), s.avgHr, s.maxHr, s.trimp, s.zones ? s.zones.map(z => Math.round(z / 60)).join('/') : '', recov(s) ?? '', s.rpe || '', s.feelBody || '', s.anaCat || ''].join(';'));
+  let wh = ''; try { const ks = Object.keys(WH.data.days).filter(k => k >= from.slice(0, 10)).sort(); wh = ks.map(k => { const d = WH.data.days[k]; return [k, d.recovery ?? '', d.hrv ?? '', d.rhr ?? '', d.sleepH ?? '', d.sleepPerf ?? ''].join(';'); }).join('\n'); } catch (e) { }
+  const ws = (typeof CUT !== 'undefined' ? CUT.weights : []).filter(w => w.d >= from.slice(0, 10)).map(w => w.d + ' ' + w.kg).join(', ');
+  const f = typeof FC !== 'undefined' && FC.f;
+  const txt = `Du bist mein Coach. Ich bin K1-/Kickbox-Kämpfer (${state.profile.age} J., ${state.profile.weight || '?'} kg, Max-Puls ${state.profile.max}, Ruhepuls ${state.profile.rest}). Analysier ${lbl === 'Woche' ? 'meine letzte Woche' : 'meine letzten ' + lbl}. Locker, direkt, auf Deutsch. Gliederung: **Kurz**, **Was gut lief**, **Was auffällt**, **Erholung & Schlaf**, ${f ? '**Kampf & Gewicht**, ' : ''}**Plan für nächste Woche**. ${big ? 'Bei langen Zeiträumen: Trends und Entwicklung über die Monate.' : ''} Keine medizinischen Diagnosen.
+${f ? `Nächster Kampf: ${f.name || ''} ${f.place || ''} am ${f.date}, Kampfgewicht ${f.cls || '?'} kg.\n` : ''}${ws ? 'Gewicht: ' + ws + '\n' : ''}
+Trainings (Datum;Art;Notiz;Min;ØPuls;Max;Belastung TRIMP;Zonen Z1-Z5 min;Erholung Pause bpm;RPE 1-10;Körper 1-5;Kategorie):
+${rows.join('\n')}
+${wh ? '\nWHOOP (Datum;Erholung %;HRV ms;Ruhepuls;Schlaf h;Schlafleistung %):\n' + wh : ''}`;
+  let ok = false; try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) { }
+  if (ok) { toast('Kopiert! In Claude einfügen.'); setTimeout(() => (isNative() ? HN().openUrl({ url: 'https://claude.ai/new' }) : window.open('https://claude.ai/new', '_blank')), 400); } else toast('Kopieren ging nicht.');
+}
+
 // ===================== FIGHT CAMP =====================
 const FC = { f: null };
 (async () => { await ready; try { FC.f = await kvGet('fight') || null; } catch (e) { } renderFight(); })();
@@ -2952,7 +3019,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2137';
+const APP_VERSION = '2026.11.17-2146';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
