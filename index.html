@@ -162,9 +162,10 @@ h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing
 .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .kpi div{background:#0f1216;border-radius:10px;padding:10px;min-width:0}
 .kpi span{font-size:12px;color:var(--mut)}.kpi b{display:block;font:700 26px 'Barlow Condensed'}.kpi em{font-style:normal;font-size:13px;font-weight:600}
-.alist label{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer}
+.alist label{display:grid;grid-template-columns:22px 1fr auto 34px;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer}
 .alist input{accent-color:var(--acc);width:18px;height:18px}
 .alist small{color:var(--mut)}
+.arm{border:0;background:#2a1618;color:var(--bad);width:30px;height:30px;border-radius:8px;font-size:15px;cursor:pointer}
 .cmp{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
 .cmp td,.cmp th{padding:6px 4px;border-top:1px solid var(--line);text-align:right}.cmp td:first-child,.cmp th:first-child{text-align:left;color:var(--mut)}
 .cmp th{font-size:12px}
@@ -2258,8 +2259,10 @@ function renderAnalyse() {
       <div><span>Anstrengung</span><b>${last.rpe ? last.rpe + '/10' : '–'}</b>${prev && last.rpe && prev.rpe ? dlt(last.rpe, prev.rpe, true) : ''}</div>
     </div><p class="hint">Grün = besser. Ø Puls und Anstrengung niedriger bei gleicher Einheit = fitter. Erholung höher = Puls fällt in der Pause schneller.</p></div>`;
   if (list.length >= 2) h += `<div class="card"><h3>Verlauf</h3><canvas id="anaTrend" height="170"></canvas><div class="legend"><span><i style="background:#ff6b3d"></i>Ø Puls</span><span><i style="background:#3ddc84"></i>Erholung</span><span><i style="background:#a974ff"></i>Anstrengung ×10</span></div></div>`;
-  h += `<div class="card"><h3>Einheiten <small>2 auswählen zum Vergleichen</small></h3><div class="alist">${list.slice().reverse().map(s => `<label><input type="checkbox" value="${s.id}" ${ana.sel.includes(s.id) ? 'checked' : ''}><span>${fmtDate(s.date)}${s.note ? ' · <small>' + esc(s.note) + '</small>' : ''}</span><small>${fmtDur(s.durationSec)} · Ø ${s.avgHr ?? '–'}</small></label>`).join('')}</div>
-    <button class="btn" id="anaCmpBtn" ${ana.sel.length === 2 ? '' : 'disabled'} style="margin-top:10px">Vergleichen</button></div><div id="anaCmp"></div>`;
+  h += `<div class="card"><h3>Einheiten <small>2 auswählen zum Vergleichen</small></h3><div class="alist">${list.slice().reverse().map(s => `<label><input type="checkbox" value="${s.id}" ${ana.sel.includes(s.id) ? 'checked' : ''}><span>${fmtDate(s.date)}${s.note ? ' · <small>' + esc(s.note) + '</small>' : ''}</span><small>${fmtDur(s.durationSec)} · Ø ${s.avgHr ?? '–'}</small><button class="arm" data-id="${s.id}" title="Aus der Analyse nehmen">✕</button></label>`).join('')}</div>
+    <button class="btn" id="anaCmpBtn" ${ana.sel.length === 2 ? '' : 'disabled'} style="margin-top:10px">Vergleichen</button>
+    <button class="btn ghost" id="anaClear" style="margin-top:8px;color:var(--bad)">Alle aus „${esc(ana.cat)}“ entfernen</button>
+    <p class="hint">✕ nimmt eine Einheit nur aus der Analyse – das Training selbst bleibt im Verlauf.</p></div><div id="anaCmp"></div>`;
   $('#anaBody').innerHTML = h;
   $('#anaBody').querySelectorAll('.alist input').forEach(i => i.onchange = () => {
     if (i.checked) { ana.sel.push(i.value); if (ana.sel.length > 2) ana.sel.shift(); } else ana.sel = ana.sel.filter(x => x !== i.value);
@@ -2267,6 +2270,9 @@ function renderAnalyse() {
     $('#anaCmpBtn').disabled = ana.sel.length !== 2;
   });
   $('#anaCmpBtn').onclick = () => renderCompare();
+  const anaOut = async ids => { for (const id of ids) { const s = state.sessions.find(x => x.id === id); if (s) { delete s.anaCat; await store.saveSession(s); } } ana.sel = ana.sel.filter(x => !ids.includes(x)); renderAnalyse(); };
+  $('#anaBody').querySelectorAll('.arm').forEach(b => b.onclick = async e => { e.preventDefault(); e.stopPropagation(); await anaOut([b.dataset.id]); toast('Aus der Analyse genommen'); });
+  $('#anaClear').onclick = async () => { if (!confirm(`Alle ${list.length} Einheiten aus „${ana.cat}“ aus der Analyse nehmen?\n(Die Trainings bleiben im Verlauf.)`)) return; await anaOut(list.map(s => s.id)); toast('Kategorie geleert ✓'); };
   $('#anaCoreBtn').onclick = () => { (ana.fullCat = ana.fullCat || {})[ana.cat] = false; renderAnalyse(); if (ana.sel.length === 2) renderCompare(); };
   $('#anaFullBtn').onclick = () => { (ana.fullCat = ana.fullCat || {})[ana.cat] = true; renderAnalyse(); if (ana.sel.length === 2) renderCompare(); };
   if (list.length >= 2) requestAnimationFrame(() => drawAnaTrend(list));
@@ -2489,7 +2495,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2042';
+const APP_VERSION = '2026.11.17-2045';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
