@@ -140,6 +140,14 @@ h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing
 .feel button.on{border-color:var(--acc);background:#ff6b3d18;color:var(--txt)}
 .ratecard .rrow{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line);font-size:15px}
 .ratecard .rrow:first-of-type{border-top:0}
+/* whoop */
+.whgrid{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.whring{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;background:conic-gradient(var(--rc) calc(var(--p)*1%),#252b33 0);position:relative}
+.whring::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--card)}
+.whring b,.whring small{position:relative}.whring b{font:700 30px/1 'Barlow Condensed';color:var(--rc)}.whring small{font-size:10px;color:var(--mut)}
+.whstats{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.whstats div{font-size:12px;color:var(--mut)}.whstats b{display:block;font:700 20px 'Barlow Condensed';color:var(--txt)}
+.whnote{font-size:14px;margin-top:10px}
 /* navigation & start */
 [hidden]{display:none!important}
 .hrow{display:flex;justify-content:space-between;align-items:center}
@@ -306,6 +314,7 @@ body{padding-top:env(safe-area-inset-top)}
 <section class="view" id="view-session" hidden></section>
 
 <section class="view" id="view-overview">
+  <div class="card" id="whToday" hidden></div>
   <div class="card" id="perfCard" hidden>
     <h3>Leistung <small>aus deinem Puls berechnet</small></h3>
     <div class="ptiles">
@@ -363,6 +372,19 @@ body{padding-top:env(safe-area-inset-top)}
     <div class="lvrow"><button class="btn" id="bkExport">Sicherung speichern</button><button class="btn ghost" id="bkImportBtn">Sicherung laden</button></div>
     <input type="file" id="bkFile" accept=".json,application/json" hidden>
     <p class="hint" id="appVer"></p>
+  </div>
+  <div class="card" id="whoopCard">
+    <h3>WHOOP</h3>
+    <p class="hint" style="margin-top:0" id="whNoApk" hidden>WHOOP geht nur in der <b>Android-App (APK)</b>.</p>
+    <div id="whSetup">
+      <p class="hint" style="margin-top:0">Schlaf, Erholung, HRV und Ruhepuls von WHOOP holen. Dafür einmal bei WHOOP eine App anlegen (developer-dashboard.whoop.com) und diese Weiterleitungs-Adresse eintragen:</p>
+      <div class="lvrow" style="grid-template-columns:1fr auto;align-items:center"><code id="whRedir" style="font-size:12px;word-break:break-all"></code><button class="btn ghost" id="whCopy" style="padding:8px 12px">Kopieren</button></div>
+      <label class="field" style="margin-top:10px">Client ID<input id="whId" autocapitalize="off" autocomplete="off"></label>
+      <label class="field" style="margin-top:10px">Client Secret<input id="whSecret" type="password" autocapitalize="off" autocomplete="off"></label>
+      <button class="btn" id="whConnect" style="margin-top:4px">Mit WHOOP verbinden</button>
+    </div>
+    <div id="whOn" hidden><div class="lvrow"><button class="btn ghost" id="whRefresh">Jetzt aktualisieren</button><button class="btn ghost" id="whOff">Trennen</button></div></div>
+    <p class="hint" id="whStatus"></p>
   </div>
   <div class="card" id="syncCard">
     <h3>Mit Claude verbinden</h3>
@@ -1632,6 +1654,7 @@ async function syncRun(list) {
       catch (e) { fail++; if (e.status === 401 || e.status === 403) { syncStatus('Token ungültig oder ohne Schreibrecht. Bitte neuen Token eintragen.'); return; } if (fail > 3) break; }
     }
     try { const cur = await gh('GET', 'contents/profile.json'); await putFile('profile.json', JSON.stringify(state.profile, null, 1), 'Profil', cur && cur.sha); } catch (e) { }
+    try { if (typeof WH !== 'undefined' && WH.data && WH.data.last && WH.data.last !== sync.whoopLast) { const cur = await gh('GET', 'contents/whoop.json'); await putFile('whoop.json', JSON.stringify(WH.data.days), 'WHOOP-Daten', cur && cur.sha); sync.whoopLast = WH.data.last; } } catch (e) { }
   } finally { sync.busy = false; }
   if (sync.again) { sync.again = false; return syncRun(syncPending()); }
   syncInfo(); if (n === 1) toast('Training an Claude übertragen ✓');
@@ -1777,7 +1800,7 @@ $('#wkNext').onclick = () => { if (wk.off < 0) { wk.off++; renderWeek(); } };
 $('#wkMetric').querySelectorAll('button').forEach(b => b.onclick = () => { wk.metric = b.dataset.m; $('#wkMetric').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderWeek(); });
 (() => { let x0 = null; const c = $('#wkCard'); c.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true }); c.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) < 60) return; if (dx > 0 && !$('#wkPrev').disabled) { wk.off--; renderWeek(); } else if (dx < 0 && wk.off < 0) { wk.off++; renderWeek(); } }, { passive: true }); })();
 const _rh = renderHistory;
-renderHistory = function () { _rh(); $('#ovEmpty').hidden = state.sessions.length > 0; $('#wkCard').hidden = !state.sessions.length; requestAnimationFrame(() => { renderPerf(); renderWeek(); }); };
+renderHistory = function () { _rh(); if (window.renderWhoop) try { renderWhoop(); } catch (e) { } $('#ovEmpty').hidden = state.sessions.length > 0; $('#wkCard').hidden = !state.sessions.length; requestAnimationFrame(() => { renderPerf(); renderWeek(); }); };
 window.addEventListener('resize', () => { if (state.view === 'overview') { renderWeek(); } });
 
 // ===================== BEWERTUNG NACH DEM TRAINING (RPE + Gefühl) =====================
@@ -1914,6 +1937,155 @@ function handleAppUrl(url) { if (!url) return; window.__lastAppUrl = url; if (wi
 if (isNative()) nativeInit();
 else window.addEventListener('load', () => { if (isNative()) nativeInit(); });
 
+// ===================== WHOOP =====================
+const WH = { cfg: null, tok: null, data: { days: {}, last: 0 }, busy: false };
+const WH_REDIRECT = 'https://semkoq.github.io/trainings-app/whoop.html';
+const WH_API = 'https://api.prod.whoop.com/developer/v2';
+const WH_TOKEN = 'https://api.prod.whoop.com/oauth/oauth2/token';
+const WH_SCOPES = 'offline read:recovery read:sleep read:cycles read:workout read:profile read:body_measurement';
+function whHttp() { return window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.CapacitorHttp; }
+async function whReq(method, url, { headers = {}, form = null } = {}) {
+  const H = whHttp(); if (!H) throw new Error('WHOOP geht nur in der Android-App');
+  const opt = { url, method, headers: { Accept: 'application/json', ...headers } };
+  if (form) { opt.headers['Content-Type'] = 'application/x-www-form-urlencoded'; opt.data = new URLSearchParams(form).toString(); }
+  const r = await H.request(opt);
+  let d = r.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { } }
+  if (r.status >= 400) { const e = new Error('WHOOP ' + r.status + (d && d.error_description ? ': ' + d.error_description : '')); e.status = r.status; throw e; }
+  return d;
+}
+function whStatus(t) { $('#whStatus').textContent = t; }
+function whUi() {
+  const nat = isNative();
+  $('#whNoApk').hidden = nat; $('#whSetup').hidden = !nat || !!WH.tok; $('#whOn').hidden = !nat || !WH.tok;
+  $('#whRedir').textContent = WH_REDIRECT;
+  if (WH.cfg) $('#whId').value = WH.cfg.id || '';
+  if (WH.tok) { const n = Object.keys(WH.data.days).length; whStatus(`✓ Verbunden · ${n} Tage geladen${WH.data.last ? ' · zuletzt ' + new Date(WH.data.last).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}`); }
+}
+$('#whCopy').onclick = async () => { try { await navigator.clipboard.writeText(WH_REDIRECT); toast('Adresse kopiert'); } catch (e) { toast(WH_REDIRECT); } };
+$('#whConnect').onclick = async () => {
+  if (!isNative()) { whStatus('Bitte in der Android-App öffnen.'); return; }
+  const id = $('#whId').value.trim(), secret = $('#whSecret').value.trim() || (WH.cfg && WH.cfg.secret);
+  if (!id || !secret) { whStatus('Bitte Client ID und Client Secret eintragen.'); return; }
+  const st = Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 6);
+  WH.cfg = { id, secret, state: st }; await kvSet('whoopCfg', WH.cfg); $('#whSecret').value = '';
+  const u = 'https://api.prod.whoop.com/oauth/oauth2/auth?' + new URLSearchParams({ client_id: id, redirect_uri: WH_REDIRECT, response_type: 'code', scope: WH_SCOPES, state: st });
+  whStatus('WHOOP-Anmeldung öffnet sich … danach kommst du automatisch zurück.');
+  HN().openUrl({ url: u });
+};
+window.onAppUrl = async url => {
+  if (!url || !url.startsWith('trainingsapp://whoop')) return;
+  const q = new URLSearchParams(url.split('?')[1] || '');
+  if (q.get('error')) { whStatus('WHOOP-Anmeldung abgebrochen: ' + q.get('error')); return; }
+  const code = q.get('code'); if (!code || !WH.cfg) return;
+  if (WH.cfg.state && q.get('state') && q.get('state') !== WH.cfg.state) { whStatus('Sicherheits-Check fehlgeschlagen, bitte nochmal verbinden.'); return; }
+  if (WH.cfg.usedCode === code) return;
+  WH.cfg.usedCode = code; await kvSet('whoopCfg', WH.cfg);
+  showView('profile'); whStatus('Verbinde mit WHOOP …');
+  try {
+    const t = await whReq('POST', WH_TOKEN, { form: { grant_type: 'authorization_code', code, client_id: WH.cfg.id, client_secret: WH.cfg.secret, redirect_uri: WH_REDIRECT } });
+    WH.tok = { access: t.access_token, refresh: t.refresh_token, exp: Date.now() + (t.expires_in || 3600) * 1000 };
+    await kvSet('whoopTok', WH.tok); toast('WHOOP verbunden ✓'); whUi(); await whFetch(30);
+  } catch (e) { whStatus('Verbinden fehlgeschlagen: ' + e.message + '. Client ID/Secret und Weiterleitungs-Adresse prüfen.'); }
+};
+async function whToken() {
+  if (!WH.tok) throw new Error('nicht verbunden');
+  if (Date.now() < WH.tok.exp - 60000) return WH.tok.access;
+  const t = await whReq('POST', WH_TOKEN, { form: { grant_type: 'refresh_token', refresh_token: WH.tok.refresh, client_id: WH.cfg.id, client_secret: WH.cfg.secret, scope: 'offline' } });
+  WH.tok = { access: t.access_token, refresh: t.refresh_token || WH.tok.refresh, exp: Date.now() + (t.expires_in || 3600) * 1000 };
+  await kvSet('whoopTok', WH.tok); return WH.tok.access;
+}
+async function whGetAll(path, days) {
+  const out = []; let next = null; const start = new Date(Date.now() - days * 86400000).toISOString();
+  for (let i = 0; i < 20; i++) {
+    const p = new URLSearchParams({ limit: '25', start }); if (next) p.set('nextToken', next);
+    const d = await whReq('GET', `${WH_API}${path}?${p}`, { headers: { Authorization: 'Bearer ' + await whToken() } });
+    out.push(...(d.records || [])); next = d.next_token; if (!next) break;
+  }
+  return out;
+}
+const msH = ms => ms == null ? null : Math.round(ms / 360000) / 10;
+async function whFetch(days = 7) {
+  if (!WH.tok || WH.busy || !isNative()) return;
+  WH.busy = true; whStatus('Lade WHOOP-Daten …');
+  try {
+    const [rec, sl, cy] = await Promise.all([whGetAll('/recovery', days), whGetAll('/activity/sleep', days), whGetAll('/cycle', days)]);
+    const D = WH.data.days, sleepById = {};
+    for (const s of sl) {
+      if (s.nap) continue; sleepById[s.id] = s;
+      const k = dayKey(s.end || s.start), sc = s.score || {}, ss = sc.stage_summary || {};
+      const inBed = ss.total_in_bed_time_milli, awake = ss.total_awake_time_milli;
+      Object.assign(D[k] = D[k] || {}, {
+        sleepH: inBed != null ? msH(inBed - (awake || 0)) : null, inBedH: msH(inBed), deepH: msH(ss.total_slow_wave_sleep_time_milli), remH: msH(ss.total_rem_sleep_time_milli), lightH: msH(ss.total_light_sleep_time_milli),
+        sleepPerf: sc.sleep_performance_percentage ?? null, sleepEff: sc.sleep_efficiency_percentage != null ? Math.round(sc.sleep_efficiency_percentage) : null, sleepCons: sc.sleep_consistency_percentage ?? null,
+        resp: sc.respiratory_rate != null ? Math.round(sc.respiratory_rate * 10) / 10 : null, disturb: ss.disturbance_count ?? null
+      });
+    }
+    for (const r of rec) {
+      const sc = r.score || {}; if (r.score_state && r.score_state !== 'SCORED') continue;
+      const s = sleepById[r.sleep_id]; const k = dayKey(s ? (s.end || s.start) : r.created_at);
+      Object.assign(D[k] = D[k] || {}, { recovery: sc.recovery_score ?? null, hrv: sc.hrv_rmssd_milli != null ? Math.round(sc.hrv_rmssd_milli) : null, rhr: sc.resting_heart_rate ?? null, spo2: sc.spo2_percentage != null ? Math.round(sc.spo2_percentage * 10) / 10 : null, skinTemp: sc.skin_temp_celsius != null ? Math.round(sc.skin_temp_celsius * 10) / 10 : null });
+    }
+    for (const c of cy) { const sc = c.score || {}; if (sc.strain == null) continue; const k = dayKey(c.start); Object.assign(D[k] = D[k] || {}, { strain: Math.round(sc.strain * 10) / 10, kj: sc.kilojoule != null ? Math.round(sc.kilojoule) : null }); }
+    WH.data.last = Date.now(); await kvSet('whoopData', WH.data);
+    // Ruhepuls im Profil automatisch nachführen (Ø der letzten 7 Tage)
+    const rh = Object.keys(D).sort().slice(-7).map(k => D[k].rhr).filter(x => x);
+    if (rh.length >= 3) { const avg = Math.round(rh.reduce((a, b) => a + b, 0) / rh.length); if (avg !== state.profile.rest) { state.profile.rest = avg; await store.saveProfile(state.profile); fillProfileForm(); } }
+    whUi(); renderWhoop(); renderPerf(); if (sync.cfg) syncRun(syncPending());
+  } catch (e) { whStatus('WHOOP-Fehler: ' + e.message); if (e.status === 401) { WH.tok = null; await kvSet('whoopTok', null); whUi(); whStatus('WHOOP-Zugang abgelaufen – bitte neu verbinden.'); } }
+  finally { WH.busy = false; }
+}
+$('#whRefresh').onclick = () => whFetch(14);
+$('#whOff').onclick = async () => { WH.tok = null; await kvSet('whoopTok', null); whUi(); renderWhoop(); whStatus('Getrennt.'); };
+function whToday() { const ks = Object.keys(WH.data.days).sort(); for (let i = ks.length - 1; i >= 0; i--) { const d = WH.data.days[ks[i]]; if (d.recovery != null || d.sleepH != null) return [ks[i], d]; } return null; }
+function recCol(r) { return r == null ? '#7d8590' : r >= 67 ? '#3ddc84' : r >= 34 ? '#ffb020' : '#ff4d4d'; }
+function renderWhoop() {
+  const c = $('#whToday'), t = WH.tok && whToday();
+  if (!t) { c.hidden = true; return; }
+  const [k, d] = t, ks = Object.keys(WH.data.days).sort().slice(-8, -1).map(x => WH.data.days[x]);
+  const avg = f => { const v = ks.map(x => x[f]).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const arr = (v, a, up) => v == null || a == null ? '' : Math.abs(v - a) < (up === 'h' ? 0.25 : 1.5) ? '' : (v > a ? ' ↑' : ' ↓');
+  const today = k === dayKey(new Date());
+  c.hidden = false;
+  c.innerHTML = `<h3>Erholung <small>WHOOP · ${today ? 'heute' : new Date(k).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' })}</small></h3>
+  <div class="whgrid"><div class="whring" style="--p:${d.recovery ?? 0};--rc:${recCol(d.recovery)}"><b>${d.recovery ?? '–'}${d.recovery != null ? '%' : ''}</b><small>Erholung</small></div>
+  <div class="whstats">
+    <div>HRV<b>${d.hrv ?? '–'}<small> ms${arr(d.hrv, avg('hrv'))}</small></b></div>
+    <div>Ruhepuls<b>${d.rhr ?? '–'}<small> bpm${arr(d.rhr, avg('rhr'))}</small></b></div>
+    <div>Schlaf<b>${d.sleepH != null ? Math.floor(d.sleepH) + 'h ' + String(Math.round(d.sleepH % 1 * 60)).padStart(2, '0') : '–'}<small>${d.sleepPerf != null ? ' · ' + d.sleepPerf + ' %' : ''}</small></b></div>
+    <div>Atemfrequenz<b>${d.resp ?? '–'}<small> /min</small></b></div>
+  </div></div>
+  <div class="whstats" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
+    <div>Tiefschlaf<b>${d.deepH ?? '–'}<small> h</small></b></div><div>REM<b>${d.remH ?? '–'}<small> h</small></b></div>
+    <div>SpO2<b>${d.spo2 ?? '–'}<small> %</small></b></div><div>Strain gestern<b>${(WH.data.days[dayKey(new Date(new Date(k).getTime() - 86400000))] || {}).strain ?? '–'}</b></div>
+  </div>
+  <p class="whnote">${whAdvice(d)}</p>`;
+}
+function whAdvice(d) {
+  const r = d.recovery;
+  if (r == null) return 'Erholung wird von WHOOP noch berechnet.';
+  if (r >= 67) return '🟢 Gut erholt – heute ist ein hartes Training drin.';
+  if (r >= 34) return '🟡 Mittel erholt – normales Training, nicht ans Limit.';
+  return '🔴 Schlecht erholt – heute locker (Technik, Mobility, Zone 2) oder Pause.';
+}
+// Bereitschaft: WHOOP-Erholung fließt in die Empfehlung ein
+const _rp = renderPerf;
+renderPerf = function () {
+  _rp(); const t = WH.tok && whToday(); if (!t || $('#perfCard').hidden) return;
+  const r = t[1].recovery; if (r == null) return;
+  const tip = $('#rdTip');
+  if (r < 34) { $('#rdState').textContent += ' · WHOOP rot'; tip.textContent = 'Deine Trainingsbelastung wäre okay, aber WHOOP zeigt schlechte Erholung (' + r + ' %). Heute lieber locker.'; }
+  else if (r >= 67 && /Neutral|Frisch|Aufbau/.test($('#rdState').textContent)) tip.textContent += ' WHOOP bestätigt: gut erholt (' + r + ' %).';
+  else tip.textContent += ' WHOOP: ' + r + ' % Erholung.';
+};
+(async () => {
+  await ready;
+  try { WH.cfg = await kvGet('whoopCfg') || null; WH.tok = await kvGet('whoopTok') || null; WH.data = await kvGet('whoopData') || { days: {}, last: 0 }; } catch (e) { }
+  whUi(); renderWhoop(); renderPerf();
+  if (window.__lastAppUrl) window.onAppUrl(window.__lastAppUrl);
+  if (WH.tok && Date.now() - WH.data.last > 60 * 60 * 1000) setTimeout(() => whFetch(7), 1500);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && WH.tok && Date.now() - WH.data.last > 60 * 60 * 1000) whFetch(7); });
+})();
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -1939,7 +2111,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1714';
+const APP_VERSION = '2026.11.17-2051';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;

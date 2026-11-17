@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WHOOP verbunden</title>
+<style>body{background:#0d1014;color:#e6edf3;font:16px system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center;padding:20px}a{display:inline-block;margin-top:18px;background:#ff6b3d;color:#fff;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:600}</style>
+</head><body><div>
+<h2 id="t">Zurück zur Trainings-App …</h2>
+<p id="p">Falls nichts passiert, tippe auf den Knopf.</p>
+<a id="a" href="#">Zur App</a>
+</div>
+<script>
+var q = location.search || '';
+var u = 'trainingsapp://whoop' + q;
+document.getElementById('a').href = u;
+if (/error=/.test(q)) { document.getElementById('t').textContent = 'WHOOP-Anmeldung abgebrochen'; }
+setTimeout(function () { location.href = u; }, 300);
+</script>
+</body></html>
