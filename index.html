@@ -2249,7 +2249,7 @@ async function whFetch(days = 7) {
       const s = sleepById[r.sleep_id]; const k = dayKey(s ? (s.end || s.start) : r.created_at);
       Object.assign(D[k] = D[k] || {}, { recovery: sc.recovery_score ?? null, hrv: sc.hrv_rmssd_milli != null ? Math.round(sc.hrv_rmssd_milli) : null, rhr: sc.resting_heart_rate ?? null, spo2: sc.spo2_percentage != null ? Math.round(sc.spo2_percentage * 10) / 10 : null, skinTemp: sc.skin_temp_celsius != null ? Math.round(sc.skin_temp_celsius * 10) / 10 : null });
     }
-    for (const c of cy) { const sc = c.score || {}; if (sc.strain == null) continue; const k = dayKey(c.start); Object.assign(D[k] = D[k] || {}, { strain: Math.round(sc.strain * 10) / 10, kj: sc.kilojoule != null ? Math.round(sc.kilojoule) : null }); }
+    for (const c of cy) { const sc = c.score || {}; if (sc.strain == null) continue; const k = dayKey(new Date(c.start).getTime() + 8 * 3600e3); Object.assign(D[k] = D[k] || {}, { strain: Math.round(sc.strain * 10) / 10, kj: sc.kilojoule != null ? Math.round(sc.kilojoule) : null, kjDone: c.end ? 1 : 0 }); }
     try { const bm = await whReq('GET', `${WH_API}/user/measurement/body`, { headers: { Authorization: 'Bearer ' + await whToken() } }); if (bm && bm.weight_kilogram) WH.data.body = { kg: Math.round(bm.weight_kilogram * 10) / 10, h: bm.height_meter ? Math.round(bm.height_meter * 100) : null }; } catch (e) { }
     WH.data.last = Date.now(); await kvSet('whoopData', WH.data);
     // Ruhepuls im Profil automatisch nachführen (Ø der letzten 7 Tage)
@@ -2334,6 +2334,7 @@ function renderToday() {
 (async () => {
   await ready;
   try { WH.cfg = await kvGet('whoopCfg') || null; WH.tok = await kvGet('whoopTok') || null; WH.data = await kvGet('whoopData') || { days: {}, last: 0 }; } catch (e) { }
+  if (!WH.data.cyV2) { for (const k in WH.data.days) { delete WH.data.days[k].kj; delete WH.data.days[k].strain; } WH.data.cyV2 = 1; WH.data.last = 0; try { await kvSet('whoopData', WH.data); } catch (e) { } if (WH.tok) setTimeout(() => whFetch(60), 2500); }
   whUi(); renderWhoop(); renderPerf(); renderToday();
   if (window.__lastAppUrl) window.onAppUrl(window.__lastAppUrl);
   if (WH.tok && Date.now() - WH.data.last > 60 * 60 * 1000) setTimeout(() => whFetch(7), 1500);
@@ -2666,25 +2667,29 @@ function cutRate() {
 function weightAt(dk) { const w = CUT.weights.filter(x => x.d <= dk); return w.length ? w[w.length - 1].kg : (CUT.weights[0] ? CUT.weights[0].kg : state.profile.weight); }
 function whBurn(dk) { // echter Tagesverbrauch laut WHOOP, auf dein echtes Gewicht korrigiert
   if (typeof WH === 'undefined' || !WH.data || dk >= dayKey(new Date())) return null;
-  const d = WH.data.days[dk]; if (!d || !d.kj) return null;
+  const d = WH.data.days[dk]; if (!d || !d.kj || d.kjDone === 0) return null;
   const wb = WH.data.body && WH.data.body.kg, me = weightAt(dk), f = wb && me ? me / wb : 1;
   const kcal = d.kj / 4.184 * f, b = bmr();
-  return b && kcal < b * 1.15 ? null : Math.round(kcal);   // zu niedrig = Band nicht den ganzen Tag getragen
+  return b && kcal < b ? null : Math.round(kcal);   // unter Grundumsatz = Band nicht den ganzen Tag getragen
 }
 function calib() {
-  const r = []; for (let i = 1; i <= 28; i++) { const k = dayKey(Date.now() - i * 864e5), wb = whBurn(k), b = bmr(); if (wb && b && trainKcal(k) < 100) r.push(wb / (b * CUT.cfg.act)); }
-  if (r.length < 4) return { f: 1, n: r.length };
-  r.sort((a, b) => a - b); const m = r[Math.floor(r.length / 2)];
-  return { f: Math.max(0.8, Math.min(1.25, m)), n: r.length };
+  const r = [], q = [], b = bmr(); if (!b) return { f: 1, n: 0, tf: 1, tn: 0 };
+  const days = []; for (let i = 1; i <= 42; i++) { const k = dayKey(Date.now() - i * 864e5), wb = whBurn(k); if (wb) days.push([wb, trainKcal(k)]); }
+  days.forEach(([wb, tr]) => { if (tr < 100) r.push(wb / (b * CUT.cfg.act)); });
+  const med = a => { a = a.slice().sort((x, y) => x - y); return a[Math.floor(a.length / 2)]; };
+  const f = r.length >= 4 ? Math.max(0.8, Math.min(1.25, med(r))) : 1;
+  days.forEach(([wb, tr]) => { if (tr >= 250) q.push((wb - b * CUT.cfg.act * f) / tr); });
+  const tf = q.length >= 4 ? Math.max(0.5, Math.min(1, med(q))) : 1;
+  return { f, n: r.length, tf, tn: q.length };
 }
 function trainKcal(dk) { return state.sessions.filter(s => dayKey(s.date) === dk).reduce((a, s) => a + (s.kcal || 0), 0); }
 function dayTarget(dk) {
   const b = bmr(); if (!b) return null;
-  const tr = trainKcal(dk), rt = cutRate(), def = Math.min(750, rt.r * 7700 / 7), cal = CUT._cal || (CUT._cal = calib()), wb = tr < 100 ? whBurn(dk) : null;
-  const base = b * CUT.cfg.act * cal.f, burn = wb || base + tr, src = wb ? 'whoop' : cal.n >= 4 ? 'calib' : 'formel';
+  const tr = trainKcal(dk), rt = cutRate(), def = Math.min(750, rt.r * 7700 / 7), cal = CUT._cal || (CUT._cal = calib()), wb = whBurn(dk);
+  const base = b * CUT.cfg.act * cal.f, burn = wb || base + tr * cal.tf, src = wb ? 'whoop' : cal.n >= 4 || cal.tn >= 4 ? 'calib' : 'formel';
   let kcal = burn - def, floor = false; if (kcal < b) { kcal = b; floor = true; }
   const w = curWeight().kg, prot = w * CUT.cfg.prot, fat = Math.max(w * 0.8, kcal * 0.22 / 9), carb = Math.max(0, (kcal - prot * 4 - fat * 9) / 4);
-  return { kcal: Math.round(kcal), burn: Math.round(burn), src, cal, b: Math.round(b), base: Math.round(base), tr: Math.round(tr), def: Math.round(def), floor, prot: Math.round(prot), fat: Math.round(fat), carb: Math.round(carb), water: Math.round(w * 37 / 250) * 250 + (tr > 300 ? 500 : 0), rt };
+  return { kcal: Math.round(kcal), burn: Math.round(burn), src, cal, b: Math.round(b), base: Math.round(base), tr: Math.round(tr * cal.tf), trRaw: Math.round(tr), def: Math.round(def), floor, prot: Math.round(prot), fat: Math.round(fat), carb: Math.round(carb), water: Math.round(w * 37 / 250) * 250 + (tr > 300 ? 500 : 0), rt };
 }
 function dayTot(dk) { const d = CUT.days[dk] || {}; const f = d.food || []; return { k: f.reduce((a, x) => a + x.k, 0), p: f.reduce((a, x) => a + (x.p || 0), 0), c: f.reduce((a, x) => a + (x.c || 0), 0), f: f.reduce((a, x) => a + (x.f || 0), 0), w: d.water || 0, food: f }; }
 async function logWeight(kg) {
@@ -2717,7 +2722,7 @@ function renderCut() {
     <div><div class="kline"><span>Ziel</span><b>${T.kcal} kcal</b></div><div class="kline"><span>Gegessen</span><b>${D.k} kcal</b></div><div class="kline"><span>Training</span><b>+${T.tr} kcal</b></div><div class="kline"><span>Defizit</span><b>−${T.def} kcal</b></div></div></div>
     ${bar('Eiweiß', D.p, T.prot, '#3fa7ff')}${bar('Kohlenhydrate', D.c, T.carb, '#ffb020')}${bar('Fett', D.f, T.fat, '#ff4d9a')}${bar('Wasser', D.w, T.water, '#5ad1ff', 'ml')}
     <div class="wbtns"><button class="minibtn" data-w="250">+ 250 ml</button><button class="minibtn" data-w="500">+ 500 ml</button><button class="minibtn" data-w="-250">− 250</button></div>
-    <p class="hint">${esc(T.rt.why)}. Verbrauch ${isToday ? 'heute' : 'an dem Tag'} ≈ <b>${T.burn} kcal</b> – ${T.src === 'whoop' ? 'gemessen von WHOOP (auf dein Gewicht korrigiert)' : T.src === 'calib' ? `Alltag an deine WHOOP-Ruhetage angepasst (×${T.cal.f.toFixed(2).replace(".", ",")}, ${T.cal.n} Tage) + Training vom Brustgurt` : `Schätzung (Grundumsatz ${T.b} × Alltag + Training)${WH.tok ? ` – wird genauer, sobald ${Math.max(0, 4 - T.cal.n)} weitere Ruhetage mit WHOOP da sind` : ''}`}.${T.floor ? ' <b style="color:#ffb020">Ziel auf Grundumsatz angehoben – weniger essen wäre zu wenig.</b>' : ''}${CUT.cfg.h || (WH.data && WH.data.body && WH.data.body.h) ? '' : ' <b>Trag unten deine Größe ein für genauere Werte.</b>'}</p>`;
+    <p class="hint">${esc(T.rt.why)}. Verbrauch ${isToday ? 'heute' : 'an dem Tag'} ≈ <b>${T.burn} kcal</b> – ${T.src === 'whoop' ? 'gemessen von WHOOP (auf dein Gewicht korrigiert)' : T.src === 'calib' ? `an deine WHOOP-Daten angepasst (Alltag ×${T.cal.f.toFixed(2).replace(".", ",")}, Training ×${T.cal.tf.toFixed(2).replace(".", ",")} vom Gurt-Wert)` : `Schätzung (Grundumsatz ${T.b} × Alltag + Training)${WH.tok ? ` – wird genauer, sobald ein paar volle WHOOP-Tage da sind` : ''}`}.${T.floor ? ' <b style="color:#ffb020">Ziel auf Grundumsatz angehoben – weniger essen wäre zu wenig.</b>' : ''}${CUT.cfg.h || (WH.data && WH.data.body && WH.data.body.h) ? '' : ' <b>Trag unten deine Größe ein für genauere Werte.</b>'}</p>`;
     $('#cdPrev').onclick = () => { CUT.day = dayKey(new Date(dk + 'T12:00').getTime() - 864e5); renderCut(); };
     $('#cdNext').onclick = () => { if (!isToday) { CUT.day = dayKey(new Date(dk + 'T12:00').getTime() + 864e5); renderCut(); } };
     $('#cutDay').querySelectorAll('[data-w]').forEach(b => b.onclick = async () => { const d = CUT.days[dk] = CUT.days[dk] || {}; d.water = Math.max(0, (d.water || 0) + +b.dataset.w); await cutSave(); renderCut(); });
@@ -2882,7 +2887,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2123';
+const APP_VERSION = '2026.11.17-2125';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
