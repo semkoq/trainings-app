@@ -422,6 +422,7 @@ body{padding-top:env(safe-area-inset-top)}
     </div>
     <label class="field" style="margin-top:10px">Zugangsschlüssel (Token)<input id="syToken" type="password" autocapitalize="off" autocomplete="off" placeholder="github_pat_…"></label>
     <div class="lvrow"><button class="btn" id="sySave">Speichern &amp; testen</button><button class="btn ghost" id="syAll">Alles hochladen</button></div>
+    <button class="btn ghost" id="syPull" style="margin-top:8px">⬇ Vom Claude-Speicher laden</button>
     <p class="hint" id="syStatus">Nicht verbunden.</p>
   </div>
 </section>
@@ -2329,6 +2330,40 @@ $('#pastAdd').onclick = async () => {
   $('#pastSheet').hidden = true; if (c !== '__none') ana.cat = c; renderAnalyse();
 };
 
+// ---- Vom Claude-Speicher laden (verbesserte/fehlende Trainings aufs Handy holen) ----
+async function syncPull(manual) {
+  if (!sync.cfg) { if (manual) syncStatus('Erst verbinden.'); return; }
+  try {
+    if (manual) syncStatus('Prüfe Claude-Speicher …');
+    const tree = await gh('GET', 'git/trees/main?recursive=1');
+    const files = (tree && tree.tree || []).filter(x => x.type === 'blob' && /^sessions\/.*\.json$/.test(x.path));
+    const local = Object.fromEntries(state.sessions.map(s => [s.id, s]));
+    const todo = files.filter(f => {
+      const id = f.path.replace(/^.*_/, '').replace(/\.json$/, ''), l = local[id];
+      if (!l) return !(sync.map[id]);                      // neu auf dem Server (nicht von hier gelöscht)
+      const m = sync.map[id]; if (m && m.sha === f.sha) return false;
+      return !(l.hr || l.hr1) && f.size > 4000;             // Server hat Pulskurve, Handy nicht
+    });
+    if (!todo.length) { if (manual) { syncInfo(); toast('Alles aktuell ✓'); } return; }
+    let n = 0;
+    for (const f of todo) {
+      const c = await gh('GET', 'contents/' + f.path);
+      const bin = atob((c.content || '').replace(/\n/g, '')); const by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i);
+      const r = JSON.parse(new TextDecoder().decode(by)), l = local[r.id];
+      if (l) for (const k of KEEP) if (l[k] != null && r[k] == null) r[k] = l[k];
+      await _save(r);
+      if (l) state.sessions = state.sessions.filter(x => x !== l);
+      state.sessions.push(r); sync.map[r.id] = { h: sHash(r), path: f.path, sha: f.sha }; n++;
+      if (n % 5 === 0) syncStatus(`Lade vom Claude-Speicher … ${n} / ${todo.length}`);
+    }
+    await kvSet('syncMap', sync.map);
+    state.sessions.sort((a, b) => b.date.localeCompare(a.date)); renderHistory();
+    toast(`${n} Trainings vom Claude-Speicher geladen ✓`); syncInfo();
+  } catch (e) { if (manual) syncStatus('Laden fehlgeschlagen: ' + (e.status ? 'GitHub ' + e.status : e.message)); }
+}
+$('#syPull').onclick = () => syncPull(true);
+(async () => { await ready; setTimeout(() => { if (sync.cfg) syncPull(false); }, 6000); })();
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -2354,7 +2389,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2121';
+const APP_VERSION = '2026.11.17-2028';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
