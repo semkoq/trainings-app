@@ -2209,6 +2209,36 @@ function sessHr(s) { // Puls-Reihe in 5-s-Schritten
   return null;
 }
 function recov(s) { if (s.rounds && s.rounds.length) { const d = s.rounds.map(r => r.drop).filter(x => x != null); if (d.length) return Math.round(d.reduce((a, b) => a + b, 0) / d.length); } return s.hrr60 ?? null; }
+
+// ---- Hauptteil erkennen: Intervall-Block (hohe Spitzen) vom Rest (Aufwärmen, Chillen, Bauch …) trennen ----
+const _core = new Map();
+function mainPart(s) {
+  const h = s.hr1; if (!h || h.length < 900) return null;
+  const k = s.id + ':' + h.length; if (_core.has(k)) return _core.get(k);
+  const p = s.prof || state.profile, sm = smooth(h, 10), v = sm.filter(x => x != null).sort((a, b) => a - b);
+  let res = null;
+  if (v.length > 600) {
+    const p90 = v[Math.floor(v.length * 0.9)], thr = Math.max(Math.min(0.85 * p.max, p90), p.rest + 0.6 * (p.max - p.rest));
+    const seg = []; let st = -1, la = -1;
+    for (let i = 0; i <= sm.length; i++) { const x = i < sm.length ? sm[i] : null; if (x != null && x >= thr) { if (st < 0) st = i; la = i; } else if (st >= 0 && (x == null || i - la > 10 || i === sm.length)) { if (la - st >= 15) seg.push([st, la]); st = -1; } }
+    if (seg.length >= 3) {
+      const cl = [[seg[0]]]; for (let i = 1; i < seg.length; i++) { if (seg[i][0] - seg[i - 1][1] > 600) cl.push([]); cl[cl.length - 1].push(seg[i]); }
+      const best = cl.reduce((m, c) => c.length > m.length ? c : m);
+      if (best.length >= 3) {
+        const a = Math.max(0, best[0][0] - 60), b = Math.min(h.length, best[best.length - 1][1] + 90);
+        if (h.length - (b - a) > Math.max(300, h.length * 0.1)) {
+          const arr = h.slice(a, b);
+          try { res = { ...s, ...analyzeSeries(arr, p), hr1: arr, hr: null, rr: null, hrv: s.hrv, _core: { a, b, full: h.length, n: best.length } }; } catch (e) { }
+        }
+      }
+    }
+  }
+  _core.set(k, res); return res;
+}
+const isFull = () => ana.fullCat && ana.fullCat[ana.cat] != null ? ana.fullCat[ana.cat] : /grundausdauer|zone|locker|mobility|regeneration/i.test(ana.cat || '');
+const useCore = s => (!isFull() && mainPart(s)) || s;
+const fmtMS = sec => { const m = Math.floor(sec / 60); return m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ' h' : m + ' min'; };
+function coreNote(x) { return x._core ? `<p class="hint" style="margin:6px 0 0">✂️ Nur Hauptteil: Minute ${Math.round(x._core.a / 60)}–${Math.round(x._core.b / 60)} (${fmtMS(x._core.b - x._core.a)} von ${fmtMS(x._core.full)}, ${x._core.n} harte Phasen). Aufwärmen/Danach ausgeblendet.</p>` : ''; }
 function renderAnalyse() {
   const used = {}; state.sessions.forEach(s => { if (s.anaCat) used[s.anaCat] = (used[s.anaCat] || 0) + 1; });
   const cats = [...new Set([...anaCats, ...Object.keys(used)])].filter(c => used[c]);
@@ -2216,11 +2246,11 @@ function renderAnalyse() {
   if (!ana.cat || !used[ana.cat]) ana.cat = cats[0];
   $('#anaTabs').innerHTML = cats.map(c => `<button class="chip ${c === ana.cat ? 'on' : ''}" data-c="${esc(c)}">${esc(c)} <small>${used[c]}</small></button>`).join('');
   $('#anaTabs').querySelectorAll('.chip').forEach(b => b.onclick = () => { ana.cat = b.dataset.c; ana.sel = []; renderAnalyse(); });
-  const list = state.sessions.filter(s => s.anaCat === ana.cat).slice().sort((a, b) => a.date.localeCompare(b.date));
+  const list = state.sessions.filter(s => s.anaCat === ana.cat).slice().sort((a, b) => a.date.localeCompare(b.date)).map(useCore);
   const last = list[list.length - 1], prev = list[list.length - 2];
   const dlt = (a, b, inv, unit = '') => a == null || b == null ? '' : (() => { const d = Math.round(a - b); if (!d) return '<em style="color:var(--mut)">±0</em>'; const good = inv ? d < 0 : d > 0; return `<em style="color:${good ? 'var(--good)' : 'var(--bad)'}">${d > 0 ? '+' : ''}${d}${unit}</em>`; })();
   const R = recov(last), Rp = prev ? recov(prev) : null;
-  let h = `<div class="card"><h3>${esc(ana.cat)} <small>${list.length} Einheiten · letzte vs. vorherige</small></h3>
+  let h = `<div class="card"><h3>${esc(ana.cat)} <small>${list.length} Einheiten · letzte vs. vorherige</small></h3><div class="seg" style="float:none;margin:4px 0 10px"><button class="${isFull() ? '' : 'on'}" id="anaCoreBtn">Nur Hauptteil</button><button class="${isFull() ? 'on' : ''}" id="anaFullBtn">Ganzes Training</button></div>
     <div class="kpi">
       <div><span>Ø Puls</span><b>${last.avgHr ?? '–'}</b>${prev ? dlt(last.avgHr, prev.avgHr, true) : ''}</div>
       <div><span>Erholung in Pausen</span><b>${R != null ? '−' + R : '–'}</b>${dlt(R, Rp, false)}</div>
@@ -2237,6 +2267,8 @@ function renderAnalyse() {
     $('#anaCmpBtn').disabled = ana.sel.length !== 2;
   });
   $('#anaCmpBtn').onclick = () => renderCompare();
+  $('#anaCoreBtn').onclick = () => { (ana.fullCat = ana.fullCat || {})[ana.cat] = false; renderAnalyse(); if (ana.sel.length === 2) renderCompare(); };
+  $('#anaFullBtn').onclick = () => { (ana.fullCat = ana.fullCat || {})[ana.cat] = true; renderAnalyse(); if (ana.sel.length === 2) renderCompare(); };
   if (list.length >= 2) requestAnimationFrame(() => drawAnaTrend(list));
 }
 function drawAnaTrend(list) {
@@ -2258,12 +2290,12 @@ function drawAnaTrend(list) {
   list.forEach((s, i) => { if (n <= 8 || i % Math.ceil(n / 8) === 0 || i === n - 1) { const d = new Date(s.date); g.fillText(d.getDate() + '.' + (d.getMonth() + 1) + '.', x(i), H - 6); } });
 }
 function renderCompare() {
-  const [a, b] = ana.sel.map(id => state.sessions.find(s => s.id === id)).sort((p, q) => p.date.localeCompare(q.date));
+  const [a, b] = ana.sel.map(id => state.sessions.find(s => s.id === id)).sort((p, q) => p.date.localeCompare(q.date)).map(useCore);
   const ha = sessHr(a), hb = sessHr(b);
   const row = (l, va, vb, inv) => { let c = ''; if (va != null && vb != null && va !== vb) { const better = inv ? vb < va : vb > va; c = `style="color:${better ? 'var(--good)' : 'var(--bad)'}"`; } return `<tr><td>${l}</td><td>${va ?? '–'}</td><td ${c}>${vb ?? '–'}</td></tr>`; };
   const z = (s, i) => s.zones ? Math.round(s.zones[i] / 60) + ' min' : null;
   const sd = s => { const d = new Date(s.date); return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); };
-  let h = `<div class="card"><h3>Vergleich</h3>`;
+  let h = `<div class="card"><h3>Vergleich</h3>${coreNote(a)}${coreNote(b)}`;
   if (ha || hb) h += `<canvas id="cmpChart" height="190"></canvas><div class="legend"><span><i style="background:#7d8590"></i>${sd(a)} (älter)</span><span><i style="background:#ff6b3d"></i>${sd(b)} (neuer)</span></div>`;
   else h += `<p class="hint">Keine Pulskurven vorhanden (alte Übersichts-Daten). Ab Live-Trainings gibt's hier beide Kurven übereinander.</p>`;
   h += `<table class="cmp"><tr><th></th><th>${sd(a)}</th><th>${sd(b)}</th></tr>
@@ -2457,7 +2489,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2037';
+const APP_VERSION = '2026.11.17-2040';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
