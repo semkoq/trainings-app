@@ -899,6 +899,8 @@ async function fileToSession(name, buf, fallbackType, note, lastModified) {
 }
 
 const near = (a, b) => Math.abs(new Date(a.date) - new Date(b.date)) < 600e3;
+const KEEP = ['anaCat', 'rpe', 'feelBody', 'feelMind', 'rateNote', 'ai'];
+const carry = (from, to) => { for (const k of KEEP) if (from[k] != null && to[k] == null) to[k] = from[k]; };
 async function batchSave(makers) {
   const prog = $('#batch'); prog.hidden = false;
   let ok = 0, dupN = 0, bad = 0, failSave = 0;
@@ -908,7 +910,7 @@ async function batchSave(makers) {
       const s = await makers[i]();
       const dup = state.sessions.find(x => near(x, s));
       if (dup && !(s.hr && !dup.hr)) { dupN++; continue; }
-      if (dup) { s.type = dup.type; s.note = s.note || dup.note; try { await store.deleteSession(dup.id); } catch (e) { } state.sessions = state.sessions.filter(x => x !== dup); }
+      if (dup) { s.type = dup.type; s.note = s.note || dup.note; carry(dup, s); try { await store.deleteSession(dup.id); } catch (e) { } state.sessions = state.sessions.filter(x => x !== dup); }
       try { await store.saveSession(s); } catch (e) { failSave++; if (e && e.code === 'quota_exceeded') break; continue; }
       state.sessions.push(s); ok++;
     } catch (e) { bad++; }
@@ -960,7 +962,7 @@ async function handleFiles(fileList) {
       const dup = state.sessions.find(x => near(x, s));
       if (dup && dup.hr) { toast('Dieses Training ist schon gespeichert'); openSession(dup, true); }
       else {
-        if (dup) { s.note = s.note || dup.note; s.type = guessType(dup.note, null, s.type); try { await store.deleteSession(dup.id); } catch (e) { } state.sessions = state.sessions.filter(x => x !== dup); }
+        if (dup) { s.note = s.note || dup.note; s.type = guessType(dup.note, null, s.type); carry(dup, s); try { await store.deleteSession(dup.id); } catch (e) { } state.sessions = state.sessions.filter(x => x !== dup); }
         await saveAndOpen(s); $('#note').value = '';
       }
     } catch (e) { $('#upErr').textContent = e.message || 'Datei konnte nicht gelesen werden.'; }
@@ -2352,7 +2354,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2118';
+const APP_VERSION = '2026.11.17-2121';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;

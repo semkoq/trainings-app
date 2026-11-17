@@ -1,5 +1,5 @@
 // Netzwerk zuerst (damit Updates sofort ankommen), offline aus dem Cache.
-const CACHE = 'trainings-app-2026.11.17-2118';
+const CACHE = 'trainings-app-2026.11.17-2121';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
