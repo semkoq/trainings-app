@@ -150,6 +150,23 @@ h3 small{font:400 12px Inter;color:var(--mut);text-transform:none;letter-spacing
 .whnote{font-size:14px;margin-top:10px}
 .rparts{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:12px;font-size:13px;color:var(--mut)}
 .rparts span{display:flex;align-items:center;gap:5px}.rparts i{width:8px;height:8px;border-radius:50%}.rparts b{color:var(--txt);font-weight:600}
+/* analyse */
+.anacats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.anacats label{display:flex;align-items:center;gap:8px;background:#1d222a;border:2px solid transparent;border-radius:10px;padding:10px;font-size:14px;cursor:pointer}
+.anacats label.on{border-color:var(--acc);background:#ff6b3d18}
+.anacats input{accent-color:var(--acc);width:18px;height:18px}
+.anachips{margin:14px 0 4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.anachips::-webkit-scrollbar{display:none}
+.anachips .chip{white-space:nowrap}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.kpi div{background:#0f1216;border-radius:10px;padding:10px;min-width:0}
+.kpi span{font-size:12px;color:var(--mut)}.kpi b{display:block;font:700 26px 'Barlow Condensed'}.kpi em{font-style:normal;font-size:13px;font-weight:600}
+.alist label{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer}
+.alist input{accent-color:var(--acc);width:18px;height:18px}
+.alist small{color:var(--mut)}
+.cmp{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.cmp td,.cmp th{padding:6px 4px;border-top:1px solid var(--line);text-align:right}.cmp td:first-child,.cmp th:first-child{text-align:left;color:var(--mut)}
+.cmp th{font-size:12px}
 /* navigation & start */
 [hidden]{display:none!important}
 .hrow{display:flex;justify-content:space-between;align-items:center}
@@ -221,7 +238,7 @@ body{padding-top:env(safe-area-inset-top)}
 <div class="wrap">
 <header>
   <div class="hrow"><h1>Trainings<span>-App</span></h1><button class="gear" id="gearBtn" aria-label="Einstellungen">⚙</button></div>
-  <nav class="tabs" id="mainTabs"><button class="tab on" data-v="overview">Überblick</button><button class="tab" data-v="start">Training</button><button class="tab" data-v="history">Verlauf</button></nav>
+  <nav class="tabs" id="mainTabs"><button class="tab on" data-v="overview">Überblick</button><button class="tab" data-v="start">Training</button><button class="tab" data-v="history">Verlauf</button><button class="tab" data-v="analyse">Analyse</button></nav>
 </header>
 
 <section class="view" id="view-start" hidden>
@@ -346,6 +363,11 @@ body{padding-top:env(safe-area-inset-top)}
   <p class="empty" id="ovEmpty" hidden>Noch keine Trainings. Wisch zu „Training“ und leg los – oder importier alte Trainings über ⚙.</p>
 </section>
 
+<section class="view" id="view-analyse" hidden>
+  <div class="chips anachips" id="anaTabs"></div>
+  <div id="anaBody"></div>
+</section>
+
 <section class="view" id="view-history" hidden>
   <div id="weekCard" hidden></div>
   <div id="histList"></div>
@@ -404,7 +426,7 @@ body{padding-top:env(safe-area-inset-top)}
 </div>
 <div id="toast"></div>
 <div id="rateSheet" hidden>
-  <div class="sheet">
+  <div class="sheet"><div id="rateStep1">
     <h3>Wie war dein Training?</h3>
     <div class="lbl">Anstrengung</div>
     <div class="rpe" id="rpeRow"></div>
@@ -416,6 +438,16 @@ body{padding-top:env(safe-area-inset-top)}
     <input id="rateCmt" placeholder="Kommentar (optional), z.B. Beine schwer, wenig geschlafen" style="margin-top:14px">
     <div class="lvrow" style="margin-top:4px"><button class="btn ghost" id="rateSkip">Später</button><button class="btn" id="rateSave">Speichern</button></div>
   </div>
+  <div id="anaStep" hidden>
+    <h3>Zur Analyse hinzufügen?</h3>
+    <p class="hint" style="margin-top:0">Dann kannst du dieses Training später mit gleichen Einheiten vergleichen.</p>
+    <div class="lvrow" id="anaAsk"><button class="btn ghost" id="anaNo">Nein</button><button class="btn" id="anaYes">Ja</button></div>
+    <div id="anaPick" hidden>
+      <div class="anacats" id="anaCats"></div>
+      <div class="lvrow" style="grid-template-columns:1fr auto;margin-top:8px"><input id="anaNew" placeholder="+ Eigene Kategorie, z.B. Bergläufe"><button class="btn ghost" id="anaNewBtn" style="padding:8px 14px">+</button></div>
+      <div class="lvrow" style="margin-top:6px"><button class="btn ghost" id="anaCancel">Abbrechen</button><button class="btn" id="anaAdd">Hinzufügen</button></div>
+    </div>
+  </div></div>
 </div>
 <script>
 // ===== Core: Parser + Analyse (ohne DOM-Rendering) =====
@@ -718,8 +750,8 @@ function showView(v, dir) {
   state.view = v;
   window.scrollTo(0, 0);
 }
-const MAIN = ['overview', 'start', 'history'];
-function goMain(v) { const d = MAIN.indexOf(v) - MAIN.indexOf(state.view); if (v !== 'start') renderHistory(); showView(v, d > 0 ? 1 : d < 0 ? -1 : 0); }
+const MAIN = ['overview', 'start', 'history', 'analyse'];
+function goMain(v) { const d = MAIN.indexOf(v) - MAIN.indexOf(state.view); if (v !== 'start') renderHistory(); if (v === 'analyse') renderAnalyse(); showView(v, d > 0 ? 1 : d < 0 ? -1 : 0); }
 document.querySelectorAll('#mainTabs .tab').forEach(t => t.onclick = () => goMain(t.dataset.v));
 $('#gearBtn').onclick = () => showView('profile');
 $('#setBack').onclick = () => goMain('overview');
@@ -728,7 +760,7 @@ $('#impBack').onclick = () => showView('profile');
 // Wischen zwischen Verlauf und Training
 (() => {
   let x0 = null, y0 = null;
-  document.addEventListener('touchstart', e => { if (!MAIN.includes(state.view)) { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.pager,#wkCard')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchstart', e => { if (!MAIN.includes(state.view)) { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.pager,#wkCard,.anachips')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchend', e => {
     if (x0 == null) return;
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
@@ -1361,7 +1393,7 @@ function roundStats(arr, rounds) {
       const rs = arr.slice(rest.start, Math.min(rest.end, rest.start + 60) + 1).filter(x => x != null);
       if (rs.length >= 20 && isFinite(endHr)) drop = Math.round(endHr - Math.min(...rs));
     }
-    out.push({ r: r.round, d: r.end - r.start, avg: Math.round(seg.reduce((a, b) => a + b, 0) / seg.length), max: Math.max(...seg), drop });
+    out.push({ r: r.round, d: r.end - r.start, avg: Math.round(seg.reduce((a, b) => a + b, 0) / seg.length), max: Math.round(Math.max(...seg)), drop });
   }
   return out.length ? out : null;
 }
@@ -1380,7 +1412,7 @@ async function liveStop(e) {
     const nd = isNative() ? await HN().stop() : null;
     const s = await samplesToSession(nd ? nd.samples : live.samples, nd ? new Date(nd.startedAt) : live.startedAt, live.type, $('#lvNote').value.trim(), nd ? nd.rounds : live.rounds, nd ? nd.rr : live.rr, nd ? nd.rrT : live.rrT);
     clearDraft(); $('#lvNote').value = '';
-    await saveAndOpen(s); openRate(s);
+    await saveAndOpen(s); openRate(s, true);
   } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); showView('start'); }
 }
 
@@ -1812,13 +1844,14 @@ const RPE_COL = ['', '#3fa7ff', '#3fa7ff', '#3ddc84', '#3ddc84', '#ffb020', '#ff
 const FEEL = [['😫', 'Sehr schlecht'], ['🙁', 'Schlecht'], ['😐', 'Normal'], ['🙂', 'Gut'], ['💪', 'Sehr gut']];
 const rate = { s: null, rpe: null, body: null, mind: null };
 function rateCardHtml(s) {
-  if (s.rpe == null && s.feelBody == null && s.feelMind == null) return `<h3>Dein Gefühl</h3><p class="hint" style="margin-top:0">Noch nicht bewertet.</p><button class="btn ghost" id="rateEdit">Training bewerten</button>`;
+  if (s.rpe == null && s.feelBody == null && s.feelMind == null) return `<h3>Dein Gefühl</h3><p class="hint" style="margin-top:0">Noch nicht bewertet.${s.anaCat ? ' · Analyse: <b>' + esc(s.anaCat) + '</b>' : ''}</p><div class="lvrow"><button class="btn ghost" id="rateEdit">Training bewerten</button><button class="btn ghost" id="anaEdit">${s.anaCat ? 'Kategorie ändern' : 'Zur Analyse'}</button></div>`;
   const f = v => v ? FEEL[v - 1][0] + ' ' + FEEL[v - 1][1] : '–';
   const srpe = s.rpe ? Math.round(s.rpe * s.durationSec / 60) : null;
   return `<h3>Dein Gefühl <button class="link" id="rateEdit" style="float:right;font-size:13px">ändern</button></h3>
     <div class="rrow"><span>Anstrengung</span><b style="color:${RPE_COL[s.rpe] || 'inherit'}">${s.rpe ? s.rpe + '/10 · ' + RPE_TXT[s.rpe] : '–'}</b></div>
     <div class="rrow"><span>Körperlich</span><b>${f(s.feelBody)}</b></div>
     <div class="rrow"><span>Mental</span><b>${f(s.feelMind)}</b></div>
+    <div class="rrow"><span>Analyse</span><b>${s.anaCat ? esc(s.anaCat) + ' <button class="link" id="anaEdit" style="font-size:13px">ändern</button>' : '<button class="link" id="anaEdit" style="font-size:13px">hinzufügen</button>'}</b></div>
     ${s.rateNote ? `<div class="rrow"><span>Kommentar</span><b style="font-weight:500;text-align:right;max-width:65%">${esc(s.rateNote)}</b></div>` : ''}
     ${srpe != null ? `<p class="hint">Gefühlte Belastung: <b>${srpe}</b> (Anstrengung × Minuten)${s.trimp ? ` · Puls-Belastung: <b>${s.trimp}</b>` : ''}</p>` : ''}`;
 }
@@ -1832,8 +1865,9 @@ function rateRender() {
     $(id).querySelectorAll('button').forEach(b => b.onclick = () => { rate[k] = +b.dataset.v; rateRender(); });
   }
 }
-function openRate(s) {
-  Object.assign(rate, { s, rpe: s.rpe ?? null, body: s.feelBody ?? null, mind: s.feelMind ?? null });
+function openRate(s, askAna) {
+  $('#rateStep1').hidden = false; $('#anaStep').hidden = true;
+  Object.assign(rate, { s, askAna: !!askAna, rpe: s.rpe ?? null, body: s.feelBody ?? null, mind: s.feelMind ?? null });
   $('#rateCmt').value = s.rateNote || '';
   rateRender(); $('#rateSheet').hidden = false;
 }
@@ -1844,8 +1878,9 @@ $('#rateSave').onclick = async () => {
   if (!rate.rpe) { toast('Bitte die Anstrengung antippen (1–10).'); return; }
   s.rpe = rate.rpe; s.feelBody = rate.body; s.feelMind = rate.mind; s.rateNote = $('#rateCmt').value.trim();
   try { await store.saveSession(s); } catch (e) { }
-  $('#rateSheet').hidden = true; toast('Gespeichert ✓');
   if (state.current === s) openSession(s, s._new);
+  if (rate.askAna && !s.anaCat) { openAna(s); return; }
+  $('#rateSheet').hidden = true; toast('Gespeichert ✓');
 };
 document.addEventListener('click', e => { if (e.target && e.target.id === 'rateEdit' && state.current) openRate(state.current); });
 
@@ -2122,6 +2157,128 @@ function renderToday() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && WH.tok && Date.now() - WH.data.last > 60 * 60 * 1000) whFetch(7); });
 })();
 
+// ===================== ANALYSE: Kategorien, Trend, Vergleich =====================
+const ANA_DEFAULT = ['Sparring', 'Pratzen', 'Sandsack', 'Grundausdauer', 'Lauf-Intervalle', 'Intervalle', 'Zirkel/Kraftausdauer'];
+let anaCats = ANA_DEFAULT.slice();
+const ana = { s: null, pick: null, cat: null, sel: [] };
+(async () => { await ready; try { const c = await kvGet('anaCats'); if (c && c.length) anaCats = c; } catch (e) { } })();
+function openAna(s) {
+  ana.s = s; ana.pick = s.anaCat || null;
+  $('#rateSheet').hidden = false; $('#rateStep1').hidden = true; $('#anaStep').hidden = false;
+  $('#anaAsk').hidden = !!s.anaCat; $('#anaPick').hidden = !s.anaCat; anaRenderCats();
+}
+function anaRenderCats() {
+  $('#anaCats').innerHTML = anaCats.map(c => `<label class="${ana.pick === c ? 'on' : ''}"><input type="radio" name="anacat" value="${esc(c)}" ${ana.pick === c ? 'checked' : ''}>${esc(c)}</label>`).join('');
+  $('#anaCats').querySelectorAll('input').forEach(i => i.onchange = () => { ana.pick = i.value; anaRenderCats(); });
+}
+$('#anaNo').onclick = () => { $('#rateSheet').hidden = true; toast('Gespeichert ✓'); };
+$('#anaYes').onclick = () => { $('#anaAsk').hidden = true; $('#anaPick').hidden = false; };
+$('#anaCancel').onclick = () => { $('#rateSheet').hidden = true; };
+$('#anaNewBtn').onclick = async () => {
+  const v = $('#anaNew').value.trim(); if (!v) return;
+  if (!anaCats.includes(v)) { anaCats.push(v); await kvSet('anaCats', anaCats); }
+  ana.pick = v; $('#anaNew').value = ''; anaRenderCats();
+};
+$('#anaAdd').onclick = async () => {
+  if (!ana.pick) { toast('Bitte eine Kategorie wählen.'); return; }
+  const s = ana.s; s.anaCat = ana.pick;
+  try { await store.saveSession(s); } catch (e) { }
+  $('#rateSheet').hidden = true; toast(`Zur Analyse „${s.anaCat}“ hinzugefügt ✓`);
+  if (state.current === s) openSession(s, s._new);
+};
+document.addEventListener('click', e => { if (e.target && e.target.id === 'anaEdit' && state.current) openAna(state.current); });
+
+function sessHr(s) { // Puls-Reihe in 5-s-Schritten
+  if (s.hr1 && s.hr1.length) { const o = []; for (let i = 0; i < s.hr1.length; i += 5) { const seg = s.hr1.slice(i, i + 5).filter(x => x != null); o.push(seg.length ? seg.reduce((a, b) => a + b, 0) / seg.length : null); } return o; }
+  if (s.hr && s.hr.v) return s.hr.step === 5 ? s.hr.v : s.hr.v;
+  return null;
+}
+function recov(s) { if (s.rounds && s.rounds.length) { const d = s.rounds.map(r => r.drop).filter(x => x != null); if (d.length) return Math.round(d.reduce((a, b) => a + b, 0) / d.length); } return s.hrr60 ?? null; }
+function renderAnalyse() {
+  const used = {}; state.sessions.forEach(s => { if (s.anaCat) used[s.anaCat] = (used[s.anaCat] || 0) + 1; });
+  const cats = [...new Set([...anaCats, ...Object.keys(used)])].filter(c => used[c]);
+  if (!cats.length) { $('#anaTabs').innerHTML = ''; $('#anaBody').innerHTML = '<p class="empty">Noch keine Trainings in der Analyse.<br>Nach dem Training: bewerten → „Zur Analyse hinzufügen“ → Kategorie wählen. Oder in der Auswertung eines alten Trainings auf „Zur Analyse“ tippen.</p>'; return; }
+  if (!ana.cat || !used[ana.cat]) ana.cat = cats[0];
+  $('#anaTabs').innerHTML = cats.map(c => `<button class="chip ${c === ana.cat ? 'on' : ''}" data-c="${esc(c)}">${esc(c)} <small>${used[c]}</small></button>`).join('');
+  $('#anaTabs').querySelectorAll('.chip').forEach(b => b.onclick = () => { ana.cat = b.dataset.c; ana.sel = []; renderAnalyse(); });
+  const list = state.sessions.filter(s => s.anaCat === ana.cat).slice().sort((a, b) => a.date.localeCompare(b.date));
+  const last = list[list.length - 1], prev = list[list.length - 2];
+  const dlt = (a, b, inv, unit = '') => a == null || b == null ? '' : (() => { const d = Math.round(a - b); if (!d) return '<em style="color:var(--mut)">±0</em>'; const good = inv ? d < 0 : d > 0; return `<em style="color:${good ? 'var(--good)' : 'var(--bad)'}">${d > 0 ? '+' : ''}${d}${unit}</em>`; })();
+  const R = recov(last), Rp = prev ? recov(prev) : null;
+  let h = `<div class="card"><h3>${esc(ana.cat)} <small>${list.length} Einheiten · letzte vs. vorherige</small></h3>
+    <div class="kpi">
+      <div><span>Ø Puls</span><b>${last.avgHr ?? '–'}</b>${prev ? dlt(last.avgHr, prev.avgHr, true) : ''}</div>
+      <div><span>Erholung in Pausen</span><b>${R != null ? '−' + R : '–'}</b>${dlt(R, Rp, false)}</div>
+      <div><span>Max-Puls</span><b>${last.maxHr != null ? Math.round(last.maxHr) : '–'}</b>${prev ? dlt(last.maxHr, prev.maxHr, true) : ''}</div>
+      <div><span>Anstrengung</span><b>${last.rpe ? last.rpe + '/10' : '–'}</b>${prev && last.rpe && prev.rpe ? dlt(last.rpe, prev.rpe, true) : ''}</div>
+    </div><p class="hint">Grün = besser. Ø Puls und Anstrengung niedriger bei gleicher Einheit = fitter. Erholung höher = Puls fällt in der Pause schneller.</p></div>`;
+  if (list.length >= 2) h += `<div class="card"><h3>Verlauf</h3><canvas id="anaTrend" height="170"></canvas><div class="legend"><span><i style="background:#ff6b3d"></i>Ø Puls</span><span><i style="background:#3ddc84"></i>Erholung</span><span><i style="background:#a974ff"></i>Anstrengung ×10</span></div></div>`;
+  h += `<div class="card"><h3>Einheiten <small>2 auswählen zum Vergleichen</small></h3><div class="alist">${list.slice().reverse().map(s => `<label><input type="checkbox" value="${s.id}" ${ana.sel.includes(s.id) ? 'checked' : ''}><span>${fmtDate(s.date)}${s.note ? ' · <small>' + esc(s.note) + '</small>' : ''}</span><small>${fmtDur(s.durationSec)} · Ø ${s.avgHr ?? '–'}</small></label>`).join('')}</div>
+    <button class="btn" id="anaCmpBtn" ${ana.sel.length === 2 ? '' : 'disabled'} style="margin-top:10px">Vergleichen</button></div><div id="anaCmp"></div>`;
+  $('#anaBody').innerHTML = h;
+  $('#anaBody').querySelectorAll('.alist input').forEach(i => i.onchange = () => {
+    if (i.checked) { ana.sel.push(i.value); if (ana.sel.length > 2) ana.sel.shift(); } else ana.sel = ana.sel.filter(x => x !== i.value);
+    $('#anaBody').querySelectorAll('.alist input').forEach(x => x.checked = ana.sel.includes(x.value));
+    $('#anaCmpBtn').disabled = ana.sel.length !== 2;
+  });
+  $('#anaCmpBtn').onclick = () => renderCompare();
+  if (list.length >= 2) requestAnimationFrame(() => drawAnaTrend(list));
+}
+function drawAnaTrend(list) {
+  const cv = $('#anaTrend'); if (!cv || !cv.clientWidth) return;
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 170; cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const L = 30, R = 8, T = 8, B = 22, pw = W - L - R, ph = H - T - B, n = list.length;
+  const series = [['#ff6b3d', s => s.avgHr], ['#3ddc84', s => recov(s)], ['#a974ff', s => s.rpe ? s.rpe * 10 : null]];
+  const all = list.flatMap(s => series.map(([, f]) => f(s))).filter(v => v != null);
+  const lo = Math.max(0, Math.min(...all) - 10), hi = Math.max(...all) + 10;
+  const x = i => L + (n === 1 ? pw / 2 : i / (n - 1) * pw), y = v => T + ph - (v - lo) / (hi - lo) * ph;
+  g.font = '11px Inter, sans-serif'; g.fillStyle = '#7d8590'; g.textAlign = 'right';
+  for (let v = Math.ceil(lo / 20) * 20; v <= hi; v += 20) { g.fillText(v, L - 5, y(v) + 4); g.strokeStyle = '#ffffff10'; g.beginPath(); g.moveTo(L, y(v)); g.lineTo(W - R, y(v)); g.stroke(); }
+  for (const [c, f] of series) {
+    g.strokeStyle = c; g.fillStyle = c; g.lineWidth = 2; g.beginPath(); let st = false;
+    list.forEach((s, i) => { const v = f(s); if (v == null) return; st ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); st = true; });
+    g.stroke(); list.forEach((s, i) => { const v = f(s); if (v != null) { g.beginPath(); g.arc(x(i), y(v), 3, 0, 7); g.fill(); } });
+  }
+  g.fillStyle = '#7d8590'; g.textAlign = 'center';
+  list.forEach((s, i) => { if (n <= 8 || i % Math.ceil(n / 8) === 0 || i === n - 1) { const d = new Date(s.date); g.fillText(d.getDate() + '.' + (d.getMonth() + 1) + '.', x(i), H - 6); } });
+}
+function renderCompare() {
+  const [a, b] = ana.sel.map(id => state.sessions.find(s => s.id === id)).sort((p, q) => p.date.localeCompare(q.date));
+  const ha = sessHr(a), hb = sessHr(b);
+  const row = (l, va, vb, inv) => { let c = ''; if (va != null && vb != null && va !== vb) { const better = inv ? vb < va : vb > va; c = `style="color:${better ? 'var(--good)' : 'var(--bad)'}"`; } return `<tr><td>${l}</td><td>${va ?? '–'}</td><td ${c}>${vb ?? '–'}</td></tr>`; };
+  const z = (s, i) => s.zones ? Math.round(s.zones[i] / 60) + ' min' : null;
+  const sd = s => { const d = new Date(s.date); return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); };
+  let h = `<div class="card"><h3>Vergleich</h3>`;
+  if (ha || hb) h += `<canvas id="cmpChart" height="190"></canvas><div class="legend"><span><i style="background:#7d8590"></i>${sd(a)} (älter)</span><span><i style="background:#ff6b3d"></i>${sd(b)} (neuer)</span></div>`;
+  else h += `<p class="hint">Keine Pulskurven vorhanden (alte Übersichts-Daten). Ab Live-Trainings gibt's hier beide Kurven übereinander.</p>`;
+  h += `<table class="cmp"><tr><th></th><th>${sd(a)}</th><th>${sd(b)}</th></tr>
+    ${row('Dauer', fmtDur(a.durationSec), fmtDur(b.durationSec))}${row('Ø Puls', a.avgHr, b.avgHr, true)}${row('Max-Puls', a.maxHr != null ? Math.round(a.maxHr) : null, b.maxHr != null ? Math.round(b.maxHr) : null, true)}
+    ${row('Erholung Pausen', recov(a) != null ? '−' + recov(a) : null, recov(b) != null ? '−' + recov(b) : null)}
+    ${row('Belastung', a.trimp, b.trimp)}${row('Zeit Z4+Z5', a.zones ? Math.round((a.zones[3] + a.zones[4]) / 60) + ' min' : null, b.zones ? Math.round((b.zones[3] + b.zones[4]) / 60) + ' min' : null)}
+    ${row('Anstrengung', a.rpe ? a.rpe + '/10' : null, b.rpe ? b.rpe + '/10' : null)}${row('Körperlich', a.feelBody ? FEEL[a.feelBody - 1][0] : null, b.feelBody ? FEEL[b.feelBody - 1][0] : null)}
+    ${row('HRV', a.hrv ? a.hrv.rmssd + ' ms' : null, b.hrv ? b.hrv.rmssd + ' ms' : null)}</table>`;
+  if (a.rounds || b.rounds) {
+    const n = Math.max((a.rounds || []).length, (b.rounds || []).length);
+    h += `<h3 style="margin-top:14px">Runde für Runde</h3><table class="cmp"><tr><th>Runde</th><th>Max · Abfall</th><th>Max · Abfall</th></tr>`;
+    for (let i = 0; i < n; i++) { const ra = (a.rounds || [])[i], rb = (b.rounds || [])[i]; const f = r => r ? `${Math.round(r.max)} · ${r.drop != null ? '−' + r.drop : '–'}` : '–'; h += `<tr><td>${i + 1}</td><td>${f(ra)}</td><td>${f(rb)}</td></tr>`; }
+    h += `</table>`;
+  }
+  h += `<p class="hint">Grün = neuere Einheit besser (niedrigerer Puls bei gleicher Arbeit, schnellere Erholung).</p></div>`;
+  $('#anaCmp').innerHTML = h; $('#anaCmp').scrollIntoView({ behavior: 'smooth' });
+  if (ha || hb) requestAnimationFrame(() => {
+    const cv = $('#cmpChart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 190; cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+    const L = 30, R = 6, T = 6, B = 20, pw = W - L - R, ph = H - T - B;
+    const n = Math.max((ha || []).length, (hb || []).length); const vals = [...(ha || []), ...(hb || [])].filter(v => v != null);
+    const lo = Math.max(40, Math.min(...vals) - 5), hi = Math.max(...vals) + 5;
+    const x = i => L + i / Math.max(1, n - 1) * pw, y = v => T + ph - (v - lo) / (hi - lo) * ph;
+    g.font = '11px Inter, sans-serif'; g.fillStyle = '#7d8590'; g.textAlign = 'right';
+    for (let v = Math.ceil(lo / 20) * 20; v <= hi; v += 20) { g.fillText(v, L - 5, y(v) + 4); g.strokeStyle = '#ffffff10'; g.beginPath(); g.moveTo(L, y(v)); g.lineTo(W - R, y(v)); g.stroke(); }
+    g.textAlign = 'center'; const step = n * 5 > 3600 ? 900 : 300;
+    for (let s = 0; s <= n * 5; s += step) g.fillText(Math.round(s / 60) + "'", x(s / 5), H - 5);
+    [[ha, '#7d8590'], [hb, '#ff6b3d']].forEach(([arr, c]) => { if (!arr) return; g.strokeStyle = c; g.lineWidth = 2; g.beginPath(); let st = false; arr.forEach((v, i) => { if (v == null) { st = false; return; } st ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); st = true; }); g.stroke(); });
+  });
+}
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -2147,7 +2304,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2107';
+const APP_VERSION = '2026.11.17-2114';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
