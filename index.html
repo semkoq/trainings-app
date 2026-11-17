@@ -99,6 +99,27 @@ table.cmp{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeri
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#2a313b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:400px){.hv span:not(.load):first-child{display:none}}
+/* navigation & start */
+[hidden]{display:none!important}
+.hrow{display:flex;justify-content:space-between;align-items:center}
+.gear{background:none;border:0;color:var(--mut);font-size:24px;cursor:pointer;padding:2px 6px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:#1d222a;border:2px solid transparent;border-radius:14px;padding:12px 4px 10px;color:var(--txt);font:600 13px Inter;cursor:pointer;text-align:center}
+.tile i{display:block;font-style:normal;font-size:28px;margin-bottom:4px}
+.tile.on{border-color:var(--acc);background:#ff6b3d18}
+.btn.go{font:700 24px 'Barlow Condensed';letter-spacing:2px;padding:18px;border-radius:16px;margin-top:14px}
+.btn.go:disabled{background:#3a414c}
+.gurt{font-weight:600;color:var(--good);text-align:center}
+.grid.g2{grid-template-columns:repeat(2,1fr)!important}
+.lvtop{display:flex;justify-content:space-between;align-items:center;padding:12px 2px 4px}
+.lvtop b{font:700 22px 'Barlow Condensed';letter-spacing:1px}
+.lvtop .lvstatus{margin:0;font-size:12px}
+#countdown{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#cdNum{font:700 200px/1 'Barlow Condensed';color:var(--acc);animation:cdpop 1s ease-out infinite}
+#cdTxt{color:var(--mut);font:600 18px Inter;margin-top:10px}
+@keyframes cdpop{0%{transform:scale(1.4);opacity:.3}30%{transform:scale(1);opacity:1}}
+.view{animation:fadein .18s ease-out}
+@keyframes fadein{from{opacity:.4;transform:translateX(var(--from,0))}to{opacity:1;transform:none}}
 /* pager + intervall */
 .pagetabs{display:flex;gap:6px;justify-content:center;margin-top:12px}
 .pagetabs button{border:1px solid var(--line);background:#1d222a;color:var(--mut);border-radius:20px;padding:6px 14px;font:600 13px Inter;cursor:pointer}
@@ -148,27 +169,42 @@ body{padding-top:env(safe-area-inset-top)}
 <body>
 <div class="wrap">
 <header>
-  <h1>Trainings<span>-App</span></h1>
-  <nav class="tabs"><button class="tab on" data-v="live">Live</button><button class="tab" data-v="new">Datei</button><button class="tab" data-v="history">Verlauf</button><button class="tab" data-v="profile">Profil</button></nav>
+  <div class="hrow"><h1>Trainings<span>-App</span></h1><button class="gear" id="gearBtn" aria-label="Einstellungen">⚙</button></div>
+  <nav class="tabs" id="mainTabs"><button class="tab on" data-v="history">Verlauf</button><button class="tab" data-v="start">Training</button></nav>
 </header>
 
-<section class="view" id="view-live">
+<section class="view" id="view-start" hidden>
   <div class="card" id="lvBt" hidden><b>Bluetooth geht hier nicht.</b><p class="hint">Öffne die App in <b>Chrome auf deinem Android-Handy</b>. Auf dem iPhone und in manchen Browsern ist Bluetooth für Web-Apps gesperrt.</p></div>
   <div class="card" id="lvDraft" hidden></div>
+  <div class="card">
+    <h3>Was trainierst du?</h3>
+    <div class="tiles" id="stTiles"></div>
+    <div style="margin-top:12px"><input id="lvNote" placeholder="Notiz (optional), z.B. 5×3 min Sparring"></div>
+  </div>
+  <div class="card">
+    <h3>Brustgurt</h3>
+    <div id="stConnBox"></div>
+    <div class="lvstatus" id="stStatus">Gurt anlegen, Kontakte anfeuchten, dann verbinden.</div>
+  </div>
+  <button class="btn go" id="stGo">▶ START</button>
+  <p class="hint" style="text-align:center">Tipp: Wenn die Wahoo-App gleichzeitig mit dem Gurt verbunden ist, Wahoo kurz schließen.</p>
+</section>
+
+<section class="view" id="view-live" hidden>
+  <div class="lvtop"><b id="lvType">KICKBOXEN</b><span id="lvStatus" class="lvstatus"></span></div>
   <div class="pagetabs" id="pgTabs"><button class="on" data-p="0">Puls</button><button data-p="1">Intervall-Timer</button></div>
   <div class="pager" id="pager">
   <div class="card page">
     <div id="lvHrBox"><div id="lvHr">--</div><small>bpm</small><div id="lvZone">nicht verbunden</div></div>
     <div id="lvTime">00:00</div>
-    <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="grid g2">
       <div class="stat"><div class="l">Ø Puls</div><div class="v" id="lvAvg">–</div></div>
       <div class="stat"><div class="l">Max</div><div class="v" id="lvMax">–</div></div>
       <div class="stat"><div class="l">kcal</div><div class="v" id="lvKcal">0</div></div>
       <div class="stat"><div class="l">Belastung</div><div class="v" id="lvLoad">0</div></div>
     </div>
     <div id="lvBtns" style="margin-top:4px"></div>
-    <div class="lvstatus" id="lvStatus">Gurt anlegen, Kontakte anfeuchten, dann verbinden.</div>
-    <p class="hint swipehint">← Wischen für Intervall-Timer</p>
+    <p class="hint swipehint">Wischen ← für Intervall-Timer</p>
   </div>
   <div class="card page" id="ivPage">
     <div id="ivSetup">
@@ -194,15 +230,11 @@ body{padding-top:env(safe-area-inset-top)}
   </div>
   <div class="card"><h3>Puls <div class="seg" id="lvView"><button data-r="5">5 min</button><button data-r="all" class="on">Alles</button></div></h3><canvas id="lvChart" height="170"></canvas></div>
   <div class="card"><h3>Zeit in Zonen</h3><div id="lvZones"></div></div>
-  <div class="card">
-    <div class="lbl">Was trainierst du?</div>
-    <div class="chips" id="lvTypeChips"></div>
-    <div style="margin-top:12px"><input id="lvNote" placeholder="Notiz (optional), z.B. 5×3 min Sparring"></div>
-    <p class="hint">Tipp: Bildschirm bleibt während des Trainings an. Wenn die Wahoo-App gleichzeitig mit dem Gurt verbunden ist, kann es Probleme geben – dann Wahoo kurz schließen.</p>
-  </div>
 </section>
+<div id="countdown" hidden><div id="cdNum">3</div><div id="cdTxt">Mach dich bereit</div></div>
 
 <section class="view" id="view-new" hidden>
+  <button class="back" id="impBack">‹ Einstellungen</button>
   <div class="card">
     <div class="lbl">Was hast du trainiert?</div>
     <div class="chips" id="typeChips"></div>
@@ -232,15 +264,17 @@ body{padding-top:env(safe-area-inset-top)}
 
 <section class="view" id="view-session" hidden></section>
 
-<section class="view" id="view-history" hidden>
-  <div class="card" id="yearCard" hidden></div>
+<section class="view" id="view-history">
   <div class="card"><h3>Diese Woche</h3><div id="weekCard"></div></div>
+  <div id="histList"></div>
   <div class="card" id="trendCard" hidden><h3>Trend</h3><canvas id="trendChart" height="170"></canvas>
     <div class="legend"><span><i style="background:#ff6b3d88"></i>Belastung</span><span><i style="background:#3ddc84"></i>Erholung (höher = fitter)</span></div></div>
-  <div id="histList"></div>
+  <div class="card" id="yearCard" hidden></div>
 </section>
 
 <section class="view" id="view-profile" hidden>
+  <button class="back" id="setBack">‹ Zurück</button>
+  <div class="card"><h3>Trainings importieren</h3><p class="hint" style="margin-top:0">Alte Trainings als .fit, .tcx, .gpx, .csv, ZIP oder intervals.icu-Übersicht hochladen.</p><button class="btn ghost" id="toImport">Dateien hochladen</button></div>
   <div class="card">
     <h3>Dein Profil</h3>
     <p class="hint" style="margin-top:0">Wird für Kalorien, Zonen und Belastung gebraucht. Je genauer, desto besser die Analyse.</p>
@@ -570,12 +604,31 @@ const ready = (async () => {
 })();
 
 // ---------- Tabs ----------
-function showView(v) {
-  document.querySelectorAll('.view').forEach(x => x.hidden = x.id !== 'view-' + v);
-  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.v === v || (v === 'session' && x.dataset.v === (state.current && state.current.source === 'live' ? 'live' : 'new') && state.current && state.current._new)));
+function showView(v, dir) {
+  document.querySelectorAll('.view').forEach(x => { x.hidden = x.id !== 'view-' + v; if (!x.hidden) x.style.setProperty('--from', dir ? (dir > 0 ? '40px' : '-40px') : '0'); });
+  document.querySelector('header').hidden = v === 'live';
+  $('#mainTabs').hidden = !(v === 'history' || v === 'start');
+  document.querySelectorAll('#mainTabs .tab').forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  state.view = v;
   window.scrollTo(0, 0);
 }
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => { if (t.dataset.v === 'history') renderHistory(); showView(t.dataset.v); });
+document.querySelectorAll('#mainTabs .tab').forEach(t => t.onclick = () => { if (t.dataset.v === 'history') renderHistory(); showView(t.dataset.v, t.dataset.v === 'start' ? 1 : -1); });
+$('#gearBtn').onclick = () => showView('profile');
+$('#setBack').onclick = () => { renderHistory(); showView('history'); };
+$('#toImport').onclick = () => showView('new');
+$('#impBack').onclick = () => showView('profile');
+// Wischen zwischen Verlauf und Training
+(() => {
+  let x0 = null, y0 = null;
+  document.addEventListener('touchstart', e => { if (state.view !== 'history' && state.view !== 'start') { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.pager')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && state.view === 'history') showView('start', 1);
+    else if (dx > 0 && state.view === 'start') { renderHistory(); showView('history', -1); }
+  }, { passive: true });
+})();
 
 // ---------- Typ-Auswahl ----------
 function renderTypeChips(el, sel, onPick) {
@@ -858,7 +911,7 @@ function openSession(s, isNew) {
   }
   v.innerHTML = `
     <div class="shead">
-      <button class="back" id="backBtn">‹ ${isNew ? (s.source === 'live' ? 'Live' : 'Datei') : 'Verlauf'}</button>
+      <button class="back" id="backBtn">‹ ${isNew && s.source !== 'live' && s.source !== 'manuell' ? 'Import' : 'Verlauf'}</button>
       <div class="stype"><select id="sType">${TYPES.map(t => `<option ${t === s.type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="sdate">${fmtDate(s.date)}${s.note ? ' · ' + esc(s.note) : ''}</div>
     </div>
@@ -875,7 +928,7 @@ function openSession(s, isNew) {
     <div class="card" id="aiCard" hidden><h3>KI-Coach</h3><div id="aiOut" class="ai">${s.ai ? md(s.ai) : ''}<p class="hint">Kopiert alle Daten von diesem Training. In Claude einfügen – dann bekommst du eine ausführliche Auswertung mit Tipps.</p></div><button class="btn" id="aiBtn">An Claude schicken</button></div>
     <button class="del" id="delBtn">Training löschen</button>`;
   showView('session');
-  $('#backBtn').onclick = () => { if (isNew) showView(s.source === 'live' ? 'live' : 'new'); else { renderHistory(); showView('history'); } };
+  $('#backBtn').onclick = () => { if (isNew && s.source !== 'live' && s.source !== 'manuell') showView('new'); else { renderHistory(); showView('history'); } };
   $('#sType').onchange = async e => { s.type = e.target.value; try { await store.saveSession(s); } catch (x) { } openSession(s, isNew); };
   const sm = $('#setMax'); if (sm) sm.onclick = async () => { state.profile.max = s.maxHr; try { await store.saveProfile(state.profile); } catch (x) { } fillProfileForm(); toast('Max-Puls aktualisiert'); openSession(s, isNew); };
   let armed = false;
@@ -956,7 +1009,7 @@ function renderHistory() {
   const w = weekLoad(new Date().toISOString());
   const ratioTxt = w.ratio == null ? 'Noch zu wenig Verlauf' : w.ratio > 1.5 ? 'Deutlich mehr als sonst – aufpassen' : w.ratio > 1.3 ? 'Etwas mehr als sonst' : w.ratio < 0.8 ? 'Weniger als sonst' : 'Im grünen Bereich';
   $('#weekCard').innerHTML = `<div class="grid three"><div class="stat"><div class="l">Trainings 7 Tage</div><div class="v">${w.count}</div></div><div class="stat"><div class="l">Belastung 7 Tage</div><div class="v">${w.acute}</div></div><div class="stat"><div class="l">Ø pro Woche</div><div class="v">${w.chronic}</div></div></div><p class="hint">${ratioTxt}</p>`;
-  if (!ss.length) { el.innerHTML = '<p class="empty">Noch keine Trainings. Starte unter „Live" ein Training oder lade unter „Datei" alte Trainings hoch.</p>'; $('#trendCard').hidden = true; $('#yearCard').hidden = true; return; }
+  if (!ss.length) { el.innerHTML = '<p class="empty">Noch keine Trainings. Wisch nach links zu „Training“ und starte dein erstes Training. Alte Trainings kannst du über ⚙ importieren.</p>'; $('#trendCard').hidden = true; $('#yearCard').hidden = true; return; }
   renderYear();
   el.innerHTML = ss.map(s => `<button class="hitem" data-id="${s.id}"><div><b>${esc(s.type)}</b><span>${fmtDate(s.date)}</span></div><div class="hv"><span>${fmtDur(s.durationSec)}</span><span>${s.kcal} kcal</span><span class="load l${['Locker', 'Moderat', 'Hart', 'Sehr hart', 'Extrem'].indexOf(loadLabel(s.trimp))}">${s.trimp}</span></div></button>`).join('');
   el.querySelectorAll('.hitem').forEach(b => b.onclick = () => openSession(ss.find(x => x.id === b.dataset.id), false));
@@ -1044,7 +1097,7 @@ const BT_OK = 'bluetooth' in navigator;
 
 function liveSec() { return Math.floor((live.activeMs + (live.running && !live.paused ? Date.now() - live.segStart : 0)) / 1000); }
 
-function liveStatus(txt, cls) { const el = $('#lvStatus'); el.textContent = txt; el.className = 'lvstatus ' + (cls || ''); }
+function liveStatus(txt, cls) { for (const id of ['#lvStatus', '#stStatus']) { const el = $(id); if (el) { el.textContent = txt; el.className = 'lvstatus ' + (cls || ''); } } }
 
 async function liveConnect() {
   if (!BT_OK) { toast('Bluetooth geht nur in Chrome auf Android.'); return; }
@@ -1210,21 +1263,36 @@ async function liveStop(e) {
     const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim(), live.rounds, live.rr, live.rrT);
     clearDraft(); $('#lvNote').value = '';
     await saveAndOpen(s);
-  } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); }
+  } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); showView('start'); }
 }
 
 function fmtClock(sec) { const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return (h ? h + ':' + String(m).padStart(2, '0') : String(m).padStart(2, '0')) + ':' + String(s).padStart(2, '0'); }
 
 function renderLiveButtons() {
+  const cb = $('#stConnBox');
+  if (!BT_OK) cb.innerHTML = '';
+  $('#stStatus').hidden = live.connected;
+  if (!BT_OK) { }
+  else if (live.connected) { cb.innerHTML = `<div class="gurt">✓ ${esc(live.dev && live.dev.name || 'Brustgurt')} verbunden${live.bat != null ? ` · Akku ${live.bat} %` : ''}</div><button class="link lvsmall" id="lvDisc">Gurt trennen</button>`; $('#lvDisc').onclick = liveDisconnect; }
+  else { cb.innerHTML = `<button class="btn ghost" id="lvConn">🔗 Brustgurt verbinden</button>`; $('#lvConn').onclick = liveConnect; }
+  $('#stGo').disabled = !live.connected;
   const b = $('#lvBtns');
-  if (!BT_OK) { b.innerHTML = ''; return; }
-  if (!live.connected && !live.running) { b.innerHTML = `<button class="btn" id="lvConn">Brustgurt verbinden</button>`; $('#lvConn').onclick = liveConnect; return; }
-  if (!live.running) {
-    b.innerHTML = `<button class="btn big" id="lvStart">▶ Training starten</button><button class="link lvsmall" id="lvDisc">Gurt trennen</button>`;
-    $('#lvStart').onclick = liveStart; $('#lvDisc').onclick = liveDisconnect; return;
-  }
-  b.innerHTML = `<div class="lvrow"><button class="btn ghost" id="lvPause">${live.paused ? '▶ Weiter' : '❚❚ Pause'}</button><button class="btn stop" id="lvStop">■ Beenden</button></div>`;
-  $('#lvPause').onclick = livePause; $('#lvStop').onclick = liveStop;
+  b.innerHTML = live.running ? `<div class="lvrow"><button class="btn ghost" id="lvPause">${live.paused ? '▶ Weiter' : '❚❚ Pause'}</button><button class="btn stop" id="lvStop">■ Beenden</button></div>` : '';
+  if (live.running) { $('#lvPause').onclick = livePause; $('#lvStop').onclick = liveStop; }
+}
+
+const TYPE_ICONS = { Kickboxen: '🥊', Sparring: '🥋', Pratzen: '🎯', Sandsack: '💥', Intervalle: '⏱️', Laufen: '🏃', Rudern: '🚣', Kraft: '🏋️', Mobility: '🧘', Sonstiges: '➕' };
+function renderTiles() {
+  $('#stTiles').innerHTML = TYPES.map(t => `<button class="tile ${t === live.type ? 'on' : ''}" data-t="${t}"><i>${TYPE_ICONS[t] || '•'}</i>${t}</button>`).join('');
+  $('#stTiles').querySelectorAll('.tile').forEach(b => b.onclick = () => { live.type = b.dataset.t; try { localStorage.setItem('ta_last_type', live.type); } catch (e) { } renderTiles(); });
+}
+async function countdownStart() {
+  if (!live.connected) { toast('Erst den Brustgurt verbinden.'); return; }
+  audio(); const cd = $('#countdown'); cd.hidden = false;
+  for (const n of [3, 2, 1]) { $('#cdNum').textContent = n; $('#cdNum').style.animation = 'none'; void $('#cdNum').offsetWidth; $('#cdNum').style.animation = ''; beep(1, 1000); await new Promise(r => setTimeout(r, 1000)); }
+  beep(1, 1500, 0.45); cd.hidden = true;
+  $('#lvType').textContent = (TYPE_ICONS[live.type] || '') + ' ' + live.type.toUpperCase();
+  liveStart(); showView('live');
 }
 
 function renderLive() {
@@ -1273,7 +1341,8 @@ function drawLiveChart() {
 
 function initLive() {
   $('#lvBt').hidden = BT_OK;
-  renderTypeChips($('#lvTypeChips'), live.type, t => { live.type = t; });
+  try { const lt = localStorage.getItem('ta_last_type'); if (lt && TYPES.includes(lt)) live.type = lt; } catch (e) { }
+  renderTiles(); $('#stGo').onclick = countdownStart;
   document.querySelectorAll('#lvView button').forEach(b => b.onclick = () => { live.view = b.dataset.r; document.querySelectorAll('#lvView button').forEach(x => x.classList.toggle('on', x === b)); drawLiveChart(); });
   renderLiveButtons(); renderLive();
   // Unterbrochenes Training wiederherstellen
@@ -1287,6 +1356,7 @@ function initLive() {
   window.addEventListener('resize', drawLiveChart);
 }
 initLive();
+state.view = 'history';
 
 // ===================== INTERVALL-TIMER =====================
 const iv = { cfg: { rounds: 5, work: 120, rest: 60 }, on: false, paused: false, phase: 'work', round: 1, end: 0, left: 0, dur: 0, timer: null, lastSec: null, phaseStartSec: 0 };
@@ -1523,7 +1593,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1624';
+const APP_VERSION = '2026.11.17-1633';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
