@@ -99,6 +99,30 @@ table.cmp{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeri
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#2a313b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:400px){.hv span:not(.load):first-child{display:none}}
+/* pager + intervall */
+.pagetabs{display:flex;gap:6px;justify-content:center;margin-top:12px}
+.pagetabs button{border:1px solid var(--line);background:#1d222a;color:var(--mut);border-radius:20px;padding:6px 14px;font:600 13px Inter;cursor:pointer}
+.pagetabs button.on{background:#2a313b;color:var(--txt);border-color:#3a424d}
+.pager{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:flex-start}
+.pager::-webkit-scrollbar{display:none}
+.pager .page{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;margin-top:8px}
+.swipehint{text-align:center;font-size:12px}
+.ivset{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:16px}
+.step{display:flex;align-items:center;gap:14px}
+.step button{width:44px;height:44px;border-radius:12px;border:0;background:#252b33;color:var(--txt);font:600 24px Inter;cursor:pointer}
+.step b{font:700 28px 'Barlow Condensed';min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+#ivRun{text-align:center;border-radius:14px;padding:6px 4px;transition:background .3s}
+#ivRun.work{--pc:#ff6b3d}#ivRun.rest{--pc:#3ddc84}#ivRun.done{--pc:#3fa7ff}
+#ivPhase{font:700 34px/1 'Barlow Condensed';letter-spacing:1px;color:var(--pc);margin-top:6px}
+#ivRound{color:var(--mut);font-weight:600;margin-top:4px}
+#ivClock{font:700 120px/1 'Barlow Condensed';color:var(--pc);font-variant-numeric:tabular-nums;margin-top:6px}
+#ivClock.last{animation:pulse .5s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.06)}}
+.ivbar{height:10px;background:#0f1216;border-radius:6px;overflow:hidden;margin-top:8px}.ivbar i{display:block;height:100%;width:0;background:var(--pc);transition:width .25s linear}
+#ivHr{margin-top:10px;color:var(--mut)}#ivHr b{font:700 34px 'Barlow Condensed';color:var(--txt);vertical-align:-3px}
+.rtab{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.rtab th{color:var(--mut);font-size:12px;font-weight:600;text-align:right;padding:4px}.rtab th:first-child,.rtab td:first-child{text-align:left}
+.rtab td{padding:7px 4px;border-top:1px solid var(--line);text-align:right}
 /* live */
 #lvHrBox{--zc:#39414c;text-align:center;border:2px solid var(--zc);border-radius:18px;padding:14px 10px 12px;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--zc) 22%,transparent),transparent 70%);transition:border-color .4s}
 #lvHr{font:700 96px/1 'Barlow Condensed',sans-serif;color:var(--zc);transition:color .4s;font-variant-numeric:tabular-nums}
@@ -131,7 +155,9 @@ body{padding-top:env(safe-area-inset-top)}
 <section class="view" id="view-live">
   <div class="card" id="lvBt" hidden><b>Bluetooth geht hier nicht.</b><p class="hint">Öffne die App in <b>Chrome auf deinem Android-Handy</b>. Auf dem iPhone und in manchen Browsern ist Bluetooth für Web-Apps gesperrt.</p></div>
   <div class="card" id="lvDraft" hidden></div>
-  <div class="card">
+  <div class="pagetabs" id="pgTabs"><button class="on" data-p="0">Puls</button><button data-p="1">Intervall-Timer</button></div>
+  <div class="pager" id="pager">
+  <div class="card page">
     <div id="lvHrBox"><div id="lvHr">--</div><small>bpm</small><div id="lvZone">nicht verbunden</div></div>
     <div id="lvTime">00:00</div>
     <div class="grid" style="grid-template-columns:repeat(4,1fr)">
@@ -142,6 +168,29 @@ body{padding-top:env(safe-area-inset-top)}
     </div>
     <div id="lvBtns" style="margin-top:4px"></div>
     <div class="lvstatus" id="lvStatus">Gurt anlegen, Kontakte anfeuchten, dann verbinden.</div>
+    <p class="hint swipehint">← Wischen für Intervall-Timer</p>
+  </div>
+  <div class="card page" id="ivPage">
+    <div id="ivSetup">
+      <h3>Intervall-Timer</h3>
+      <div class="ivset"><span>Runden</span><div class="step"><button data-k="rounds" data-d="-1">−</button><b id="ivRounds">5</b><button data-k="rounds" data-d="1">+</button></div></div>
+      <div class="ivset"><span>Belastung</span><div class="step"><button data-k="work" data-d="-15">−</button><b id="ivWork">2:00</b><button data-k="work" data-d="15">+</button></div></div>
+      <div class="ivset"><span>Pause</span><div class="step"><button data-k="rest" data-d="-15">−</button><b id="ivRest">1:00</b><button data-k="rest" data-d="15">+</button></div></div>
+      <div class="chips" id="ivPresets" style="margin-top:12px"></div>
+      <p class="hint" id="ivTotal"></p>
+      <button class="btn big" id="ivStart">▶ Intervalle starten</button>
+      <p class="hint">Piept 2× bei 10 Sek, dann bei 3-2-1 jede Sekunde und am Ende 4× schnell. Läuft das Training schon, werden die Runden mit aufgezeichnet.</p>
+    </div>
+    <div id="ivRun" hidden>
+      <div id="ivPhase">BELASTUNG</div>
+      <div id="ivRound">Runde 1 / 5</div>
+      <div id="ivClock">2:00</div>
+      <div class="ivbar"><i id="ivProg"></i></div>
+      <div id="ivHr"><b id="ivHrV">--</b> bpm <span id="ivHrZ"></span></div>
+      <div class="lvrow" style="margin-top:12px"><button class="btn ghost" id="ivPause">❚❚ Pause</button><button class="btn ghost" id="ivSkip">Weiter ⏭</button></div>
+      <button class="btn stop" id="ivStop">■ Timer stoppen</button>
+    </div>
+  </div>
   </div>
   <div class="card"><h3>Puls <div class="seg" id="lvView"><button data-r="5">5 min</button><button data-r="all" class="on">Alles</button></div></h3><canvas id="lvChart" height="170"></canvas></div>
   <div class="card"><h3>Zeit in Zonen</h3><div id="lvZones"></div></div>
@@ -809,6 +858,7 @@ function openSession(s, isNew) {
       return `<div class="zrow"><span class="zl">${ZONE_NAMES[i]}</span><div class="zbar"><i style="width:${pct.toFixed(1)}%;background:${ZONE_COLORS[i]}"></i></div><span class="zv">${fmtDur(z).replace(' min', '').replace(' h', 'h')}</span></div>`;
     }).join('')}</div>` : ''}
     ${s.efforts && s.efforts.length ? `<div class="card"><h3>Belastungsphasen</h3><div class="efforts">${s.efforts.map((e, i) => `<div class="ef"><b>${i + 1}</b><span>${fmtDur(e.d).replace(' min', '')}</span><span>Peak ${e.p}</span><span>${e.r != null ? '−' + e.r : '–'}</span></div>`).join('')}</div><p class="hint">Dauer · Spitzenpuls · Pulsabfall in der Pause danach</p></div>` : ''}
+    ${s.rounds ? `<div class="card"><h3>Runden</h3><table class="rtab"><tr><th>Runde</th><th>Dauer</th><th>Ø Puls</th><th>Max</th><th>Abfall</th></tr>${s.rounds.map(r => `<tr><td>${r.r}</td><td>${fmtClock(r.d)}</td><td>${r.avg}</td><td>${r.max}</td><td style="color:var(--good)">${r.drop != null ? '−' + r.drop : '–'}</td></tr>`).join('')}</table><p class="hint">Abfall = wie stark dein Puls in der ersten Pausenminute fällt. Mehr = besser erholt.</p></div>` : ''}
     ${cmp}
     <div class="card" id="aiCard" hidden><h3>KI-Coach</h3><div id="aiOut" class="ai">${s.ai ? md(s.ai) : ''}<p class="hint">Kopiert alle Daten von diesem Training. In Claude einfügen – dann bekommst du eine ausführliche Auswertung mit Tipps.</p></div><button class="btn" id="aiBtn">An Claude schicken</button></div>
     <button class="del" id="delBtn">Training löschen</button>`;
@@ -868,7 +918,7 @@ Profil: Alter ${state.profile.age}, Gewicht ${state.profile.weight || 'unbekannt
 Zonen: Z1 <60 %, Z2 60–70 %, Z3 70–80 %, Z4 80–90 %, Z5 >90 % vom Max-Puls. Belastungsphasen = Abschnitte ≥85 % Max-Puls ≥20 s.
 
 HEUTIGES TRAINING: ${JSON.stringify(strip(s))}
-Phasen (Dauer s, Peak, Pulsabfall danach): ${JSON.stringify((s.efforts || []).map(e => [e.d, e.p, e.r]))}
+${s.rounds ? 'Intervall-Runden (Runde, Dauer s, Ø Puls, Max, Pulsabfall 1. Pausenminute): ' + JSON.stringify(s.rounds.map(r => [r.r, r.d, r.avg, r.max, r.drop])) + '\n' : ''}Phasen (Dauer s, Peak, Pulsabfall danach): ${JSON.stringify((s.efforts || []).map(e => [e.d, e.p, e.r]))}
 Pulskurve (alle 30 s): ${curve ? JSON.stringify(curve) : 'keine'}
 Wochenbelastung (TRIMP letzte 7 Tage): ${w.acute}, Schnitt pro Woche (28 Tage): ${w.chronic}
 FRÜHERE TRAININGS (neueste zuerst): ${hist.length ? JSON.stringify(hist) : 'noch keine'}`;
@@ -1050,7 +1100,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 function liveStart() {
   if (!live.connected) { toast('Erst den Brustgurt verbinden.'); return; }
-  Object.assign(live, { running: true, paused: false, startedAt: new Date(), activeMs: 0, segStart: Date.now(), samples: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0, lastZone: -1 });
+  Object.assign(live, { running: true, paused: false, startedAt: new Date(), activeMs: 0, segStart: Date.now(), samples: [], rounds: [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0, lastZone: -1 });
   clearInterval(live.tick); live.tick = setInterval(liveTick, 1000);
   keepAwake(true); renderLiveButtons(); renderLive();
 }
@@ -1078,11 +1128,11 @@ function liveTick() {
 }
 
 function saveDraft() {
-  try { localStorage.setItem('ta_live_draft', JSON.stringify({ startedAt: live.startedAt, type: live.type, note: $('#lvNote').value, samples: live.samples })); } catch (e) { }
+  try { localStorage.setItem('ta_live_draft', JSON.stringify({ startedAt: live.startedAt, type: live.type, note: $('#lvNote').value, samples: live.samples, rounds: live.rounds })); } catch (e) { }
 }
 function clearDraft() { try { localStorage.removeItem('ta_live_draft'); } catch (e) { } }
 
-async function samplesToSession(samples, startedAt, type, note) {
+async function samplesToSession(samples, startedAt, type, note, rounds) {
   const arr = toSeries(samples);
   if (arr.filter(x => x != null).length < 60) throw new Error('Zu kurz – unter 1 Minute Pulsdaten.');
   const p = state.profile, res = analyzeSeries(arr, p);
@@ -1091,8 +1141,26 @@ async function samplesToSession(samples, startedAt, type, note) {
     date: new Date(startedAt).toISOString(), type, note: note || '', source: 'live',
     ...res, kcalDevice: null,
     prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
-    hr: { step: 5, v: downsample(arr, 5) }, ai: null, created: new Date().toISOString()
+    hr: { step: 5, v: downsample(arr, 5) }, ai: null, created: new Date().toISOString(),
+    rounds: roundStats(arr, rounds)
   };
+}
+function roundStats(arr, rounds) {
+  if (!rounds || !rounds.length) return null;
+  const out = [];
+  for (const r of rounds.filter(x => x.phase === 'work')) {
+    const seg = arr.slice(r.start, r.end + 1).filter(x => x != null);
+    if (seg.length < 5) continue;
+    const rest = rounds.find(x => x.phase === 'rest' && x.round === r.round);
+    let drop = null;
+    if (rest) {
+      const endHr = Math.max(...arr.slice(Math.max(r.start, r.end - 10), r.end + 1).filter(x => x != null));
+      const rs = arr.slice(rest.start, Math.min(rest.end, rest.start + 60) + 1).filter(x => x != null);
+      if (rs.length >= 20 && isFinite(endHr)) drop = Math.round(endHr - Math.min(...rs));
+    }
+    out.push({ r: r.round, d: r.end - r.start, avg: Math.round(seg.reduce((a, b) => a + b, 0) / seg.length), max: Math.max(...seg), drop });
+  }
+  return out.length ? out : null;
 }
 
 let stopArmed = false;
@@ -1105,7 +1173,8 @@ async function liveStop(e) {
   renderLiveButtons(); renderLive();
   try {
     await ready;
-    const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim());
+    if (iv.on) ivStop(true);
+    const s = await samplesToSession(live.samples, live.startedAt, live.type, $('#lvNote').value.trim(), live.rounds);
     clearDraft(); $('#lvNote').value = '';
     await saveAndOpen(s);
   } catch (err) { clearDraft(); toast(err.message || 'Konnte nicht gespeichert werden.'); }
@@ -1179,12 +1248,131 @@ function initLive() {
   if (d && d.samples && d.samples.length >= 60) {
     const c = $('#lvDraft'); c.hidden = false;
     c.innerHTML = `<p><b>Unterbrochenes Training gefunden</b> (${fmtDate(d.startedAt)}, ${fmtClock(d.samples[d.samples.length - 1].t)}).</p><div class="lvrow"><button class="btn" id="drSave">Speichern</button><button class="btn ghost" id="drDel">Verwerfen</button></div>`;
-    $('#drSave').onclick = async () => { try { await ready; const s = await samplesToSession(d.samples, d.startedAt, d.type || 'Sonstiges', d.note); clearDraft(); c.hidden = true; await saveAndOpen(s); } catch (e) { toast(e.message); } };
+    $('#drSave').onclick = async () => { try { await ready; const s = await samplesToSession(d.samples, d.startedAt, d.type || 'Sonstiges', d.note, d.rounds); clearDraft(); c.hidden = true; await saveAndOpen(s); } catch (e) { toast(e.message); } };
     $('#drDel').onclick = () => { clearDraft(); c.hidden = true; };
   } else if (d) clearDraft();
   window.addEventListener('resize', drawLiveChart);
 }
 initLive();
+
+// ===================== INTERVALL-TIMER =====================
+const iv = { cfg: { rounds: 5, work: 120, rest: 60 }, on: false, paused: false, phase: 'work', round: 1, end: 0, left: 0, dur: 0, timer: null, lastSec: null, phaseStartSec: 0 };
+try { Object.assign(iv.cfg, JSON.parse(localStorage.getItem('ta_iv_cfg') || '{}')); } catch (e) { }
+const PRESETS = [['5× 2:00 / 1:00', 5, 120, 60], ['3× 3:00 / 1:00', 3, 180, 60], ['5× 3:00 / 1:00', 5, 180, 60], ['8× 0:20 / 0:10', 8, 20, 10], ['10× 1:00 / 0:30', 10, 60, 30]];
+
+let actx = null;
+function audio() { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { } return actx; }
+function beep(times = 1, freq = 1000, len = 0.12, gap = 0.08) {
+  const a = audio(); if (!a) return;
+  let t = a.currentTime + 0.02;
+  for (let i = 0; i < times; i++) {
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = 'square'; o.frequency.value = freq; o.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.01); g.gain.setValueAtTime(0.35, t + len - 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.start(t); o.stop(t + len + 0.02); t += len + gap;
+  }
+  if (navigator.vibrate) navigator.vibrate(times > 1 ? Array(times * 2 - 1).fill(0).map((_, i) => i % 2 ? 60 : 90) : 120);
+}
+
+function ivFmt(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function ivRenderSetup() {
+  const c = iv.cfg;
+  $('#ivRounds').textContent = c.rounds; $('#ivWork').textContent = ivFmt(c.work); $('#ivRest').textContent = ivFmt(c.rest);
+  const tot = c.rounds * c.work + (c.rounds - 1) * c.rest;
+  $('#ivTotal').textContent = `Gesamt: ${ivFmt(tot)} min`;
+  $('#ivPresets').innerHTML = PRESETS.map(([l, r, w, p]) => `<button class="chip ${c.rounds === r && c.work === w && c.rest === p ? 'on' : ''}" data-r="${r}" data-w="${w}" data-p="${p}">${l}</button>`).join('');
+  $('#ivPresets').querySelectorAll('.chip').forEach(b => b.onclick = () => { Object.assign(iv.cfg, { rounds: +b.dataset.r, work: +b.dataset.w, rest: +b.dataset.p }); ivSave(); ivRenderSetup(); });
+}
+function ivSave() { try { localStorage.setItem('ta_iv_cfg', JSON.stringify(iv.cfg)); } catch (e) { } }
+document.querySelectorAll('#ivSetup .step button').forEach(b => b.onclick = () => {
+  const k = b.dataset.k, d = +b.dataset.d, c = iv.cfg;
+  if (k === 'rounds') c.rounds = Math.min(30, Math.max(1, c.rounds + d));
+  else { const step = Math.abs(d) === 15 && c[k] + d < 60 && c[k] + d > 0 ? Math.sign(d) * 5 : d; c[k] = Math.min(1200, Math.max(k === 'rest' ? 0 : 5, c[k] + step)); }
+  ivSave(); ivRenderSetup();
+});
+
+function ivPhaseStart(phase, round) {
+  const c = iv.cfg;
+  iv.phase = phase; iv.round = round; iv.dur = phase === 'work' ? c.work : c.rest;
+  iv.end = Date.now() + iv.dur * 1000; iv.lastSec = null;
+  iv.phaseStartSec = live.running ? liveSec() : null;
+  $('#ivRun').className = phase;
+}
+function ivLog() {
+  if (live.running && iv.phaseStartSec != null) {
+    const end = liveSec();
+    if (end - iv.phaseStartSec >= 3) live.rounds.push({ round: iv.round, phase: iv.phase, start: iv.phaseStartSec, end });
+  }
+}
+function ivStart() {
+  audio(); beep(1, 1400, 0.35);
+  iv.on = true; iv.paused = false;
+  $('#ivSetup').hidden = true; $('#ivRun').hidden = false;
+  ivPhaseStart('work', 1);
+  clearInterval(iv.timer); iv.timer = setInterval(ivTick, 100);
+  keepAwake(true); ivTick();
+}
+function ivNext() {
+  ivLog();
+  const c = iv.cfg;
+  if (iv.phase === 'work' && iv.round < c.rounds && c.rest > 0) ivPhaseStart('rest', iv.round);
+  else if (iv.phase === 'work' && iv.round < c.rounds) ivPhaseStart('work', iv.round + 1);
+  else if (iv.phase === 'rest') ivPhaseStart('work', iv.round + 1);
+  else { ivDone(); return; }
+}
+function ivDone() {
+  clearInterval(iv.timer); iv.on = false;
+  $('#ivRun').className = 'done'; $('#ivPhase').textContent = 'FERTIG 💪'; $('#ivClock').textContent = '0:00'; $('#ivClock').classList.remove('last');
+  $('#ivRound').textContent = `${iv.cfg.rounds} Runden geschafft`; $('#ivProg').style.width = '100%';
+  $('#ivPause').hidden = true; $('#ivSkip').hidden = true; $('#ivStop').textContent = 'Zurück';
+  if (!live.running) keepAwake(false);
+}
+function ivStop(silent) {
+  if (iv.on) ivLog();
+  clearInterval(iv.timer); iv.on = false; iv.paused = false;
+  $('#ivSetup').hidden = false; $('#ivRun').hidden = true; $('#ivPause').hidden = false; $('#ivSkip').hidden = false;
+  $('#ivStop').textContent = '■ Timer stoppen'; $('#ivPause').textContent = '❚❚ Pause';
+  if (!live.running && !silent) keepAwake(false);
+  ivRenderSetup();
+}
+function ivTick() {
+  if (!iv.on) return;
+  const left = iv.paused ? iv.left : (iv.end - Date.now()) / 1000;
+  const sec = Math.ceil(left);
+  if (!iv.paused && sec !== iv.lastSec) {
+    if (iv.lastSec != null) {
+      if (sec === 10 && iv.dur > 15) beep(2, 1000);
+      else if (sec <= 3 && sec >= 1) beep(1, 1000);
+    }
+    iv.lastSec = sec;
+  }
+  if (!iv.paused && left <= 0) { beep(4, 1500, 0.11, 0.06); ivNext(); return; }
+  $('#ivPhase').textContent = iv.paused ? 'PAUSIERT' : iv.phase === 'work' ? 'BELASTUNG' : 'PAUSE';
+  $('#ivRound').textContent = iv.phase === 'work' ? `Runde ${iv.round} / ${iv.cfg.rounds}` : `Pause · gleich Runde ${iv.round + 1} / ${iv.cfg.rounds}`;
+  $('#ivClock').textContent = ivFmt(left);
+  $('#ivClock').classList.toggle('last', !iv.paused && left <= 3.05);
+  $('#ivProg').style.width = (100 - Math.max(0, left) / iv.dur * 100).toFixed(1) + '%';
+  const fresh = live.hr != null && Date.now() - live.hrAt < 5000;
+  $('#ivHrV').textContent = fresh ? live.hr : '--';
+  $('#ivHrZ').textContent = fresh ? '· ' + ZONE_NAMES[zoneOf(live.hr, state.profile.max)] : '';
+  $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile.max)] : '';
+}
+$('#ivStart').onclick = ivStart;
+$('#ivPause').onclick = () => {
+  if (!iv.on) return;
+  if (iv.paused) { iv.paused = false; iv.end = Date.now() + iv.left * 1000; iv.lastSec = Math.ceil(iv.left); $('#ivPause').textContent = '❚❚ Pause'; }
+  else { iv.left = (iv.end - Date.now()) / 1000; iv.paused = true; $('#ivPause').textContent = '▶ Weiter'; }
+  ivTick();
+};
+$('#ivSkip').onclick = () => { if (iv.on) { beep(1, 1200); ivNext(); } };
+$('#ivStop').onclick = () => ivStop();
+ivRenderSetup();
+
+// Wischen zwischen Puls und Intervall-Timer
+const pager = $('#pager');
+function goPage(i) { pager.scrollTo({ left: i * (pager.clientWidth + 12), behavior: 'smooth' }); }
+$('#pgTabs').querySelectorAll('button').forEach(b => b.onclick = () => goPage(+b.dataset.p));
+pager.addEventListener('scroll', () => { const i = Math.round(pager.scrollLeft / (pager.clientWidth + 12)); $('#pgTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.p === i)); }, { passive: true });
 
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
@@ -1211,7 +1399,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-1610';
+const APP_VERSION = '2026.11.17-1617';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
