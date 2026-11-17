@@ -2218,13 +2218,13 @@ function mainPart(s) {
   const p = s.prof || state.profile, sm = smooth(h, 10), v = sm.filter(x => x != null).sort((a, b) => a - b);
   let res = null;
   if (v.length > 600) {
-    const p90 = v[Math.floor(v.length * 0.9)], thr = Math.max(Math.min(0.85 * p.max, p90), p.rest + 0.6 * (p.max - p.rest));
+    const thr = p.rest + 0.6 * (p.max - p.rest);
     const seg = []; let st = -1, la = -1;
     for (let i = 0; i <= sm.length; i++) { const x = i < sm.length ? sm[i] : null; if (x != null && x >= thr) { if (st < 0) st = i; la = i; } else if (st >= 0 && (x == null || i - la > 10 || i === sm.length)) { if (la - st >= 15) seg.push([st, la]); st = -1; } }
-    if (seg.length >= 3) {
-      const cl = [[seg[0]]]; for (let i = 1; i < seg.length; i++) { if (seg[i][0] - seg[i - 1][1] > 600) cl.push([]); cl[cl.length - 1].push(seg[i]); }
-      const best = cl.reduce((m, c) => c.length > m.length ? c : m);
-      if (best.length >= 3) {
+    if (seg.length) {
+      const cl = [[seg[0]]]; for (let i = 1; i < seg.length; i++) { if (seg[i][0] - seg[i - 1][1] > 720) cl.push([]); cl[cl.length - 1].push(seg[i]); }
+      const hard = c => c.reduce((a, x) => a + x[1] - x[0], 0), best = cl.reduce((m, c) => hard(c) > hard(m) ? c : m);
+      if (hard(best) >= 300) {
         const a = Math.max(0, best[0][0] - 60), b = Math.min(h.length, best[best.length - 1][1] + 90);
         if (h.length - (b - a) > Math.max(300, h.length * 0.1)) {
           const arr = h.slice(a, b);
@@ -2238,7 +2238,7 @@ function mainPart(s) {
 const isFull = () => ana.fullCat && ana.fullCat[ana.cat] != null ? ana.fullCat[ana.cat] : /grundausdauer|zone|locker|mobility|regeneration/i.test(ana.cat || '');
 const useCore = s => (!isFull() && mainPart(s)) || s;
 const fmtMS = sec => { const m = Math.floor(sec / 60); return m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ' h' : m + ' min'; };
-function coreNote(x) { return x._core ? `<p class="hint" style="margin:6px 0 0">✂️ Nur Hauptteil: Minute ${Math.round(x._core.a / 60)}–${Math.round(x._core.b / 60)} (${fmtMS(x._core.b - x._core.a)} von ${fmtMS(x._core.full)}, ${x._core.n} harte Phasen). Aufwärmen/Danach ausgeblendet.</p>` : ''; }
+function coreNote(x) { return x._core ? `<p class="hint" style="margin:6px 0 0">✂️ Nur Hauptteil: Minute ${Math.round(x._core.a / 60)}–${Math.round(x._core.b / 60)} (${fmtMS(x._core.b - x._core.a)} von ${fmtMS(x._core.full)}, ${x._core.n} harte Abschnitte). Aufwärmen/Danach ausgeblendet.</p>` : ''; }
 function renderAnalyse() {
   const used = {}; state.sessions.forEach(s => { if (s.anaCat) used[s.anaCat] = (used[s.anaCat] || 0) + 1; });
   const cats = [...new Set([...anaCats, ...Object.keys(used)])].filter(c => used[c]);
@@ -2489,7 +2489,7 @@ $('#bkFile').onchange = async e => {
 };
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.17-2040';
+const APP_VERSION = '2026.11.17-2042';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
