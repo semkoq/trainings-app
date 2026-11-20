@@ -4229,6 +4229,25 @@ $('#ovGrid').addEventListener('click', e => {
   window.addEventListener('touchmove', e => { if (D.ph) e.preventDefault(); }, { passive: false });
 })();
 
+// ===================== ZURÜCK-GESTE (Android-Geste, Zurück-Taste, Browser-Zurück) =====================
+// Schritt für Schritt zurück: Fenster zu → Bearbeiten beenden → Unterseite verlassen → zum Überblick → erst dann App verlassen
+window.__appBack = () => {
+  if (!$('#scanSheet').hidden) { scClose(); return true; }
+  for (const id of ['bodySheet', 'supSheet', 'foodSheet', 'wSheet', 'fightSheet', 'pastSheet', 'rateSheet']) { const e = document.getElementById(id); if (e && !e.hidden) { e.hidden = true; return true; } }
+  if (OV.edit) { ovEditMode(false); return true; }
+  const v = state.view;
+  if (v === 'live' || !$('#countdown').hidden) { toast('Training läuft – zum Beenden auf Stopp tippen.'); return true; }
+  if (!MAIN.includes(v)) { const sec = $('#view-' + v), b = sec && (sec.querySelector('#backBtn') || sec.querySelector('.back')); if (b) b.click(); else goMain('overview'); return true; }
+  if (v !== 'overview') { goMain('overview'); return true; }
+  return false;
+};
+if (!isNative()) { // Browser / installierte Web-App: Zurück-Geste über den Verlauf abfangen
+  try {
+    history.replaceState({ ta: 0 }, ''); history.pushState({ ta: 1 }, '');
+    window.addEventListener('popstate', () => { if (isNative()) return; if (window.__appBack()) history.pushState({ ta: 1 }, ''); else history.back(); });
+  } catch (e) { }
+}
+
 // ===================== Sicherung =====================
 $('#bkExport').onclick = async () => {
   await ready;
@@ -4278,7 +4297,7 @@ try {
 } catch (e) { }
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.20-1637';
+const APP_VERSION = '2026.11.20-1642';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;

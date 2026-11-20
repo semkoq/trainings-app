@@ -20,6 +20,8 @@ import android.os.ParcelUuid;
 import android.os.PowerManager;
 import android.provider.Settings;
 
+import androidx.activity.OnBackPressedCallback;
+
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
@@ -53,6 +55,17 @@ public class HrPlugin extends Plugin {
         };
         Intent i = getActivity().getIntent();
         if (i != null && i.getData() != null) lastUrl = i.getData().toString();
+        // Zurück-Geste / Zurück-Taste: erst die App fragen (Fenster schließen, Unterseite verlassen, zum Überblick),
+        // nur wenn sie nichts mehr zurückgehen kann, die App in den Hintergrund legen
+        getActivity().getOnBackPressedDispatcher().addCallback(getActivity(), new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                try {
+                    getBridge().getWebView().evaluateJavascript("(function(){try{return window.__appBack&&window.__appBack()?'1':'0'}catch(e){return '0'}})()", v -> {
+                        if (v == null || !v.contains("1")) getActivity().moveTaskToBack(true);
+                    });
+                } catch (Exception e) { getActivity().moveTaskToBack(true); }
+            }
+        });
     }
 
     @Override protected void handleOnNewIntent(Intent intent) {
