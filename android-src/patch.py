@@ -10,11 +10,19 @@ perms = ['android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverF
          'android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30',
          'android.permission.FOREGROUND_SERVICE', 'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE',
          'android.permission.POST_NOTIFICATIONS', 'android.permission.WAKE_LOCK', 'android.permission.VIBRATE',
-         'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS']
+         'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+         'android.permission.CAMERA', 'android.permission.RECEIVE_BOOT_COMPLETED']
 add = ''.join(f'    <uses-permission android:name="{p}" />\n' for p in perms)
 add += '    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />\n'
+add += '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'
 m = m.replace('<application', add + '\n    <application', 1)
 svc = '''        <service android:name=".TrainingService" android:exported="false" android:foregroundServiceType="connectedDevice" />
+        <receiver android:name=".SuppAlarm" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 '''
 m = m.replace('</application>', svc + '    </application>', 1)
 deeplink = '''            <intent-filter>

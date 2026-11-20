@@ -1,3 +1,4 @@
 android-src/node_modules/
 android-src/android/
 android-src/www/
+.test/

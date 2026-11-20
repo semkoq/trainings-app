@@ -176,6 +176,24 @@ public class HrPlugin extends Plugin {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(i); call.resolve();
     }
+    // ---- Supplement-Erinnerungen ----
+    @PluginMethod public void suppSchedule(PluginCall call) {
+        JSArray items = call.getArray("items");
+        SuppAlarm.save(getContext(), items == null ? "[]" : items.toString());
+        SuppAlarm.scheduleAll(getContext());
+        call.resolve();
+    }
+    @PluginMethod public void suppTaken(PluginCall call) {
+        JSObject r = new JSObject();
+        try { r.put("list", new JSArray(SuppAlarm.takeTaken(getContext()))); } catch (Exception e) { r.put("list", new JSArray()); }
+        call.resolve(r);
+    }
+    @PluginMethod public void notifPerm(PluginCall call) {
+        if (Build.VERSION.SDK_INT < 33 || getPermissionState("notif") == PermissionState.GRANTED) { JSObject r = new JSObject(); r.put("granted", true); call.resolve(r); return; }
+        requestPermissionForAlias("notif", call, "notifCb");
+    }
+    @PermissionCallback private void notifCb(PluginCall call) { JSObject r = new JSObject(); r.put("granted", Build.VERSION.SDK_INT < 33 || getPermissionState("notif") == PermissionState.GRANTED); call.resolve(r); }
+
     @SuppressLint("BatteryLife")
     @PluginMethod public void batterySettings(PluginCall call) {
         try {
