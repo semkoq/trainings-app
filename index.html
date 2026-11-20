@@ -714,6 +714,7 @@ html,body{background:#000}
 .wdg.drag{z-index:40;box-shadow:0 18px 40px #000d;transform:scale(1.03);transition:none}
 .wdg.ph{border:1.5px dashed var(--line);border-radius:20px;background:transparent}
 .editing #ovEdit{display:none}
+.ovwait{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}.ovwait span{color:var(--mut);text-align:right}
 #ovDoneBar{position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;background:#18181c;border:1px solid var(--line);border-radius:999px;box-shadow:0 10px 30px #000c;font:12px var(--f-body);color:var(--mut);white-space:nowrap}
 #ovDoneBar button{border:0;border-radius:999px;padding:9px 18px;background:var(--acc);color:var(--on-acc);font:600 13px var(--f-disp);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 #ovTray{margin:14px 0 120px}
@@ -740,6 +741,33 @@ html,body{background:#000}
 .bdtab td:last-child{color:var(--mut)}
 .bdsplit.bal i:first-child{background:var(--z2)}.bdsplit.bal i:last-child{background:var(--z3)}
 .egrid div em{display:block;font:600 11px var(--f-mono);font-style:normal;margin-top:1px}
+/* Körper – Detail-Seite */
+.bdmore{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:14px}.bdmore span{font-size:18px;line-height:1}
+.bdvhead .bdvdate{font:600 20px/1.2 var(--f-disp);margin-top:2px}.bdvsrc{font:12px var(--f-mono);color:var(--mut);margin-top:3px}
+.bdvchips{margin-top:12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.bdvchips::-webkit-scrollbar{display:none}.bdvchips .chip{white-space:nowrap;font-family:var(--f-mono);font-size:12px}
+.bdvhero{display:flex;align-items:center;gap:18px}
+.bdring{width:132px;height:132px;flex:none;border-radius:50%;background:conic-gradient(var(--acc) calc(var(--p)*1%),var(--z2) 0);display:flex;align-items:center;justify-content:center;position:relative}
+.bdring::before{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--card)}
+.bdring>div{position:relative;text-align:center}.bdring b{display:block;font:600 34px/1 var(--f-disp)}.bdring b small{font:14px var(--f-mono);color:var(--mut)}.bdring span{font:10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.bdvhl{display:flex;flex-direction:column;gap:10px;min-width:0}.bdvhl span{display:block;font:500 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.bdvhl b{font:600 26px/1.1 var(--f-disp)}.bdvhl b small{font:12px var(--f-mono);color:var(--mut)}
+.bdleg{display:flex;align-items:center;gap:7px;font:12px var(--f-mono);color:var(--mut)}.bdleg i{width:9px;height:9px;border-radius:2px}.bdleg i.a{background:var(--z2)}.bdleg i.b{background:var(--acc)}
+.mrow{padding:14px 0;border-top:1px solid var(--line)}.card h3+.mrow{border-top:0;padding-top:6px}
+.mtop{display:flex;justify-content:space-between;align-items:center}.mn{font:500 13px var(--f-body);color:var(--mut)}.mst{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.mval{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:2px}.mval b{font:600 28px/1.1 var(--f-disp);font-variant-numeric:tabular-nums}.mval small{font:12px var(--f-mono);color:var(--mut)}.mval em{font:600 11.5px var(--f-mono);font-style:normal;margin-left:auto}
+.mbar{position:relative;height:8px;border-radius:4px;margin-top:10px;background:color-mix(in srgb,var(--warn) 28%,var(--card2))}
+.mbar i{position:absolute;top:0;bottom:0;border-radius:4px;background:color-mix(in srgb,var(--good) 55%,var(--card2))}
+.mbar u{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid var(--card);box-sizing:content-box}
+.mrng{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:7px;font:11.5px var(--f-mono);color:var(--mut)}
+.spark{width:92px;height:28px;flex:none}
+.sym{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--line)}.card h3+.sym{border-top:0}
+.symv{text-align:center}.symv b{display:block;font:600 20px var(--f-disp)}.symv small{font:10px var(--f-mono);color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.symm{text-align:center;min-width:0}.symm span{font:500 13px var(--f-body)}.symm em{display:block;font:11px var(--f-mono);font-style:normal;margin-top:5px}
+.symb{display:flex;justify-content:center;gap:3px;margin-top:6px}.symb i{height:6px;border-radius:3px;background:var(--z2)}.symb i:first-child{border-radius:3px 0 0 3px}.symb i:last-child{background:var(--z3);border-radius:0 3px 3px 0}
+.balbig{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;text-align:center}.balbig b{display:block;font:600 30px var(--f-disp)}.balbig b small{font:12px var(--f-mono);color:var(--mut)}.balbig span{font:10px var(--f-mono);color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.balst{font:600 13px var(--f-body)}.balst small{display:block;font:10.5px var(--f-mono);color:var(--mut);font-weight:400;margin-top:3px}
+.bdpost2{padding:12px 0;border-top:1px solid var(--line)}.card h3+.bdpost2{border-top:0;padding-top:4px}.bdpost2>b{font:600 14px var(--f-body)}.bdpost2 p{font-size:13px;color:var(--mut);margin-top:5px}.bdpost2 p b{color:var(--txt);font-weight:600}
+.pmore summary small{font:11px var(--f-mono);color:var(--mut);margin-left:6px}
 .bdpost{margin-top:12px}.bdpost b{font:600 13px var(--f-body)}.bdpost p{font-size:13px;color:var(--mut);margin-top:3px;padding-left:10px;border-left:2px solid var(--line)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -908,6 +936,11 @@ html,body{background:#000}
   <button class="link spmanual" id="spManual">Ohne Barcode hinzufügen</button>
   <div class="card" id="spToday" hidden></div>
   <div id="spList"></div>
+</section>
+
+<section class="view" id="view-body" hidden>
+  <button class="back" id="bdvBack">‹ Überblick</button>
+  <div id="bdv"></div>
 </section>
 
 <section class="view" id="view-coach" hidden>
@@ -3762,7 +3795,7 @@ const bdDate = (d, o) => new Date(d + 'T12:00').toLocaleDateString('de-DE', o ||
 })();
 (async () => { await ready; try { BD.list = await kvGet('body') || []; } catch (e) { } renderBody(); })();
 async function bdSave() {
-  BD.list.sort((a, b) => a.d.localeCompare(b.d)); await kvSet('body', BD.list); renderBody();
+  BD.list.sort((a, b) => a.d.localeCompare(b.d)); await kvSet('body', BD.list); renderBody(); if (state.view === 'body') renderBodyView();
   if (sync.cfg) { clearTimeout(BD.st); BD.st = setTimeout(() => syncRun(syncPending()), 4000); }
 }
 function fatClass(fat) { // Einordnung nach ACE (American Council on Exercise)
@@ -3792,6 +3825,7 @@ function renderBody() {
     ${lr.length ? lrTab(lr.map(([k, nm]) => [nm, C0[k + 'L'], C0[k + 'R']])) : ''}
     ${n.balL != null && n.balR != null ? `<div class="lbl" style="margin-top:14px">Balance – Gewicht auf den Beinen</div><div class="bdsplit bal"><i style="flex:${n.balL}"></i><i style="flex:${n.balR}"></i></div><div class="bdlab"><span>Links ${bdN(n.balL)} %</span><span>Rechts ${bdN(n.balR)} %</span></div>` : ''}
     ${L.length >= 2 ? '<canvas id="bdChart" height="170" style="margin-top:14px"></canvas>' : ''}
+    <button class="btn ghost bdmore" data-bd="view">Genauer ansehen <span>›</span></button>
     ${Object.keys(groups).length ? `<details class="pmore"><summary>Arme &amp; Beine im Detail</summary>${Object.entries(groups).map(([g, rows]) => `<div class="lbl" style="margin-top:12px">${esc(g)}${/volumen/i.test(g) ? ' (Liter)' : ' (cm)'}</div>` + lrTab(rows.map(([l, v]) => [l, v.l, v.r]))).join('')}</details>` : ''}
     ${post.length ? `<details class="pmore"><summary>Haltung (${post.length} Punkte)</summary>${Object.entries(pg).map(([g, ss]) => `<div class="bdpost"><b>${esc(g)}</b>${ss.map(s => `<p>${esc(s)}</p>`).join('')}</div>`).join('')}</details>` : ''}
     <details class="pmore"><summary>Alle Messungen (${L.length})</summary>${L.slice().reverse().map(x => `<div class="fitem bdrow" data-d="${x.d}"><div>${bdDate(x.d, { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' })}<small>${x.src ? esc(x.src) : 'per Hand'}</small></div><b>${bdN(x.kg)} kg · ${bdN(x.fat)} %</b><span class="arr" style="color:var(--mut)">›</span></div>`).join('')}
@@ -3801,6 +3835,7 @@ function renderBody() {
 }
 function bdWire(c) {
   c.querySelectorAll('[data-bd="pdf"]').forEach(b => b.onclick = () => $('#bdFile').click());
+  c.querySelectorAll('[data-bd="view"]').forEach(b => b.onclick = () => openBodyView());
   c.querySelectorAll('[data-bd="new"]').forEach(b => b.onclick = () => openBody({ d: dayKey(new Date()) }, true));
   c.querySelectorAll('.bdrow').forEach(r => r.onclick = () => openBody(BD.list.find(x => x.d === r.dataset.d)));
 }
@@ -3819,6 +3854,78 @@ function drawBody(cv) {
     g.fillStyle = col; pts.forEach(x => { g.beginPath(); g.arc(X(x), Y(x[k]), 2.5, 0, 7); g.fill(); });
     g.textAlign = 'left'; g.fillText((k === 'fat' ? 'Körperfett ' : 'Gewicht ') + bdN(pts[pts.length - 1][k]) + (k === 'fat' ? ' %' : ' kg'), Lp, top - 4); g.textAlign = 'center';
   });
+}
+// ---- Detail-Seite „Genauer ansehen“: Normalbereich, Einordnung, Verlauf je Wert ----
+function bdRange(k, n) { // Normalbereich: aus dem Bericht, sonst übliche Richtwerte
+  if (n.ranges && n.ranges[k]) return n.ranges[k];
+  const f = state.profile.sex === 'f', h = (n.h || CUT.cfg.h || (WH.data && WH.data.body && WH.data.body.h) || 0) / 100, r1 = v => Math.round(v * 10) / 10;
+  return ({
+    kg: h ? [r1(18.5 * h * h), r1(25 * h * h)] : null, fat: f ? [21, 32] : [8, 19], lean: h ? (f ? [r1(15 * h * h), r1(19 * h * h)] : [r1(19 * h * h), r1(24 * h * h)]) : null,
+    ffmi: f ? [15, 19] : [19, 24], bmi: [18.5, 25], whr: [null, f ? 0.85 : 0.9], whtr: [0.4, 0.5], water: f ? [45, 60] : [50, 65], visc: [1, 9], protein: [16, 20], age: [null, state.profile.age || null]
+  })[k] || null;
+}
+const BD_HIGH_OK = ['lean', 'muscle', 'ffmi', 'skm', 'protein'];
+function bdSpark(vals, col) { // kleines Verlaufs-Diagramm als SVG
+  const v = vals.filter(x => x != null); if (v.length < 2) return '';
+  const lo = Math.min(...v), hi = Math.max(...v), W = 92, H = 28, sp = hi - lo || 1;
+  const pts = vals.map((x, i) => x == null ? null : [3 + i / (vals.length - 1) * (W - 6), 4 + (1 - (x - lo) / sp) * (H - 8)]).filter(Boolean);
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="color:${col || 'var(--txt)'}"><polyline points="${pts.map(p => p.map(c => c.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.6" fill="currentColor"/></svg>`;
+}
+function bdMetric(nm, v, u, rg, prev, hist, opt = {}) {
+  let st = '', col = 'var(--mut)', bar = '';
+  if (rg && (rg[0] != null || rg[1] != null)) {
+    let [lo, hi] = rg; const a = lo != null ? lo : hi * 0.4, b = hi != null ? hi : lo * 1.6, span = b - a || 1;
+    let d0 = a - span * 0.6, d1 = b + span * 0.6; d0 = Math.min(d0, v - span * 0.1); d1 = Math.max(d1, v + span * 0.1); if (lo == null) d0 = Math.max(0, Math.min(d0, v)); const P = x => (x - d0) / (d1 - d0) * 100;
+    const below = lo != null && v < lo, above = hi != null && v > hi;
+    st = below ? 'Unter Normal' : above ? (opt.highOk ? 'Sehr hoch' : 'Über Normal') : 'Normal';
+    col = below || (above && !opt.highOk) ? 'var(--warn)' : 'var(--good)';
+    bar = `<div class="mbar"><i style="left:${P(a).toFixed(1)}%;width:${(P(b) - P(a)).toFixed(1)}%"></i><u style="left:${Math.max(1, Math.min(99, P(v))).toFixed(1)}%;background:${col}"></u></div>`;
+  }
+  const rtxt = rg ? (rg[0] != null && rg[1] != null ? `${bdN(rg[0])}–${bdN(rg[1])}` : rg[0] == null ? `unter ${bdN(rg[1])}` : `über ${bdN(rg[0])}`) + (u ? ' ' + u : '') : 'kein Richtwert';
+  let dl = ''; if (prev && prev.v != null) { const d = v - prev.v; if (Math.abs(d) >= 0.05) { const good = opt.inv == null ? null : opt.inv ? d < 0 : d > 0; dl = `<em style="color:${good == null ? 'var(--mut)' : good ? 'var(--good)' : 'var(--bad)'}">${d > 0 ? '+' : ''}${bdN(d)}${u === '%' ? ' %' : u ? ' ' + u : ''} seit ${bdDate(prev.d, { day: '2-digit', month: '2-digit' })}</em>`; } }
+  return `<div class="mrow"><div class="mtop"><span class="mn">${nm}</span>${st ? `<span class="mst" style="color:${col}">${st}</span>` : ''}</div>
+    <div class="mval"><b>${bdN(v)}</b>${u ? `<small>${u}</small>` : ''}${dl}</div>${bar}
+    <div class="mrng"><span>${rg ? 'Normal ' : ''}${rtxt}</span>${bdSpark(hist, col)}</div></div>`;
+}
+function openBodyView(i) { BD.vi = i; renderBodyView(); showView('body'); }
+$('#bdvBack').onclick = () => goMain('overview');
+function renderBodyView() {
+  const L = BD.list; if (!L.length) { goMain('overview'); return; }
+  const i = BD.vi != null && L[BD.vi] ? BD.vi : L.length - 1, n = L[i], pv = i > 0 ? L[i - 1] : null, upto = L.slice(0, i + 1);
+  const fc = n.fat != null ? fatClass(n.fat) : null, fatKg = n.kg != null && n.fat != null ? n.kg * n.fat / 100 : null;
+  const hist = k => upto.map(x => x[k] ?? null), chist = k => upto.map(x => (x.circ || {})[k] ?? null);
+  const inv = { kg: null, fat: true, lean: false, muscle: false, ffmi: false, bmi: null, bmr: null, whr: true, whtr: true, water: false, visc: true, skm: false, bone: null, protein: false, age: true, subq: true };
+  const metrics = BD_F.filter(([k]) => !['h', 'mh', 'balL', 'balR'].includes(k) && n[k] != null)
+    .map(([k, nm, u]) => bdMetric(nm, n[k], u, bdRange(k, n), pv && pv[k] != null ? { v: pv[k], d: pv.d } : null, hist(k), { inv: inv[k], highOk: BD_HIGH_OK.includes(k) })).join('');
+  const C0 = n.circ || {}, Cp = (pv && pv.circ) || {}, f = state.profile.sex === 'f';
+  const circ = [['taille', 'Taille', true, [null, f ? 80 : 94]], ['bauch', 'Bauch', true], ['brust', 'Brust', false], ['schulter', 'Schulter', false], ['huefte', 'Hüfte', null], ['hals', 'Hals', null]].filter(([k]) => C0[k] != null)
+    .map(([k, nm, iv, rg]) => bdMetric(nm, C0[k], 'cm', rg || null, Cp[k] != null ? { v: Cp[k], d: pv.d } : null, chist(k), { inv: iv })).join('');
+  const sym = [['oa', 'Oberarm'], ['ua', 'Unterarm'], ['os', 'Oberschenkel'], ['us', 'Unterschenkel']].filter(([k]) => C0[k + 'L'] != null && C0[k + 'R'] != null).map(([k, nm]) => {
+    const l = C0[k + 'L'], r = C0[k + 'R'], d = Math.abs(l - r), pc = d / Math.max(l, r) * 100, ok = pc < 3;
+    return `<div class="sym"><div class="symv"><b>${bdN(l)}</b><small>links</small></div><div class="symm"><span>${nm}</span><div class="symb"><i style="width:${(l / Math.max(l, r) * 50).toFixed(1)}%"></i><i style="width:${(r / Math.max(l, r) * 50).toFixed(1)}%"></i></div><em style="color:${ok ? 'var(--good)' : 'var(--warn)'}">${d < 0.05 ? 'gleich' : (l > r ? 'links' : 'rechts') + ' +' + bdN(d) + ' cm'}${ok ? ' · ausgeglichen' : ''}</em></div><div class="symv"><b>${bdN(r)}</b><small>rechts</small></div></div>`;
+  }).join('');
+  const bal = n.balL != null && n.balR != null ? (() => { const d = Math.abs(n.balL - n.balR), ok = d <= 4; return `<div class="card"><h3>Balance <small>Gewicht auf den Beinen</small></h3><div class="balbig"><div><b>${bdN(n.balL)}<small> %</small></b><span>Links</span></div><div class="balst" style="color:${ok ? 'var(--good)' : 'var(--warn)'}">${ok ? 'Ausgeglichen' : 'Mehr Gewicht ' + (n.balR > n.balL ? 'rechts' : 'links')}<small>Normal: 50 / 50, bis 4 % Unterschied</small></div><div><b>${bdN(n.balR)}<small> %</small></b><span>Rechts</span></div></div><div class="bdsplit bal"><i style="flex:${n.balL}"></i><i style="flex:${n.balR}"></i></div></div>`; })() : '';
+  const ext = n.ext || {}, groups = {}; Object.entries(ext).forEach(([key, v]) => { const j = key.indexOf(' · '); (groups[key.slice(0, j)] = groups[key.slice(0, j)] || []).push([key.slice(j + 3), v]); });
+  const tab = rows => `<table class="bdtab"><tr><th></th><th>Links</th><th>Rechts</th><th>Diff.</th></tr>${rows.map(([l, v]) => `<tr><td>${esc(l)}</td><td>${bdN(v.l)}</td><td>${bdN(v.r)}</td><td>${v.l != null && v.r != null && Math.abs(v.l - v.r) >= 0.005 ? (v.l > v.r ? 'L +' : 'R +') + bdN(Math.abs(v.l - v.r)) : '–'}</td></tr>`).join('')}</table>`;
+  const pg = {}; (n.post || []).forEach(x => (pg[x.g] = pg[x.g] || []).push(x.s));
+  const hl = s => esc(s).replace(/(-?\d+(?:,\d+)?\s*(?:cm|°|%))/g, '<b>$1</b>');
+  $('#bdv').innerHTML = `<div class="card bdvhead"><h3>Körper-Analyse</h3><div class="bdvdate">${bdDate(n.d, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div><div class="bdvsrc">${esc(n.src || 'per Hand eingetragen')}</div>
+      ${L.length > 1 ? `<div class="chips bdvchips">${L.map((x, j) => `<button class="chip${j === i ? ' on' : ''}" data-i="${j}">${bdDate(x.d, { day: '2-digit', month: '2-digit', year: '2-digit' })}</button>`).join('')}</div>` : ''}</div>
+    <div class="card bdvhero">${fatKg != null ? `<div class="bdring" style="--p:${n.fat}"><div><b>${bdN(n.fat)}<small>%</small></b><span>Körperfett</span></div></div>` : ''}
+      <div class="bdvhl"><div><span>Gewicht</span><b>${bdN(n.kg)}<small> kg</small></b></div>${fc ? `<div><span>Einordnung</span><b style="color:${fc[1]}">${fc[0]}</b></div>` : ''}${fatKg != null ? `<div class="bdleg"><i class="a"></i>Fettfrei ${bdN(Math.round((n.kg - fatKg) * 10) / 10)} kg</div><div class="bdleg"><i class="b"></i>Fett ${bdN(Math.round(fatKg * 10) / 10)} kg</div>` : ''}</div></div>
+    ${metrics ? `<div class="card"><h3>Körperwerte <small>mit Normalbereich</small></h3>${metrics}</div>` : ''}
+    ${circ ? `<div class="card"><h3>Umfänge</h3>${circ}</div>` : ''}
+    ${sym ? `<div class="card"><h3>Links / Rechts <small>Umfang in cm</small></h3>${sym}</div>` : ''}
+    ${bal}
+    ${L.length >= 2 ? '<div class="card"><h3>Verlauf</h3><canvas id="bdvChart" height="170"></canvas></div>' : ''}
+    ${Object.keys(groups).length ? `<div class="card"><h3>Arme &amp; Beine im Detail</h3>${Object.entries(groups).map(([g, rows]) => `<details class="pmore"><summary>${esc(g)} <small>${/volumen/i.test(g) ? 'Liter' : 'cm'}</small></summary>${tab(rows)}</details>`).join('')}</div>` : ''}
+    ${Object.keys(pg).length ? `<div class="card"><h3>Haltung</h3>${Object.entries(pg).map(([g, ss]) => `<div class="bdpost2"><b>${esc(g)}</b>${ss.map(s => `<p>${hl(s)}</p>`).join('')}</div>`).join('')}</div>` : ''}
+    <button class="btn ghost" id="bdvEdit" style="margin-top:12px">Messung bearbeiten</button>
+    <p class="hint" style="text-align:center;margin:10px 0 30px">Richtwerte zur Orientierung, keine medizinische Bewertung.${n.ranges ? ' Normalbereiche aus deinem Bericht.' : ''}</p>`;
+  $('#bdv').querySelectorAll('.bdvchips [data-i]').forEach(b => b.onclick = () => { BD.vi = +b.dataset.i; renderBodyView(); });
+  $('#bdvEdit').onclick = () => openBody(n);
+  if (L.length >= 2) requestAnimationFrame(() => { const cv = $('#bdvChart'); if (cv && cv.clientWidth) drawBody(cv); });
 }
 // ---- Fenster: Messung prüfen / eintragen ----
 function openBody(x, isNew) {
@@ -3841,7 +3948,7 @@ $('#bdSave').onclick = async () => {
   BD_F.forEach(([k, , , [lo, hi]]) => { const v = pnum($('#bd_' + k).value); if (v >= lo && v <= hi) x[k] = r2(v); });
   const circ = {}; BD_C.forEach(([k]) => { const v = pnum($('#bdc_' + k).value); if (v >= 10 && v <= 250) circ[k] = r2(v); });
   if (Object.keys(circ).length) x.circ = circ;
-  if (E.ext && Object.keys(E.ext).length) x.ext = E.ext; if (E.post && E.post.length) x.post = E.post;
+  if (E.ext && Object.keys(E.ext).length) x.ext = E.ext; if (E.post && E.post.length) x.post = E.post; if (E.ranges) x.ranges = E.ranges;
   if (x.kg == null && x.fat == null && !x.circ) { toast('Mindestens Gewicht, Körperfett oder einen Umfang eintragen.'); return; }
   BD.list = BD.list.filter(y => y.d !== d && y !== E); BD.list.push(x);
   await bdSave(); $('#bodySheet').hidden = true; toast('Messung gespeichert');
@@ -3878,6 +3985,16 @@ function bdNear(items, it, lo, hi, used, below) { // Zahl rechts daneben (gleich
     .map(o => { const dy = o.y - it.y, dx = o.x - (it.x + it.w), same = Math.abs(dy) < Math.max(it.h, o.h) * 0.7 && dx > -2, bl = below && dy > 0 && dy < it.h * 3.2 && Math.abs(o.x - it.x) < 120; return { o, sc: same ? dx : bl ? 400 + dy * 4 + Math.abs(o.x - it.x) : Infinity }; })
     .filter(c => isFinite(c.sc)).sort((a, b) => a.sc - b.sc);
   for (const c of cands) { if (/^\d+(?:[.,]\d+)?\s*[-–~]\s*\d/.test(c.o.s)) continue; const n = numIn(c.o.s); if (n >= lo && n <= hi) { used.add(c.o); return n; } }
+  return null;
+}
+function bdRangeNear(items, it) { // Normalbereich in derselben Zeile, z.B. „56 - 76 kg“, „unter 19 %“
+  const n = s => pnum(s);
+  for (const o of items.filter(o => o.p === it.p && o !== it && Math.abs(o.y - it.y) < Math.max(it.h, o.h) * 0.7 && o.x > it.x).sort((a, b) => a.x - b.x)) {
+    const s = o.s.replace(/−/g, '-').trim();
+    let m = s.match(/^(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)\s*(kg|%|cm|kcal)?$/i); if (m) return [n(m[1]), n(m[2])];
+    m = s.match(/^(unter|bis|max\.?|<|≤)\s*(\d+(?:[.,]\d+)?)/i); if (m) return [null, n(m[2])];
+    m = s.match(/^(über|ab|min\.?|>|≥)\s*(\d+(?:[.,]\d+)?)/i); if (m) return [n(m[2]), null];
+  }
   return null;
 }
 function bdExt(items) { // Tabellen „Umfänge / Volumen / Höhen und Längen“ (Arme & Beine, rechts/links)
@@ -3930,7 +4047,7 @@ function bdParse(items) {
       const tail = it.s.replace(re, ' '); // 1) Zahl im selben Textstück hinter dem Begriff (Referenzbereiche wie 10–20 % überspringen)
       let v = /\d/.test(tail) && !/^\D*\d+(?:[.,]\d+)?\s*[-–~]\s*\d/.test(tail) ? numIn(tail) : null;
       if (!(v >= lo && v <= hi)) v = bdNear(items, it, lo, hi, used, true); // 2) Zahl daneben oder darunter
-      if (v != null && v >= lo && v <= hi) { r[k] = Math.round(v * 100) / 100; break; }
+      if (v != null && v >= lo && v <= hi) { r[k] = Math.round(v * 100) / 100; const rg = bdRangeNear(items, it); if (rg) (r.ranges = r.ranges || {})[k] = rg; break; }
     }
   }
   const circ = {}; // Umfänge des Körpers (cm)
@@ -3955,6 +4072,7 @@ $('#bdFile').onchange = async e => {
 
 // ===================== ÜBERBLICK ALS WIDGETS: verschieben, groß/klein, ausblenden =====================
 const OV_BLOCKS = [['fightBox', 'Kampf-Countdown'], ['todayCard', 'Bereitschaft'], ['spOv', 'Supplements heute'], ['endCard', 'Ausdauer'], ['bodyCard', 'Körper'], ['coachTeaser', 'Coach'], ['whToday', 'Schlaf & Erholung'], ['perfCard', 'Leistung'], ['wkCard', 'Woche']];
+const OV_WAIT = { fightBox: '', todayCard: 'nach den ersten Trainings', spOv: 'sobald du Supplements einträgst', endCard: 'ab 3 Trainings', bodyCard: '', coachTeaser: 'mit dem ersten Wochenbericht', whToday: 'WHOOP über ⚙ verbinden – dann kommen Schlaf & Erholung', perfCard: 'nach ca. 1 Woche Training', wkCard: 'nach dem ersten Training' };
 const OV_DEF = () => ({ order: OV_BLOCKS.map(b => b[0]), off: [], size: { spOv: 's', endCard: 's' } });
 const OV = { ...OV_DEF(), edit: false, q: 0 };
 const ovName = id => (OV_BLOCKS.find(b => b[0] === id) || [, id])[1];
@@ -3975,9 +4093,9 @@ function ovRefresh() {
   let redraw = false;
   OV_BLOCKS.forEach(([id]) => {
     const w = ovW(id), b = document.getElementById(id), has = ovHas(b), off = OV.off.includes(id), s = OV.size[id] === 's';
-    w.hidden = off || (!has && !OV.edit);
+    w.hidden = off || !has; // auch beim Bearbeiten nur, was danach wirklich im Überblick steht
     w.classList.toggle('s', s);
-    const mini = s || !has; w.classList.toggle('mini', mini);
+    const mini = s; w.classList.toggle('mini', mini);
     if (mini && !w.hidden) { const m = w.querySelector('.wmini'), html = ovMini(id, has); if (m.innerHTML !== html) m.innerHTML = html; }
     const [a, c] = w.querySelectorAll('.wsz i'); a.classList.toggle('on', s); c.classList.toggle('on', !s);
     const full = !w.hidden && !mini ? '1' : '0'; if (w.dataset.full !== full) { w.dataset.full = full; if (full === '1' && (id === 'wkCard' || id === 'perfCard' || id === 'bodyCard')) redraw = true; }
@@ -3985,7 +4103,9 @@ function ovRefresh() {
   if (redraw) requestAnimationFrame(() => { try { if (!$('#wkCard').hidden) renderWeek(); const bc = $('#bdChart'); if (bc && bc.clientWidth) drawBody(bc); const d = $('#perfCard details'); if (d && d.open) drawPMC(pmcSeries().slice(-90)); } catch (e) { } });
   const tray = $('#ovTray'); tray.hidden = !OV.edit;
   if (OV.edit) {
-    tray.innerHTML = (OV.off.length ? `<h3>Ausgeblendet <small>antippen zum Hinzufügen</small></h3><div class="chips">${OV.off.map(id => `<button class="chip" data-add="${id}">+ ${esc(ovName(id))}</button>`).join('')}</div>` : '') + '<button class="link" id="ovReset">Standard wiederherstellen</button>';
+    const wait = OV_BLOCKS.filter(([id]) => !OV.off.includes(id) && !ovHas(document.getElementById(id)));
+    tray.innerHTML = (OV.off.length ? `<h3>Ausgeblendet <small>antippen zum Hinzufügen</small></h3><div class="chips">${OV.off.map(id => `<button class="chip" data-add="${id}">+ ${esc(ovName(id))}</button>`).join('')}</div>` : '')
+      + (wait.length ? `<h3 style="margin-top:14px">Noch ohne Daten <small>erscheinen von selbst</small></h3>${wait.map(([id, n]) => `<div class="ovwait"><b>${esc(n)}</b><span>${OV_WAIT[id] || ''}</span></div>`).join('')}` : '') + '<button class="link" id="ovReset">Standard wiederherstellen</button>';
     tray.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { OV.off = OV.off.filter(x => x !== b.dataset.add); ovSave(); });
     $('#ovReset').onclick = () => { Object.assign(OV, OV_DEF()); ovSave(); };
   }
@@ -4040,7 +4160,7 @@ async function ovSave() { ovRefresh(); try { await kvSet('ovLayout2', { order: O
 $('#ovGrid').addEventListener('click', e => {
   if (OV.edit || OV.justEdited) return; const m = e.target.closest('.wmini'); if (!m) return;
   const id = m.closest('.wdg').dataset.w;
-  if (id === 'spOv') goMain('supps'); else if (id === 'coachTeaser') { renderCoach(); showView('coach'); } else if (id === 'fightBox') openFight(); else if (id === 'bodyCard' && !BD.list.length) $('#bdFile').click(); else if (id === 'wkCard' || id === 'perfCard' || id === 'endCard' || id === 'bodyCard') { OV.size[id] = 'l'; ovSave(); requestAnimationFrame(() => { renderPerf(); renderWeek(); }); }
+  if (id === 'spOv') goMain('supps'); else if (id === 'coachTeaser') { renderCoach(); showView('coach'); } else if (id === 'fightBox') openFight(); else if (id === 'bodyCard') { if (BD.list.length) openBodyView(); else $('#bdFile').click(); } else if (id === 'wkCard' || id === 'perfCard' || id === 'endCard') { OV.size[id] = 'l'; ovSave(); requestAnimationFrame(() => { renderPerf(); renderWeek(); }); }
 });
 // Bearbeiten-Modus an/aus
 function ovEditMode(on) {
@@ -4142,6 +4262,7 @@ function redrawCharts() {
     if (v === 'overview') { renderPerf(); renderWeek(); }
     if (v === 'analyse' && $('#anaTrend') && ana._list) drawAnaTrend(ana._list);
     if (v === 'cut' && $('#cwChart')) drawWeight($('#cwChart'));
+    if (v === 'body' && $('#bdvChart')) drawBody($('#bdvChart'));
   } catch (e) { }
 }
 let _rzW = innerWidth, _rzT;
@@ -4157,7 +4278,7 @@ try {
 } catch (e) { }
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.20-1625';
+const APP_VERSION = '2026.11.20-1637';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;

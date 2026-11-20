@@ -12,8 +12,8 @@ Herzfrequenz-Trainings-App für den Garmin HRM 600 Brustgurt. Sprache der App un
 ## Deploy
 - GitHub Pages: https://semkoq.github.io/trainings-app/ – jeder Push auf `main` ist live.
 - **Bei jeder Änderung an `index.html` die Version hochzählen**, sonst lädt das Handy die alte Version:
-  - `index.html`: `APP_VERSION = '2026.11.20-1625'`
-  - `sw.js`: `const CACHE = 'trainings-app-2026.11.20-1625'`
+  - `index.html`: `APP_VERSION = '2026.11.20-1637'`
+  - `sw.js`: `const CACHE = 'trainings-app-2026.11.20-1637'`
   - Format `JJJJ.MM.TT-HHMM` (UTC), beide gleich.
 - Web-Änderungen brauchen keine neue APK (die APK lädt die Seite). Nur Änderungen in `android-src/` brauchen einen APK-Build.
 
