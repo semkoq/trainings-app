@@ -595,6 +595,93 @@ input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
 .zstrip.none{background:repeating-linear-gradient(135deg,var(--card2) 0 6px,var(--line) 6px 8px)}
 /* Sechs Tabs: Beschriftung etwas enger */
 .tab{font-size:9.5px;letter-spacing:.02em;min-width:0}
+/* ===== Zonen-Balken im Training ===== */
+.zg{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;align-items:end;height:84px;margin:14px 6px 0}
+.zg .zc{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;gap:5px;height:100%}
+.zg .zb{position:relative;border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--c) 14%,transparent);transition:box-shadow .3s}
+.zg .zb i{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--c);transition:height .45s ease,opacity .3s}
+.zg .zc.past .zb i{opacity:.45}
+.zg .zc.on .zb{background:color-mix(in srgb,var(--c) 32%,transparent);box-shadow:0 0 16px color-mix(in srgb,var(--c) 55%,transparent)}
+.zg .zc span{font:600 10px var(--f-mono);letter-spacing:.06em;color:var(--mut);text-align:center}
+.zg .zc.on span{color:var(--c)}
+.zg.sm{height:52px;gap:5px;margin:10px 0 0}.zg.sm .zb{border-radius:5px}.zg.sm .zc span{font-size:9px}
+.zgt{font:11px var(--f-mono);color:var(--mut);margin-top:6px;min-height:15px}
+/* ===== Kombi-Ansagen im Intervall-Timer ===== */
+.kbset{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.kbon{display:flex;align-items:center;gap:12px;cursor:pointer}
+.kbon input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--acc);margin:0;padding:0}
+.kbon span{display:flex;flex-direction:column;min-width:0}.kbon b{font:600 15px var(--f-body)}.kbon small{font:12px var(--f-body);color:var(--mut);margin-top:1px}
+#kbOpts{margin-top:12px}#kbOpts[hidden],#kbListBox[hidden]{display:none}
+.seg.kbseg{float:none;display:flex;margin:0 0 4px}.seg.kbseg button{flex:1;padding:8px 10px;font-size:13px}
+#kbList{width:100%;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:14px/1.5 var(--f-mono);margin-top:10px;resize:vertical}
+#kbTest{margin-top:8px}
+#ivCombo{font:700 32px/1.15 var(--f-disp);letter-spacing:.04em;color:var(--txt);min-height:38px;margin-top:12px;text-align:center;overflow-wrap:anywhere}
+#ivCombo.new{animation:kbpop .4s ease-out}
+@keyframes kbpop{from{transform:scale(1.2);color:var(--acc)}to{transform:scale(1)}}
+/* ===== Tapering im Kampf-Countdown ===== */
+.taper{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);cursor:default}
+.taper .tph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.taper .tst{font:600 18px var(--f-body);color:var(--tc);margin-top:4px}
+.tbar{position:relative;height:10px;border-radius:5px;background:var(--card2);margin:10px 0 6px}
+.tbar i{position:absolute;left:0;top:0;bottom:0;background:var(--tc);border-radius:5px}
+.tbar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--txt);opacity:.75}
+.tleg{display:flex;justify-content:space-between;gap:8px;font:11px var(--f-mono);color:var(--mut)}.tleg b{color:var(--tc)}
+.taper p{font-size:13px;line-height:1.45;margin:8px 0 0;color:var(--txt)}
+.stwarn{border:1px solid var(--wc);background:color-mix(in srgb,var(--wc) 9%,var(--card));margin-bottom:10px}
+.stwarn b{color:var(--wc)}.stwarn p{margin:4px 0 0;font-size:13px;line-height:1.45}
+/* ===== Krank-Warnung ===== */
+.warncard{border:1px solid color-mix(in srgb,var(--bad) 65%,transparent);background:color-mix(in srgb,var(--bad) 9%,var(--card))}
+.sick h3{color:var(--bad);display:flex;align-items:center;gap:8px;margin:0}
+.sdot{width:9px;height:9px;border-radius:50%;background:var(--bad);box-shadow:0 0 10px var(--bad);animation:pulse 1s ease-in-out infinite alternate}
+.sick .sbig{font:600 22px var(--f-body);margin:8px 0 12px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sgrid div{background:var(--card2);border-radius:10px;padding:9px 10px;font:500 10px var(--f-mono);color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.sgrid b{display:block;font:600 20px var(--f-disp);color:var(--bad);text-transform:none;letter-spacing:0;margin:3px 0 1px}
+.sgrid b small{font:11px var(--f-mono);color:var(--mut)}
+/* ===== Abend-Journal ===== */
+.jrdone{display:flex;flex-direction:column;gap:3px}.jrdone span{color:var(--good);font:600 14px var(--f-body)}.jrdone b{font:13px var(--f-mono);color:var(--txt);font-weight:400}
+.jrrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.jrrow>span{font-size:14px;min-width:0}.jrrow>span small{display:block;color:var(--mut);font:11px var(--f-mono);margin-top:2px}
+.jrrow>b{text-align:right;font:600 20px var(--f-disp);white-space:nowrap}.jrrow>b small{display:block;font:11px var(--f-mono);color:var(--mut)}
+#jrSheet input[type=time]{font:600 20px var(--f-disp);width:100%}
+#jrSheet .feel button{font-size:20px}
+.jrlblrow{display:flex;justify-content:space-between;align-items:center}.jrlblrow .link{font:600 13px var(--f-body);text-transform:none;letter-spacing:0}
+#jrTags .chip.del{border-style:dashed;color:var(--mut)}#jrTags .chip.del::after{content:' ✕';color:var(--bad)}
+#jrTags .chip.rest::before{content:'+ ';color:var(--good)}
+.jrgrp{font:500 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:10px 0 6px}
+#jrTags .chip{font-size:13px;padding:7px 12px}
+.jradd{display:flex;gap:8px;margin-top:10px}.jradd input{flex:1;min-width:0}.jradd .btn{width:48px;flex:none;margin:0;padding:0;font-size:22px}
+.jrtags{font:12px var(--f-mono);color:var(--mut);margin-top:4px}
+#jrCafLastBox{display:block}#jrCafLastBox[hidden]{display:none}#jrCafLastBox input{margin-top:6px}
+/* ===== Rekorde & Serien ===== */
+.rgrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 8px}
+.rtile{background:var(--card2);border-radius:12px;padding:10px 12px;min-width:0}
+.rtile i{display:block;font:500 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-style:normal}
+.rtile b{display:block;font:600 34px/1.1 var(--f-disp);color:var(--acc);margin-top:4px}
+.rtile small{display:block;font:11px var(--f-mono);color:var(--mut)}
+.wdots{display:flex;gap:4px;margin-top:7px}.wdots i{width:14px;height:6px;border-radius:3px;background:var(--line)}.wdots i.on{background:var(--acc)}
+.rlist>*{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--txt);font:14px var(--f-body);text-align:left}
+.rlist>button{cursor:pointer}
+.rlist span{min-width:0}.rlist span small{display:block;color:var(--mut);font:11px var(--f-mono);margin-top:2px}
+.rlist b{font:600 18px var(--f-disp);white-space:nowrap}
+.rnew{font:600 9px var(--f-mono);font-style:normal;letter-spacing:.08em;background:var(--acc);color:var(--on-acc,#000);border-radius:4px;padding:2px 5px;margin-left:7px;vertical-align:2px}
+.recban{border:1px solid var(--acc);background:color-mix(in srgb,var(--acc) 10%,var(--card))}
+.recban h3{color:var(--acc)}.recban .rrow{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+/* ===== Erholung Runde für Runde ===== */
+.rrwrap{overflow-x:auto;margin-top:10px}
+.rrtab{width:100%;border-collapse:separate;border-spacing:3px;font:12px var(--f-mono);font-variant-numeric:tabular-nums}
+.rrtab th{color:var(--mut);font-weight:500;font-size:10px;text-align:center;padding:2px}
+.rrtab th:first-child,.rrtab td:first-child{text-align:left;white-space:nowrap;color:var(--mut);background:none;padding-right:4px}
+.rrtab td{text-align:center;padding:7px 2px;border-radius:6px;background:color-mix(in srgb,var(--good) calc(var(--a) * 1%),var(--card2));color:var(--txt)}
+.rrtab td.na{background:var(--card2);color:var(--mut)}
+.rrtab tr.cur td:first-child{color:var(--txt)}
+.rrkpi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 12px}
+.rrkpi div{background:var(--card2);border-radius:10px;padding:8px;min-width:0}
+.rrkpi span{display:block;font:500 9.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.rrkpi b{display:block;font:600 22px var(--f-disp);margin-top:2px}.rrkpi em{font:600 11px var(--f-mono);font-style:normal}
+/* ===== Demo-Modus ===== */
+#demoBar{position:sticky;top:0;z-index:60;background:var(--acc);color:var(--on-acc,#000);font:600 11px var(--f-mono);letter-spacing:.06em;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+#demoBar button{background:#000;color:#fff;border:0;border-radius:8px;padding:6px 10px;font:600 12px var(--f-body);cursor:pointer;flex:none}
 /* ===== Supplements ===== */
 .scanbtn{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:15px}
 .scanbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
@@ -785,6 +872,7 @@ html,body{background:#000}
 <section class="view" id="view-start" hidden>
   <div class="card" id="lvBt" hidden><b>Bluetooth geht hier nicht.</b><p class="hint">Öffne die App in <b>Chrome auf deinem Android-Handy</b>. Auf dem iPhone und in manchen Browsern ist Bluetooth für Web-Apps gesperrt.</p></div>
   <div class="card" id="lvDraft" hidden></div>
+  <div id="stWarn"></div>
   <div class="card">
     <h3>Was trainierst du?</h3>
     <div class="tiles" id="stTiles"></div>
@@ -804,7 +892,7 @@ html,body{background:#000}
   <div class="pagetabs" id="pgTabs"><button class="on" data-p="0">Puls</button><button data-p="1">Intervall-Timer</button></div>
   <div class="pager" id="pager">
   <div class="card page">
-    <div id="lvHrBox"><div id="lvHr">--</div><small>bpm</small><div id="lvZone">nicht verbunden</div></div>
+    <div id="lvHrBox"><div id="lvHr">--</div><small>bpm</small><div id="lvZone">nicht verbunden</div><div class="zg" id="lvGauge" aria-hidden="true"></div><div class="zgt" id="lvGaugeT"></div></div>
     <div id="lvTime">00:00</div>
     <div class="grid g2">
       <div class="stat"><div class="l">Ø Puls</div><div class="v" id="lvAvg">–</div></div>
@@ -823,6 +911,15 @@ html,body{background:#000}
       <div class="ivset"><span>Pause</span><div class="step"><button data-k="rest" data-d="-15">−</button><b id="ivRest">1:00</b><button data-k="rest" data-d="15">+</button></div></div>
       <div class="chips" id="ivPresets" style="margin-top:12px"></div>
       <p class="hint" id="ivTotal"></p>
+      <div class="kbset" id="kbSet">
+        <label class="kbon"><input type="checkbox" id="kbOn"><span><b>Kombis ansagen</b><small>Die App sagt in der Belastung Kombis per Stimme an</small></span></label>
+        <div id="kbOpts">
+          <div class="seg kbseg" id="kbMode"><button data-m="rand">Zufällig</button><button data-m="list">Meine Liste</button></div>
+          <div class="ivset"><span>Alle</span><div class="step"><button id="kbLess">−</button><b id="kbEvery">8 s</b><button id="kbMore">+</button></div></div>
+          <div id="kbListBox"><textarea id="kbList" rows="5" placeholder="Eine Kombi pro Zeile, z. B. 1-2-Lowkick"></textarea><p class="hint" style="margin-top:4px">Eine Kombi pro Zeile. 1 = Jab, 2 = Cross, 3/4 = Haken, 5/6 = Uppercut.</p></div>
+          <button class="btn ghost" id="kbTest">Probe-Ansage</button>
+        </div>
+      </div>
       <button class="btn big" id="ivStart">▶ Intervalle starten</button>
       <p class="hint">Piept 2× bei 10 Sek, dann bei 3-2-1 jede Sekunde und am Ende 4× schnell. Läuft das Training schon, werden die Runden mit aufgezeichnet.</p>
     </div>
@@ -831,7 +928,8 @@ html,body{background:#000}
       <div id="ivRound">Runde 1 / 5</div>
       <div id="ivClock">2:00</div>
       <div class="ivbar"><i id="ivProg"></i></div>
-      <div id="ivHr"><b id="ivHrV">--</b> bpm <span id="ivHrZ"></span></div>
+      <div id="ivCombo" aria-live="polite"></div>
+      <div id="ivHr"><b id="ivHrV">--</b> bpm <span id="ivHrZ"></span></div><div class="zg sm" id="ivGauge" aria-hidden="true"></div>
       <div class="lvrow" style="margin-top:12px"><button class="btn ghost" id="ivPause">❚❚ Pause</button><button class="btn ghost" id="ivSkip">Weiter ›</button></div>
       <button class="btn stop" id="ivStop">■ Timer stoppen</button>
     </div>
@@ -876,7 +974,11 @@ html,body{background:#000}
 <section class="view" id="view-session" hidden></section>
 
 <section class="view" id="view-overview">
+  <div class="card warncard" id="sickBox" hidden></div>
+  <div id="ovWarn"></div>
   <div id="fightBox"></div>
+  <div class="card" id="jrCard" hidden></div>
+  <div class="card" id="recCard" hidden></div>
   <div class="card" id="todayCard" hidden></div>
   <div class="card" id="spOv" hidden></div>
   <div id="coachTeaser"></div>
@@ -913,6 +1015,7 @@ html,body{background:#000}
 
 <section class="view" id="view-analyse" hidden>
   <button class="btn ghost" id="pastBtn" style="margin-top:14px">+ Vergangene Trainings hinzufügen</button>
+  <div id="rrBox"></div>
   <div class="chips anachips" id="anaTabs"></div>
   <div id="anaBody"></div>
 </section>
@@ -945,7 +1048,7 @@ html,body{background:#000}
 
 <section class="view" id="view-coach" hidden>
   <button class="back" id="coachBack">‹ Überblick</button>
-  <div class="card coachhead"><h3 style="margin-bottom:4px">Dein Coach</h3><p class="hint" style="margin:0">Jeden Sonntagabend schaut Claude sich deine Woche an – Trainings, Erholung, Schlaf, Gewicht, Essen und Kampf-Countdown – und schreibt dir hier den Bericht. Am Monatsanfang kommt der Monatsbericht.</p></div>
+  <div class="card coachhead"><h3 style="margin-bottom:4px">Dein Coach</h3><p class="hint" style="margin:0">Den Wochenbericht gibt's nur, wenn du ihn willst: Knopf tippen, auf der Claude-Seite „Jetzt ausführen“ drücken – nach ein paar Minuten steht er hier. Claude schaut sich dann deine Woche an: Trainings, Erholung, Schlaf, Gewicht, Essen und Kampf-Countdown. Der Monatsbericht kommt weiter automatisch am Monatsanfang.</p><button class="btn" id="coachReq" style="margin-top:12px">Wochenbericht anfordern</button></div>
   <div id="coachList"></div>
   <div class="card"><h3>Selber fragen</h3><p class="hint" style="margin:0 0 8px">Kopiert deine Daten und öffnet Claude – einfach einfügen.</p>
     <div class="ccask"><button class="minibtn" data-d="7">Woche</button><button class="minibtn" data-d="30">Monat</button><button class="minibtn" data-d="182">6 Monate</button><button class="minibtn" data-d="365">Jahr</button></div></div>
@@ -980,6 +1083,7 @@ html,body{background:#000}
     <button class="btn" id="saveProfile">Speichern</button>
     <p class="hint" id="storeInfo">Speicher wird geladen …</p>
   </div>
+  <div class="card"><h3>Demo-Modus</h3><p class="hint" style="margin-top:0">Zeigt alle Funktionen mit Beispiel-Daten: Tapering vor dem Kampf, Krank-Warnung, Abend-Journal, Rekorde und Runden-Erholung. Es wird nichts gespeichert und nichts hochgeladen. Zum Beenden die App neu öffnen.</p><button class="btn ghost" id="demoBtn">Demo-Modus starten</button></div>
   <div class="card">
     <h3>Sicherung</h3>
     <p class="hint" style="margin-top:0">Deine Trainings liegen nur auf diesem Handy. Mach ab und zu eine Sicherung – z.B. bevor du die App löschst oder ein neues Handy bekommst.</p>
@@ -1024,6 +1128,28 @@ html,body{background:#000}
     <div class="row"><label>Kampfgewicht (kg)<input id="fClass" type="text" inputmode="decimal" placeholder="65"></label><label>Gewicht heute (kg)<input id="fWeight" type="text" inputmode="decimal" placeholder="68.4"></label></div>
     <div class="lvrow" style="margin-top:6px"><button class="btn ghost" id="fCancel">Abbrechen</button><button class="btn" id="fSave">Speichern</button></div>
     <button class="del" id="fDel" hidden>Kampf entfernen</button>
+  </div>
+</div>
+<div id="jrSheet" class="bsheet" hidden>
+  <div class="sheet" style="max-height:92vh;overflow-y:auto">
+    <h3>Abend-Journal <small id="jrDay"></small></h3>
+    <div class="seg kbseg" id="jrWhich" style="margin-bottom:12px"><button data-w="0">Heute</button><button data-w="1">Gestern</button></div>
+    <div class="lbl">Wann hast du zuletzt gegessen?</div>
+    <input id="jrMeal" type="time" value="20:00">
+    <div class="lbl" style="margin-top:14px">Wie gestresst warst du heute?</div>
+    <div class="feel" id="jrStress"></div>
+    <div class="lbl" style="margin-top:14px">Koffein heute <small>(Kaffee, Energy, Pre-Workout)</small></div>
+    <div class="ivset" style="margin-top:2px"><span id="jrCafTxt">Keins</span><div class="step"><button id="jrCafLess">−</button><b id="jrCaf">0</b><button id="jrCafMore">+</button></div></div>
+    <label id="jrCafLastBox" class="lbl" style="margin-top:8px">Letztes Koffein um<input id="jrCafLast" type="time" value="14:00"></label>
+    <div class="lbl jrlblrow" style="margin-top:16px"><span>Was war heute? <small>(antippen)</small></span><button class="link" id="jrEditTags">Anpassen</button></div>
+    <div id="jrTags"></div>
+    <div class="jradd"><input id="jrNewTag" type="text" placeholder="Eigene Kategorie, z. B. Physio" autocomplete="off"><button class="btn ghost" id="jrAddTag">+</button></div>
+    <div class="lbl" style="margin-top:14px">Notiz <small>(optional)</small></div>
+    <input id="jrNote" type="text" placeholder="nur falls was Besonderes war" autocomplete="off">
+    <div class="lbl" style="margin-top:16px">Erinnerungen <small>(Android-App)</small></div>
+    <label class="kbon"><input type="checkbox" id="jrRemOn"><span><b>Abends</b><small>für heute</small></span><input id="jrRemT" type="time" value="21:00" style="width:auto;margin:0 0 0 auto"></label>
+    <label class="kbon" style="margin-top:10px"><input type="checkbox" id="jrRemMOn"><span><b>Morgens</b><small>für gestern – nur wenn noch offen</small></span><input id="jrRemMT" type="time" value="08:00" style="width:auto;margin:0 0 0 auto"></label>
+    <div class="lvrow" style="margin-top:14px"><button class="btn ghost" id="jrCancel">Abbrechen</button><button class="btn" id="jrSave">Speichern</button></div>
   </div>
 </div>
 <div id="wSheet" class="bsheet" hidden>
@@ -1307,6 +1433,21 @@ function zoneOf(hr, max) {
   return q < 0.6 ? 0 : q < 0.7 ? 1 : q < 0.8 ? 2 : q < 0.9 ? 3 : 4;
 }
 
+// Zonen-Balken (Pegel): aktuelle Zone leuchtet und füllt sich bis zur nächsten, Zonen darunter halb hell
+const ZG_H = [38, 52, 67, 83, 100];
+function zoneGauge(el, hr, max) {
+  if (!el) return;
+  if (!el.firstChild) el.innerHTML = ZG_H.map((hh, i) => `<div class="zc" style="--c:var(--z${i + 1})"><div class="zb" style="height:${hh}%"><i></i></div><span>Z${i + 1}</span></div>`).join('');
+  const z = hr != null ? zoneOf(hr, max) : -1, q = hr != null ? hr / max : 0;
+  const lo = [0.5, 0.6, 0.7, 0.8, 0.9][Math.max(0, z)], fill = z < 0 ? 0 : Math.max(0.12, Math.min(1, (q - lo) / 0.1));
+  el.querySelectorAll('.zc').forEach((c, i) => { c.classList.toggle('on', i === z); c.classList.toggle('past', i < z); c.querySelector('i').style.height = (i < z ? 100 : i === z ? fill * 100 : 0).toFixed(0) + '%'; });
+}
+function zoneGaugeText(hr, max) {
+  if (hr == null) return '';
+  const z = zoneOf(hr, max), b = [0.6, 0.7, 0.8, 0.9].map(f => Math.ceil(f * max - 1e-9)); // erster Puls der nächsten Zone (wie zoneOf)
+  const rng = z === 0 ? `unter ${b[0]} bpm` : z === 4 ? `ab ${b[3]} bpm` : `${b[z - 1]}–${b[z] - 1} bpm`;
+  return z < 4 ? `${rng} · noch ${Math.max(1, b[z] - hr)} bis Z${z + 2}` : `${rng} · Maximalbereich`;
+}
 function loadLabel(t) {
   return t < 40 ? 'Locker' : t < 90 ? 'Moderat' : t < 160 ? 'Hart' : t < 250 ? 'Sehr hart' : 'Extrem';
 }
@@ -2183,7 +2324,8 @@ function renderLive() {
   const hr = fresh ? live.hr : null, z = hr != null ? zoneOf(hr, p.max) : -1;
   $('#lvHr').textContent = hr ?? '--';
   $('#lvHrBox').style.setProperty('--zc', z >= 0 ? ZONE_COLORS[z] : 'var(--line)');
-  $('#lvZone').textContent = hr != null ? `${ZONE_NAMES[z]} · ${Math.round(hr / p.max * 100)} %` : (live.connected ? 'warte auf Puls …' : 'nicht verbunden');
+  $('#lvZone').textContent = hr != null ? `${ZONE_NAMES[z]} · ${Math.floor(hr / p.max * 100)} %` : (live.connected ? 'warte auf Puls …' : 'nicht verbunden');
+  zoneGauge($('#lvGauge'), hr, p.max); zoneGauge($('#ivGauge'), hr, p.max); $('#lvGaugeT').textContent = zoneGaugeText(hr, p.max);
   const sec = live.running || live.samples.length ? liveSec() : 0;
   $('#lvTime').textContent = fmtClock(sec);
   $('#lvTime').classList.toggle('paused', live.paused);
@@ -2285,6 +2427,7 @@ function ivPhaseStart(phase, round) {
   iv.end = Date.now() + iv.dur * 1000; iv.lastSec = null;
   iv.phaseStartSec = live.running ? liveSec() : null;
   $('#ivRun').className = phase;
+  iv.kbNext = 2; kbShow('');
 }
 function ivLog() {
   if (live.running && iv.phaseStartSec != null) {
@@ -2296,10 +2439,11 @@ function ivStart() {
   if (isNative() && live.connected) {
     iv.native = true; iv.on = true; iv.paused = false;
     $('#ivSetup').hidden = true; $('#ivRun').hidden = false; $('#ivRun').className = 'work';
-    HN().ivStart({ rounds: iv.cfg.rounds, work: iv.cfg.work, rest: iv.cfg.rest }).catch(() => { iv.native = false; });
+    const kb = kbCfg();
+    HN().ivStart({ rounds: iv.cfg.rounds, work: iv.cfg.work, rest: iv.cfg.rest, combos: kb.on ? kbPool() : [], every: kb.on ? kb.every : 0 }).catch(() => { iv.native = false; });
     keepAwake(true); return;
   }
-  iv.native = false;
+  iv.native = false; iv.kbPool = kbCfg().on ? kbPool() : [];
   audio(); beep(1, 1400, 0.35);
   iv.on = true; iv.paused = false;
   $('#ivSetup').hidden = true; $('#ivRun').hidden = false;
@@ -2319,7 +2463,7 @@ function ivDone() {
   clearInterval(iv.timer); iv.on = false;
   $('#ivRun').className = 'done'; $('#ivPhase').textContent = 'FERTIG'; $('#ivClock').textContent = '0:00'; $('#ivClock').classList.remove('last');
   $('#ivRound').textContent = `${iv.cfg.rounds} Runden geschafft`; $('#ivProg').style.width = '100%';
-  $('#ivPause').hidden = true; $('#ivSkip').hidden = true; $('#ivStop').textContent = 'Zurück';
+  $('#ivPause').hidden = true; $('#ivSkip').hidden = true; $('#ivStop').textContent = 'Zurück'; kbShow('');
   if (!live.running) keepAwake(false);
 }
 function ivStop(silent) {
@@ -2327,7 +2471,7 @@ function ivStop(silent) {
   if (iv.on) ivLog();
   clearInterval(iv.timer); iv.on = false; iv.paused = false;
   $('#ivSetup').hidden = false; $('#ivRun').hidden = true; $('#ivPause').hidden = false; $('#ivSkip').hidden = false;
-  $('#ivStop').textContent = '■ Timer stoppen'; $('#ivPause').textContent = '❚❚ Pause';
+  $('#ivStop').textContent = '■ Timer stoppen'; $('#ivPause').textContent = '❚❚ Pause'; kbShow('');
   if (!live.running && !silent) keepAwake(false);
   ivRenderSetup();
 }
@@ -2343,6 +2487,11 @@ function ivTick() {
     iv.lastSec = sec;
   }
   if (!iv.paused && left <= 0) { beep(4, 1500, 0.11, 0.06); ivNext(); return; }
+  // Kombi ansagen: in der Belastung ab Sek. 2, dann alle X Sek., nicht mehr in den letzten 4 Sek. (da piept es)
+  if (!iv.paused && iv.phase === 'work' && iv.kbPool && iv.kbPool.length && left > 4) {
+    const el = iv.dur - left;
+    if (el >= iv.kbNext) { const c = iv.kbPool[Math.floor(Math.random() * iv.kbPool.length)]; kbSay(c); kbShow(c); iv.kbNext = el + kbCfg().every; }
+  }
   $('#ivPhase').textContent = iv.paused ? 'PAUSIERT' : iv.phase === 'work' ? 'BELASTUNG' : 'PAUSE';
   $('#ivRound').textContent = iv.phase === 'work' ? `Runde ${iv.round} / ${iv.cfg.rounds}` : `Pause · gleich Runde ${iv.round + 1} / ${iv.cfg.rounds}`;
   $('#ivClock').textContent = ivFmt(left);
@@ -2364,6 +2513,37 @@ $('#ivPause').onclick = () => {
 $('#ivSkip').onclick = () => { if (!iv.on) return; if (iv.native) { HN().ivSkip(); return; } beep(1, 1200); ivNext(); };
 $('#ivStop').onclick = () => ivStop();
 ivRenderSetup();
+
+// ---- Kombi-Ansagen: die App sagt in der Belastung Kombis per Stimme an ----
+const KB_DEF = ['1-2', '1-2-3', '1-2-Lowkick', '1-1-2', '2-3-2', '1-2-3-Highkick', 'Teep-1-2', '1-6-3-2', '1-2-Knie', '3-Lowkick', 'Slip-2-3-2', '1-2-Body-Kick'];
+function kbCfg() { const k = iv.cfg.kb = iv.cfg.kb || {}; if (k.on == null) Object.assign(k, { on: false, mode: 'rand', every: 8, list: KB_DEF.slice() }); return k; }
+function kbRand() { // 2–4 Techniken, Fäuste zuerst, am Ende oft ein Kick
+  const P = ['1', '2', '3', '4', '5', '6'], K = ['Lowkick', 'Highkick', 'Body-Kick', 'Teep', 'Knie'], D = ['Slip', 'Ducken'];
+  const r = a => a[Math.floor(Math.random() * a.length)], n = 2 + Math.floor(Math.random() * 3), out = [];
+  for (let i = 0; i < n; i++) {
+    const last = i === n - 1;
+    if (last && Math.random() < 0.5) out.push(r(K));
+    else if (i > 0 && !last && out[i - 1] !== 'Slip' && out[i - 1] !== 'Ducken' && Math.random() < 0.12) out.push(r(D));
+    else { let p = i === 0 ? r(['1', '1', '2', '3']) : r(P); if (out[i - 1] === p && p !== '1') p = P[(P.indexOf(p) + 1) % P.length]; out.push(p); }
+  }
+  return out.join('-');
+}
+function kbPool() { const k = kbCfg(); return k.mode === 'list' ? k.list.map(x => x.trim()).filter(Boolean) : Array.from({ length: 80 }, kbRand); }
+function webSay(t) { try { const u = new SpeechSynthesisUtterance(t.replace(/-/g, ', ')); u.lang = 'de-DE'; u.rate = 1.15; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { } }
+function kbSay(t) { const P = isNative() && HN(); if (P && !iv.noTts) { P.say({ text: t }).catch(() => { iv.noTts = true; webSay(t); }); return; } webSay(t); }
+function kbShow(t) { const el = $('#ivCombo'); if (!el || el.textContent === t) return; el.textContent = t; el.classList.remove('new'); if (t) { void el.offsetWidth; el.classList.add('new'); } }
+function kbRender() {
+  const k = kbCfg(); $('#kbOn').checked = k.on; $('#kbOpts').hidden = !k.on; $('#kbEvery').textContent = k.every + ' s'; $('#kbListBox').hidden = k.mode !== 'list';
+  $('#kbMode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === k.mode));
+  if (document.activeElement !== $('#kbList')) $('#kbList').value = k.list.join('\n');
+}
+$('#kbOn').onchange = e => { kbCfg().on = e.target.checked; ivSave(); kbRender(); };
+$('#kbMode').querySelectorAll('button').forEach(b => b.onclick = () => { kbCfg().mode = b.dataset.m; ivSave(); kbRender(); });
+$('#kbLess').onclick = () => { const k = kbCfg(); k.every = Math.max(3, k.every - 1); ivSave(); kbRender(); };
+$('#kbMore').onclick = () => { const k = kbCfg(); k.every = Math.min(30, k.every + 1); ivSave(); kbRender(); };
+$('#kbList').oninput = e => { kbCfg().list = e.target.value.split('\n').map(x => x.trim()).filter(Boolean); ivSave(); };
+$('#kbTest').onclick = () => { const p = kbPool(); if (!p.length) { toast('Erst Kombis eintragen.'); return; } const c = p[Math.floor(Math.random() * p.length)]; kbSay(c); toast('Ansage: ' + c); };
+kbRender();
 
 // Wischen zwischen Puls und Intervall-Timer
 const pager = $('#pager');
@@ -2428,6 +2608,7 @@ async function syncRun(list) {
     try { const fj = typeof FC !== 'undefined' && FC.f ? JSON.stringify(FC.f, null, 1) : null; if (fj && fj !== sync.fightLast) { const cur = await gh('GET', 'contents/fight.json').catch(() => null); await putFile('fight.json', fj, 'Fight Camp', cur && cur.sha); sync.fightLast = fj; } } catch (e) { }
     try { const sj = typeof SP !== 'undefined' && SP.list.length ? JSON.stringify({ list: SP.list.map(s => ({ ...s, img: s.img && s.img.startsWith('data:') ? null : s.img })), log: SP.log }) : null; if (sj && sj !== sync.suppLast) { const cur = await gh('GET', 'contents/supps.json').catch(() => null); await putFile('supps.json', sj, 'Supplements', cur && cur.sha); sync.suppLast = sj; } } catch (e) { }
     try { const bj = typeof BD !== 'undefined' && BD.list.length ? JSON.stringify(BD.list) : null; if (bj && bj !== sync.bodyLast) { const cur = await gh('GET', 'contents/body.json').catch(() => null); await putFile('body.json', bj, 'Körper-Messungen', cur && cur.sha); sync.bodyLast = bj; } } catch (e) { }
+    try { const jj = typeof JR !== 'undefined' && Object.keys(JR.d.days).length ? JSON.stringify(JR.d.days, null, 1) : null; if (jj && jj !== sync.jrLast) { const cur = await gh('GET', 'contents/journal.json').catch(() => null); await putFile('journal.json', jj, 'Abend-Journal', cur && cur.sha); sync.jrLast = jj; } } catch (e) { }
     try { if (typeof WH !== 'undefined' && WH.data && WH.data.last && WH.data.last !== sync.whoopLast) { const cur = await gh('GET', 'contents/whoop.json'); await putFile('whoop.json', JSON.stringify(WH.data.days), 'WHOOP-Daten', cur && cur.sha); sync.whoopLast = WH.data.last; } } catch (e) { }
   } finally { sync.busy = false; }
   if (sync.again) { sync.again = false; return syncRun(syncPending()); }
@@ -2673,6 +2854,7 @@ function ivRenderNative(d) {
   $('#ivClock').classList.toggle('last', !d.paused && d.left <= 3050);
   $('#ivProg').style.width = (100 - Math.max(0, d.left) / d.dur * 100).toFixed(1) + '%';
   $('#ivPause').textContent = d.paused ? '▶ Weiter' : '❚❚ Pause';
+  if (d.combo !== undefined) kbShow(d.phase === 'work' ? d.combo || '' : '');
   const fresh = live.hr != null && Date.now() - live.hrAt < 5000;
   $('#ivHrV').textContent = fresh ? live.hr : '--';
   $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile.max)] : '';
@@ -3393,17 +3575,24 @@ function repTitle(r) { const m = (r.text.match(/^#\s*(.+)$/m) || [])[1]; return 
 function repShort(r) { const m = r.text.match(/\*\*Kurz:?\*\*:?\s*(.+)/); if (m) return m[1].replace(/\*\*/g, ''); const l = r.text.split('\n').find(x => x.trim() && !/^#/.test(x)); return (l || '').replace(/\*\*/g, ''); }
 function renderCoachTeaser() {
   const b = $('#coachTeaser'), r = CO.reps[0];
-  if (!r) { b.innerHTML = sync.cfg ? `<div class="card coachT" id="coachOpen"><div class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg></div><div class="ct"><b>Coach</b><p>Dein erster Wochenbericht von Claude kommt am Sonntagabend.</p></div><span class="arr">›</span></div>` : ''; }
+  if (!r) { b.innerHTML = sync.cfg ? `<div class="card coachT" id="coachOpen"><div class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg></div><div class="ct"><b>Coach</b><p>Wochenbericht von Claude – auf Wunsch, im Coach anfordern.</p></div><span class="arr">›</span></div>` : ''; }
   else b.innerHTML = `<div class="card coachT" id="coachOpen"><div class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg></div><div class="ct"><b>${esc(repTitle(r))}${CO.seen !== r.sha ? '<em>NEU</em>' : ''}</b><p>${esc(repShort(r))}</p></div><span class="arr">›</span></div>`;
   const o = $('#coachOpen'); if (o) o.onclick = () => { renderCoach(); showView('coach'); };
 }
 function renderCoach() {
   const L = $('#coachList');
-  L.innerHTML = CO.reps.length ? CO.reps.map((r, i) => i === 0 ? `<div class="card rep">${md(r.text)}</div>` : `<details class="card fold rep"><summary><div>${esc(repTitle(r))}<small>${esc(repShort(r)).slice(0, 90)}</small></div></summary><div style="margin-top:10px">${md(r.text.replace(/^#.*\n/, ''))}</div></details>`).join('') : '<p class="empty">Noch keine Berichte. Der erste kommt am Sonntagabend.</p>';
+  L.innerHTML = CO.reps.length ? CO.reps.map((r, i) => i === 0 ? `<div class="card rep">${md(r.text)}</div>` : `<details class="card fold rep"><summary><div>${esc(repTitle(r))}<small>${esc(repShort(r)).slice(0, 90)}</small></div></summary><div style="margin-top:10px">${md(r.text.replace(/^#.*\n/, ''))}</div></details>`).join('') : '<p class="empty">Noch keine Berichte. Tipp oben auf „Wochenbericht anfordern“.</p>';
   if (CO.reps[0] && CO.seen !== CO.reps[0].sha) { CO.seen = CO.reps[0].sha; kvSet('coachSeen', CO.seen); renderCoachTeaser(); }
   coachFetch();
 }
 $('#coachBack').onclick = () => goMain('overview');
+// Wochenbericht nur auf Wunsch: öffnet die Claude-Routine, dort „Jetzt ausführen“ – danach ein paar Minuten lang nach dem neuen Bericht schauen
+const COACH_ROUTINE = 'https://claude.ai/code/routines/trig_01Cguwv27xH2E4obF2Zzxn2B';
+$('#coachReq').onclick = () => {
+  if (isNative() && HN()) HN().openUrl({ url: COACH_ROUTINE }); else window.open(COACH_ROUTINE, '_blank');
+  toast('Dort auf „Jetzt ausführen“ tippen – der Bericht kommt in ein paar Minuten.');
+  clearInterval(CO.poll); let n = 0; CO.poll = setInterval(() => { if (++n > 20) clearInterval(CO.poll); if (document.visibilityState === 'visible') coachFetch(); }, 60000);
+};
 document.querySelectorAll('.ccask [data-d]').forEach(b => b.onclick = () => coachAsk(+b.dataset.d, b.textContent));
 async function coachAsk(days, lbl) {
   const from = new Date(Date.now() - days * 864e5).toISOString(), ss = state.sessions.filter(s => s.date >= from).slice().reverse();
@@ -3662,15 +3851,30 @@ async function scFound(code) {
   $('#scanSheet').hidden = true; openSup(spFromProduct(code, res), true);
 }
 async function spLookup(code) {
-  const f = 'code,product_name,product_name_de,generic_name_de,generic_name,brands,quantity,product_quantity,product_quantity_unit,serving_size,serving_quantity,image_front_small_url,image_front_url,image_url';
-  for (const host of ['world.openfoodfacts.org', 'world.openproductsfacts.org', 'world.openbeautyfacts.org']) {
+  // Alle drei Datenbanken gleichzeitig fragen (auch mit/ohne führende 0 – UPC ↔ EAN) und die Treffer zusammenführen:
+  // Name/Packung vom besten Treffer, ein fehlendes Bild oder Portion von einem anderen.
+  const f = 'code,product_name,product_name_de,generic_name_de,generic_name,brands,quantity,product_quantity,product_quantity_unit,serving_size,serving_quantity,image_front_url,image_front_small_url,image_url,selected_images';
+  const codes = [...new Set([code, code.length === 12 ? '0' + code : null, code.length === 13 && code[0] === '0' ? code.slice(1) : null].filter(Boolean))];
+  const one = async (host, c) => {
     try {
-      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 8000);
-      const r = await fetch(`https://${host}/api/v2/product/${encodeURIComponent(code)}.json?fields=${f}`, { signal: ctl.signal }); clearTimeout(tm);
-      if (!r.ok) continue; const j = await r.json(); if (j.status === 1 && j.product) return { p: j.product, host };
-    } catch (e) { }
-  }
-  return null;
+      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 9000);
+      const r = await fetch(`https://${host}/api/v2/product/${encodeURIComponent(c)}.json?fields=${f}`, { signal: ctl.signal }); clearTimeout(tm);
+      if (!r.ok) return null; const j = await r.json(); return j.status === 1 && j.product ? { p: j.product, host } : null;
+    } catch (e) { return null; }
+  };
+  const hits = (await Promise.all(['world.openfoodfacts.org', 'world.openproductsfacts.org', 'world.openbeautyfacts.org'].flatMap(h => codes.map(c => one(h, c))))).filter(Boolean);
+  if (!hits.length) return null;
+  const score = h => (spName(h.p) ? 4 : 0) + (spImg(h.p) ? 2 : 0) + (spQty(h.p) ? 2 : 0) + (h.p.serving_size ? 1 : 0);
+  hits.sort((a, b) => score(b) - score(a));
+  const best = { p: { ...hits[0].p }, host: hits[0].host };
+  for (const h of hits.slice(1)) for (const k of ['product_name', 'product_name_de', 'brands', 'quantity', 'serving_size', 'serving_quantity', 'image_front_url', 'image_front_small_url', 'image_url', 'selected_images']) if (!best.p[k] && h.p[k]) best.p[k] = h.p[k];
+  return best;
+}
+const spName = p => (p.product_name_de || p.product_name || p.generic_name_de || p.generic_name || '').trim();
+function spImg(p) { // Bild aus dem Internet (Produktfoto der Datenbank): größtes Vorderseitenbild zuerst
+  const sel = p.selected_images && p.selected_images.front && p.selected_images.front.display;
+  const pick = o => o && (o.de || o.en || o.fr || Object.values(o)[0]);
+  return p.image_front_url || pick(sel) || p.image_url || p.image_front_small_url || null;
 }
 function spQty(p) { // "120 Kapseln", "500 g", "1 kg" … aus der Packungsangabe
   const t = String(p.quantity || ''), num = x => pnum(x);
@@ -3683,14 +3887,31 @@ function spQty(p) { // "120 Kapseln", "500 g", "1 kg" … aus der Packungsangabe
 function spFromProduct(code, res) {
   const s = { code, n: '', brand: '', unit: 'Kapseln', pack: null, dose: 1, times: ['08:00'], rem: true, img: null };
   if (!res) { s.src = `Barcode ${code} ist noch nicht in der Datenbank – trag Name und Packung kurz selbst ein. Tipp aufs Bild für ein Foto.`; return s; }
-  const p = res.p, q = spQty(p);
-  s.n = (p.product_name_de || p.product_name || p.generic_name_de || p.generic_name || '').trim();
+  const p = res.p;
+  s.n = spName(p);
   s.brand = (p.brands || '').split(',')[0].trim();
-  s.img = p.image_front_small_url || p.image_front_url || p.image_url || null;
+  if (s.brand && s.n.toLowerCase().startsWith(s.brand.toLowerCase() + ' ')) s.n = s.n.slice(s.brand.length).trim(); // Marke nicht doppelt im Namen
+  s.img = spImg(p);
+  // Packung: aus "quantity", sonst aus dem Namen ("Omega-3 120 Kapseln")
+  const q = spQty(p) || spQty({ quantity: spName(p) });
   if (q) { s.unit = q.unit; s.pack = q.n; }
-  const sq = +p.serving_quantity, m = String(p.serving_size || '').match(/(\d+(?:[.,]\d+)?)\s*[a-zäöü]*(kaps|caps|tabl|tabs|capl|softg|drag|stück|pcs)/i);
-  s.dose = s.unit === 'g' || s.unit === 'ml' ? (sq > 0 && sq <= 60 ? sq : 5) : m ? pnum(m[1]) : 1;
-  s.src = `Erkannt über ${res.host.includes('food') ? 'Open Food Facts' : res.host.includes('beauty') ? 'Open Beauty Facts' : 'Open Products Facts'} · Barcode ${code}. Kurz prüfen, vor allem Menge pro Einnahme.`;
+  if (s.unit === 'Stück' || !q) { // "90pcs" sagt nicht, was es ist – aus Name/Beschreibung ableiten
+    const w = (spName(p) + ' ' + (p.generic_name_de || p.generic_name || '')).toLowerCase();
+    if (/kapsel|capsul|softgel|kaps\b/.test(w)) s.unit = 'Kapseln'; else if (/tablet|tabs\b|lutsch|kautabl/.test(w)) s.unit = 'Tabletten';
+    else if (/pulver|powder|creatin|creatine|protein|whey|isolat/.test(w) && !q) s.unit = 'g';
+  }
+  if (s.pack != null && s.pack <= 1 && s.unit !== 'g' && s.unit !== 'ml') s.pack = null; // "1 Stück" = die Packung selbst, keine Anzahl
+  // Portion pro Einnahme: "2 Kapseln (1,4 g)", "1 Portion (30 g)", "5 g" … sonst Standard
+  const ss = String(p.serving_size || ''), sq = +p.serving_quantity;
+  const cnt = ss.match(/(\d+(?:[.,]\d+)?)\s*((?:vegi|veg|weich|hart)?(?:kapseln?|capsules?|caps)|softgels?|(?:kau|brause|lutsch|film)?(?:tabletten?)|tablets?|tabs|caplets?|dragees?|presslinge?|stück|stk|pcs|pieces?|sticks?|beutel|sachets?)(?![a-zäöü])/i);
+  const gm = ss.match(/(\d+(?:[.,]\d+)?)\s*(g|ml)(?![a-zäöü])/i);
+  if (s.unit === 'g' || s.unit === 'ml') s.dose = gm ? pnum(gm[1]) : sq > 0 && sq <= 80 ? sq : 5;
+  else if (cnt) s.dose = pnum(cnt[1]);
+  else if (/(\d+(?:[.,]\d+)?)\s*portion/i.test(ss)) s.dose = pnum(ss.match(/(\d+(?:[.,]\d+)?)\s*portion/i)[1]);
+  else s.dose = 1;
+  if (!(s.dose > 0 && s.dose <= 20) && s.unit !== 'g' && s.unit !== 'ml') s.dose = 1;
+  const fb = [!s.n && 'Name', !s.pack && 'Packungsgröße', !ss && 'Portion'].filter(Boolean);
+  s.src = `Erkannt über ${res.host.includes('food') ? 'Open Food Facts' : res.host.includes('beauty') ? 'Open Beauty Facts' : 'Open Products Facts'} · Barcode ${code}.${fb.length ? ' Nicht in der Datenbank: ' + fb.join(', ') + ' – bitte kurz selbst eintragen.' : ' Kurz prüfen, vor allem die Menge pro Einnahme.'}${s.img ? '' : ' Kein Bild gefunden – tippe aufs Bild für ein Foto.'}`;
   return s;
 }
 // ---- Erinnerungen über die Android-App ----
@@ -4072,7 +4293,7 @@ $('#bdFile').onchange = async e => {
 
 // ===================== ÜBERBLICK ALS WIDGETS: verschieben, groß/klein, ausblenden =====================
 const OV_BLOCKS = [['fightBox', 'Kampf-Countdown'], ['todayCard', 'Bereitschaft'], ['spOv', 'Supplements heute'], ['endCard', 'Ausdauer'], ['bodyCard', 'Körper'], ['coachTeaser', 'Coach'], ['whToday', 'Schlaf & Erholung'], ['perfCard', 'Leistung'], ['wkCard', 'Woche']];
-const OV_WAIT = { fightBox: '', todayCard: 'nach den ersten Trainings', spOv: 'sobald du Supplements einträgst', endCard: 'ab 3 Trainings', bodyCard: '', coachTeaser: 'mit dem ersten Wochenbericht', whToday: 'WHOOP über ⚙ verbinden – dann kommen Schlaf & Erholung', perfCard: 'nach ca. 1 Woche Training', wkCard: 'nach dem ersten Training' };
+const OV_WAIT = { fightBox: '', todayCard: 'nach den ersten Trainings', spOv: 'sobald du Supplements einträgst', endCard: 'ab 3 Trainings', bodyCard: '', coachTeaser: 'sobald du einen Wochenbericht anforderst', whToday: 'WHOOP über ⚙ verbinden – dann kommen Schlaf & Erholung', perfCard: 'nach ca. 1 Woche Training', wkCard: 'nach dem ersten Training' };
 const OV_DEF = () => ({ order: OV_BLOCKS.map(b => b[0]), off: [], size: { spOv: 's', endCard: 's' } });
 const OV = { ...OV_DEF(), edit: false, q: 0 };
 const ovName = id => (OV_BLOCKS.find(b => b[0] === id) || [, id])[1];
@@ -4131,7 +4352,7 @@ function ovMini(id, has) {
       const done = sl.filter(x => spTaken(dk, x.s.id, x.t)).length, nx = sl.find(x => !spTaken(dk, x.s.id, x.t));
       return `<div class="wml">Supplements</div>${ring(done / sl.length * 100, done + '/' + sl.length, done === sl.length ? C.good : C.acc)}<div class="wms">${nx ? `Als Nächstes${nx.t ? ' ' + nx.t : ''}: ${esc(nx.s.n)}` : 'Alles genommen'}</div>`;
     }
-    if (id === 'coachTeaser') { const r = CO.reps[0]; return box('Coach', r ? (CO.seen !== r.sha ? 'Neu' : 'Bericht') : '–', r ? esc(repTitle(r)) : 'Erster Bericht kommt Sonntag', r && CO.seen !== r.sha ? 'var(--acc)' : ''); }
+    if (id === 'coachTeaser') { const r = CO.reps[0]; return box('Coach', r ? (CO.seen !== r.sha ? 'Neu' : 'Bericht') : '–', r ? esc(repTitle(r)) : 'Bericht auf Wunsch', r && CO.seen !== r.sha ? 'var(--acc)' : ''); }
     if (id === 'whToday') {
       const t = WH.tok && whToday(); if (!t) return box('Erholung', '–', 'WHOOP verbinden');
       const d = t[1], hm = d.sleepH != null ? Math.floor(d.sleepH) + 'h ' + String(Math.round(d.sleepH % 1 * 60)).padStart(2, '0') : '–';
@@ -4229,6 +4450,407 @@ $('#ovGrid').addEventListener('click', e => {
   window.addEventListener('touchmove', e => { if (D.ph) e.preventDefault(); }, { passive: false });
 })();
 
+// ===================== TAPERING: in den letzten 10 Tagen vor dem Kampf genug runterfahren? =====================
+function taperInfo() {
+  const f = FC.f; if (!f || !f.date) return null;
+  const DAY = 864e5, fd = new Date(f.date + 'T12:00').getTime(), t = new Date(); t.setHours(12, 0, 0, 0);
+  const days = Math.round((fd - t) / DAY); if (days < 1 || days > 10) return null;
+  const t0 = fd - 10 * DAY, now = Date.now();
+  const inR = (a, b) => state.sessions.filter(s => { const x = new Date(s.date).getTime(); return x >= a && x < b; });
+  const sum = l => l.reduce((a, s) => a + (s.trimp || 0), 0);
+  const base = sum(inR(t0 - 28 * DAY, t0)) / 4; // normale Woche = Ø der 4 Wochen vor dem Tapering
+  const last7 = sum(inR(now - 7 * DAY, now + 1));
+  if (base < 40) return { days, noBase: true };
+  const target = days > 7 ? 80 : 60; // Faustregel: in der letzten Woche nur noch 40–60 % der normalen Belastung
+  const pct = Math.round(last7 / base * 100);
+  const hard = days <= 3 ? inR(now - 2 * DAY, now + 1).filter(s => (s.trimp || 0) >= 100 || (s.zones && s.zones[3] + s.zones[4] >= 600)) : [];
+  const st = hard.length ? 'bad' : pct <= target ? 'ok' : pct <= target + 20 ? 'warn' : 'bad';
+  return { days, base: Math.round(base), last7: Math.round(last7), pct, target, st, hard };
+}
+function taperText(T) {
+  if (T.hard.length) return ['Zu hart so kurz vorm Kampf', 'Harte Einheit in den letzten 2 Tagen. Jetzt nur noch locker: Schattenboxen, Technik, ein paar kurze Antritte – und viel schlafen.'];
+  return {
+    ok: ['Gut runtergefahren', 'Passt. Weiter kurz und knackig trainieren, viel Technik, früh schlafen – so gehst du frisch in den Kampf.'],
+    warn: ['Etwas zu viel', 'Du bist knapp drüber. Die nächsten Tage kürzer und lockerer trainieren, keine langen harten Runden mehr.'],
+    bad: ['Zu wenig runtergefahren', 'Du trainierst fast so viel wie sonst. Jetzt deutlich weniger machen – sonst gehst du müde in den Kampf.']
+  }[T.st];
+}
+function taperHtml(T) {
+  if (!T) return '';
+  if (T.noBase) return `<div class="taper" style="--tc:var(--mut)"><div class="tph"><span>Tapering · noch ${T.days} ${T.days === 1 ? 'Tag' : 'Tage'}</span></div><p>Zu wenig Trainings in den Wochen davor zum Vergleichen. Faustregel: in der letzten Woche etwa halb so viel wie sonst.</p></div>`;
+  const col = { ok: 'var(--good)', warn: 'var(--warn)', bad: 'var(--bad)' }[T.st], [lbl, msg] = taperText(T), room = Math.round(T.base * T.target / 100 - T.last7);
+  return `<div class="taper" style="--tc:${col}"><div class="tph"><span>Tapering · noch ${T.days} ${T.days === 1 ? 'Tag' : 'Tage'}</span></div><div class="tst">${lbl}</div>
+    <div class="tbar"><i style="width:${Math.min(100, T.pct / 150 * 100).toFixed(1)}%"></i><em style="left:${(T.target / 150 * 100).toFixed(1)}%"></em></div>
+    <div class="tleg"><span>Letzte 7 Tage: <b>${T.pct} %</b></span><span>Ziel ≤ ${T.target} %</span></div>
+    <p>So viel wie in einer normalen Woche: ${T.pct} % (normal ≈ ${T.base} Belastung). ${msg}${room > 0 && !T.hard.length ? ` Spielraum bis zum Ziel: noch ca. <b>${room}</b> Belastung.` : ''}</p></div>`;
+}
+{ const _rf = renderFight; renderFight = function () { _rf(); const c = $('#fCard'), T = taperInfo(); if (c && T) { c.insertAdjacentHTML('beforeend', taperHtml(T)); c.querySelector('.taper').onclick = e => e.stopPropagation(); } renderStWarn(); }; }
+
+// ===================== KRANK-WARNUNG: Ruhepuls 2 Tage hoch + HRV niedrig (WHOOP) =====================
+function sickCheck() {
+  if (!WH.tok) return null;
+  const D = WH.data.days, ks = Object.keys(D).sort().filter(k => D[k].rhr != null && D[k].hrv != null);
+  if (ks.length < 7) return null;
+  const a = ks[ks.length - 1], b = ks[ks.length - 2];
+  if (a < dayKey(new Date(Date.now() - 36 * 36e5))) return null; // nur, wenn die Werte aktuell sind
+  if (b !== dayKey(new Date(new Date(a + 'T12:00').getTime() - 864e5))) return null; // zwei Tage am Stück
+  const base = ks.filter(k => k < b).slice(-28); if (base.length < 5) return null;
+  const av = f => { const v = base.map(k => D[k][f]).filter(x => x != null); return v.length >= 5 ? v.reduce((x, y) => x + y, 0) / v.length : null; };
+  const br = av('rhr'), bh = av('hrv');
+  const hi = k => D[k].rhr >= br + Math.max(3, br * 0.06), lo = k => D[k].hrv <= bh * 0.85;
+  if (!(hi(a) && hi(b) && lo(a) && lo(b))) return null;
+  const extra = [], bt = av('skinTemp'), bresp = av('resp');
+  if (bt != null && D[a].skinTemp != null && D[a].skinTemp - bt >= 0.5) extra.push(`Hauttemperatur +${(D[a].skinTemp - bt).toFixed(1).replace('.', ',')} °C`);
+  if (bresp != null && D[a].resp != null && D[a].resp - bresp >= 1) extra.push('Atemfrequenz erhöht');
+  return { br: Math.round(br), bh: Math.round(bh), r: [D[b].rhr, D[a].rhr], h: [D[b].hrv, D[a].hrv], extra };
+}
+function renderSick() {
+  const c = $('#sickBox'), S = sickCheck();
+  if (!S) { c.hidden = true; c.innerHTML = ''; return; }
+  c.hidden = false;
+  c.innerHTML = `<div class="sick"><h3><i class="sdot"></i>Krank-Warnung</h3><div class="sbig">Heute locker oder Pause</div>
+    <div class="sgrid"><div>Ruhepuls<b>${S.r.join(' → ')}<small> bpm</small></b>gestern → heute<br>sonst Ø ${S.br}</div><div>HRV<b>${S.h.join(' → ')}<small> ms</small></b>gestern → heute<br>sonst Ø ${S.bh}</div></div>
+    <p class="hint">Zwei Tage am Stück Ruhepuls hoch und HRV niedrig${S.extra.length ? ', dazu ' + S.extra.join(' und ') : ''}. So kündigt sich oft eine Erkältung an – oder du bist übertrainiert. Viel trinken, früh schlafen. Bei Fieber oder Halsweh kein Training.</p></div>`;
+}
+{ const _rt = readinessToday; readinessToday = function () { const r = _rt(); if (r && sickCheck()) { r.score = Math.min(r.score, 30); r.sick = true; } return r; }; }
+// Hinweise direkt vor dem Training (Training-Tab, über START)
+function renderStWarn() {
+  const box = $('#stWarn'); if (!box) return; const out = [];
+  const S = sickCheck(); if (S) out.push(['var(--bad)', 'Krank-Warnung', `Ruhepuls 2 Tage erhöht (${S.r.join(' → ')} statt Ø ${S.br}) und HRV niedrig (${S.h.join(' → ')} statt Ø ${S.bh}). Heute locker oder Pause.`]);
+  const T = taperInfo(); if (T && !T.noBase && T.st !== 'ok') { const [l, m] = taperText(T); out.push([T.st === 'bad' ? 'var(--bad)' : 'var(--warn)', 'Tapering: ' + l, m]); }
+  const card = ([c, t, m]) => `<div class="card stwarn" style="--wc:${c}"><b>${t}</b><p>${m}</p></div>`;
+  box.innerHTML = out.map(card).join('');
+  // Überblick: ganz oben, fest (kein verschiebbares Widget). Die Krank-Warnung steht dort schon groß in #sickBox.
+  const ov = $('#ovWarn'); if (!ov) return;
+  ov.innerHTML = out.filter(w => w[1] !== 'Krank-Warnung').map(card).join('');
+  ov.querySelectorAll('.stwarn').forEach(el => el.onclick = () => { const f = $('#fCard'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+}
+
+// ===================== ABEND-JOURNAL: Essenszeit, Stress, Koffein → Einfluss auf die Erholung =====================
+const JR_REM = () => ({ on: false, t: '21:00', mOn: false, mt: '08:00' });
+const JR = { d: { days: {}, rem: JR_REM() }, e: null, k: null };
+const STRESS = [['1', 'Ganz ruhig'], ['2', 'Entspannt'], ['3', 'Normal'], ['4', 'Gestresst'], ['5', 'Sehr']];
+(async () => { await ready; try { const j = await kvGet('journal'); if (j) JR.d = { days: j.days || {}, rem: { ...JR_REM(), ...(j.rem || {}) }, custom: j.custom || [], hidden: j.hidden || [] }; } catch (e) { } renderJournal(); if (JR.d.rem.on || JR.d.rem.mOn) jrSchedule(false); })();
+function jrDayKey() { const d = new Date(); if (d.getHours() < 5) d.setDate(d.getDate() - 1); return dayKey(d); } // nach Mitternacht zählt noch der Abend davor
+function jrYKey() { const d = new Date(jrDayKey() + 'T12:00'); d.setDate(d.getDate() - 1); return dayKey(d); }
+const jrPlus1 = k => { const d = new Date(k + 'T12:00'); d.setDate(d.getDate() + 1); return dayKey(d); };
+function jrNextRec(k) { const n = new Date(k + 'T12:00'); n.setDate(n.getDate() + 1); const w = WH.data.days[dayKey(n)]; return w && w.recovery != null ? w.recovery : null; }
+function jrInsights() {
+  const rows = Object.entries(JR.d.days).map(([k, e]) => ({ e, r: jrNextRec(k) })).filter(x => x.r != null), out = [];
+  const cmp = (test, yes, no) => {
+    const a = rows.filter(x => test(x.e) === true), b = rows.filter(x => test(x.e) === false); if (a.length < 2 || b.length < 2) return;
+    const m = l => Math.round(l.reduce((s, x) => s + x.r, 0) / l.length); out.push({ yes, no, a: m(a), b: m(b), na: a.length, nb: b.length });
+  };
+  cmp(e => e.meal ? e.meal >= '21:00' : null, 'Spät gegessen (ab 21 Uhr)', 'früher gegessen');
+  cmp(e => e.stress ? (e.stress >= 4 ? true : e.stress <= 2 ? false : null) : null, 'Stressiger Tag (4–5)', 'entspannter Tag (1–2)');
+  cmp(e => e.caf != null ? e.caf > 0 && (e.cafLast || '00:00') >= '14:00' : null, 'Koffein nach 14 Uhr', 'ohne Koffein am Nachmittag');
+  // Kategorien: jede, die mind. 3× an und 3× aus war – nur die mit spürbarem Unterschied, stärkste zuerst
+  const tagged = rows.filter(x => Array.isArray(x.e.tags)), tags = [...new Set(tagged.flatMap(x => x.e.tags))], tout = [];
+  for (const t of tags) {
+    const a = tagged.filter(x => x.e.tags.includes(t)), b = tagged.filter(x => !x.e.tags.includes(t)); if (a.length < 3 || b.length < 3) continue;
+    const m = l => Math.round(l.reduce((s, x) => s + x.r, 0) / l.length); tout.push({ yes: t, no: 'ohne', a: m(a), b: m(b), na: a.length, nb: b.length });
+  }
+  const tagOut = tout.filter(x => Math.abs(x.a - x.b) >= 4).sort((p, q) => Math.abs(q.a - q.b) - Math.abs(p.a - p.b)).slice(0, 6);
+  return { n: rows.length, out, tagOut };
+}
+function renderJournal() {
+  const c = $('#jrCard'), k = jrDayKey(), e = JR.d.days[k], h0 = new Date().getHours(), evening = h0 >= 18 || h0 < 5, n = Object.keys(JR.d.days).length;
+  let h = `<h3>Abend-Journal <small>${n ? n + (n === 1 ? ' Eintrag' : ' Einträge') : 'Essen · Stress · Koffein'}</small></h3>`;
+  const yOpen = n > 0 && !JR.d.days[jrYKey()];
+  if (yOpen) h += `<div class="jrdone" style="margin-bottom:10px"><span style="color:var(--warn)">Gestern noch offen</span><b>Kurz nachtragen, solange du es noch weißt.</b></div><button class="btn${evening && !e ? ' ghost' : ''}" id="jrOpenY" style="margin-bottom:12px">Gestern nachtragen</button>`;
+  if (e) h += `<div class="jrdone"><span>Heute eingetragen ✓</span><b>Essen ${e.meal || '–'} · Stress ${e.stress || '–'}/5 · Koffein ${e.caf ? e.caf + '×' + (e.cafLast ? ' bis ' + e.cafLast : '') : 'keins'}</b>${e.tags && e.tags.length ? `<div class="jrtags">${e.tags.map(esc).join(' · ')}</div>` : ''}</div><button class="link" id="jrOpen" style="margin-top:6px">ändern</button>`;
+  else h += `<p class="hint" style="margin-top:0">${evening ? 'Drei kurze Fragen zu heute – dauert 20 Sekunden.' : 'Heute Abend: drei kurze Fragen zu Essenszeit, Stress und Koffein.'}</p><button class="btn${evening && !yOpen ? '' : ' ghost'}" id="jrOpen">${evening ? 'Heute eintragen' : 'Schon jetzt eintragen'}</button>`;
+  const I = jrInsights();
+  const row = x => { const d = x.a - x.b; return `<div class="jrrow"><span>${esc(x.yes)}<small>vs. ${x.no} · ${x.na}× / ${x.nb}×</small></span><b style="color:${d <= -4 ? 'var(--bad)' : d >= 4 ? 'var(--good)' : 'var(--txt)'}">${d > 0 ? '+' : ''}${d} %<small>${x.a} % statt ${x.b} %</small></b></div>`; };
+  if (I.out.length || I.tagOut.length) h += `<h3 style="margin-top:18px">Einfluss auf deine Erholung <small>WHOOP am Morgen danach</small></h3>` + I.out.map(row).join('')
+    + (I.tagOut.length ? `<div class="jrgrp" style="margin-top:14px">Deine Kategorien</div>` + I.tagOut.map(row).join('') : '')
+    + `<p class="hint">Ø Erholung am nächsten Morgen. Minus = schlechter erholt. Je mehr Einträge, desto sicherer.</p>`;
+  else h += `<p class="hint">${WH.tok ? `Ab ein paar Einträgen siehst du hier, wie Essenszeit, Stress und Koffein deine Erholung beeinflussen (${I.n} Abende mit WHOOP-Werten).` : 'Mit WHOOP siehst du hier, wie Essenszeit, Stress und Koffein deine Erholung beeinflussen.'}</p>`;
+  c.innerHTML = h; c.hidden = false; $('#jrOpen').onclick = () => openJournal(0); if ($('#jrOpenY')) $('#jrOpenY').onclick = () => openJournal(1);
+}
+// ---- Kategorien zum Antippen (statt alles aufschreiben) ----
+const JR_DAY = ['Gearbeitet', 'Arbeitsweg', 'Training', 'Ruhetag', 'Viel gesessen', 'Viel auf den Beinen', 'Frei'];
+const JR_SUPP = ['Omega-3', 'Magnesium', 'Vitamin D', 'Zink', 'Kreatin', 'Multivitamin', 'Protein-Shake', 'Elektrolyte'];
+const JR_MISC = ['Alkohol', 'Spät am Handy', 'Mittagsschlaf', 'Sauna', 'Wenig getrunken', 'Spätes Training', 'Erkältet', 'Gewicht machen'];
+const jrNorm = s => String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
+function jrSuppTags() { // erst deine eigenen Supplements, dann die üblichen (ohne doppelte, z. B. „Norsan Omega-3“ ersetzt „Omega-3“)
+  const own = (typeof SP !== 'undefined' ? SP.list.map(s => s.n) : []).filter(Boolean), out = [];
+  own.forEach(n => { if (!out.some(x => jrNorm(x) === jrNorm(n))) out.push(n); });
+  JR_SUPP.forEach(n => { if (!out.some(x => jrNorm(x).includes(jrNorm(n)))) out.push(n); });
+  return out;
+}
+const jrHid = () => JR.d.hidden || [];
+function jrGroupsAll() { return [['Dein Tag', JR_DAY], ['Supplements', jrSuppTags()], ['Sonstiges', [...JR_MISC, ...(JR.d.custom || []).filter(c => !JR_MISC.includes(c))]]]; }
+function jrGroups() { return jrGroupsAll().map(([g, l]) => [g, l.filter(t => !jrHid().includes(t))]); }
+const jrPersist = async () => { try { await kvSet('journal', JR.d); } catch (e) { } };
+function jrAutoTags(k) { // was die App schon weiß: Training an dem Tag, abgehakte Supplements
+  const t = [];
+  if (state.sessions.some(s => dayKey(s.date) === k)) t.push('Training');
+  if (typeof SP !== 'undefined') SP.list.forEach(s => { if (((SP.log[k] || {})[s.id] || []).length && s.n) t.push(s.n); });
+  return t;
+}
+function jrRenderTags() {
+  const e = JR.e, on = new Set(e.tags);
+  const ed = !!JR.edit, hid = jrHid(); $('#jrEditTags').textContent = ed ? 'Fertig' : 'Anpassen';
+  // Gewählte, aber ausgeblendete Tags bleiben sichtbar (sonst gingen sie beim Speichern unbemerkt mit)
+  const extra = e.tags.filter(t => !jrGroupsAll().some(g => g[1].includes(t)));
+  let html = jrGroups().map(([g, l], gi) => { if (gi === 2) l = [...l, ...extra]; return l.length || ed ? `<div class="jrgrp">${g}</div><div class="chips">${l.map(t => `<button class="chip ${ed ? 'del' : on.has(t) ? 'on' : ''}" data-t="${esc(t)}">${esc(t)}</button>`).join('') || '<span class="hint" style="margin:0">alles ausgeblendet</span>'}</div>` : ''; }).join('');
+  if (ed) {
+    const hl = jrGroupsAll().flatMap(g => g[1]).filter(t => hid.includes(t));
+    html += `<p class="hint" style="margin:12px 0 0">Zum Entfernen antippen. Eigene Kategorien unten hinzufügen.</p>` + (hl.length ? `<div class="jrgrp">Ausgeblendet – antippen zum Zurückholen</div><div class="chips">${hl.map(t => `<button class="chip rest" data-r="${esc(t)}">${esc(t)}</button>`).join('')}</div>` : '');
+  } else if (e.auto && e.auto.length) html += `<p class="hint" style="margin:8px 0 0">Schon angehakt, weil die App es weiß: ${e.auto.map(esc).join(', ')}.</p>`;
+  $('#jrTags').innerHTML = html;
+  $('#jrTags').querySelectorAll('[data-r]').forEach(b => b.onclick = () => { JR.d.hidden = hid.filter(x => x !== b.dataset.r); jrPersist(); jrRenderTags(); });
+  $('#jrTags').querySelectorAll('.chip[data-t]').forEach(b => b.onclick = () => {
+    const t = b.dataset.t;
+    if (ed) { // entfernen: eigene Kategorien werden gelöscht, vorgegebene ausgeblendet
+      JR.d.custom = (JR.d.custom || []).filter(x => x !== t);
+      if (JR_DAY.includes(t) || JR_SUPP.includes(t) || JR_MISC.includes(t) || (typeof SP !== 'undefined' && SP.list.some(s => s.n === t))) JR.d.hidden = [...new Set([...hid, t])];
+      e.tags = e.tags.filter(x => x !== t); jrPersist(); jrRenderTags(); return;
+    }
+    const i = e.tags.indexOf(t); if (i >= 0) e.tags.splice(i, 1); else e.tags.push(t);
+    if (t === 'Ruhetag' && i < 0) e.tags = e.tags.filter(x => x !== 'Training'); if (t === 'Training' && i < 0) e.tags = e.tags.filter(x => x !== 'Ruhetag');
+    jrRenderTags();
+  });
+}
+$('#jrEditTags').onclick = () => { JR.edit = !JR.edit; jrRenderTags(); };
+$('#jrAddTag').onclick = () => {
+  const v = $('#jrNewTag').value.trim().slice(0, 30); if (!v) return;
+  const all = jrGroupsAll().flatMap(g => g[1]); const ex = all.find(x => jrNorm(x) === jrNorm(v));
+  if (!ex) JR.d.custom = [...(JR.d.custom || []), v];
+  const t = ex || v; JR.d.hidden = jrHid().filter(x => x !== t); jrPersist(); // war sie ausgeblendet, kommt sie zurück
+  if (!JR.e.tags.includes(t)) JR.e.tags.push(t);
+  $('#jrNewTag').value = ''; jrRenderTags();
+};
+$('#jrNewTag').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#jrAddTag').click(); } };
+function jrRenderSheet() {
+  const e = JR.e;
+  jrRenderTags();
+  $('#jrStress').innerHTML = STRESS.map(([v, l]) => `<button data-v="${v}" class="${e.stress === +v ? 'on' : ''}">${v}<small>${l}</small></button>`).join('');
+  $('#jrStress').querySelectorAll('button').forEach(b => b.onclick = () => { e.stress = +b.dataset.v; jrRenderSheet(); });
+  $('#jrCaf').textContent = e.caf; $('#jrCafTxt').textContent = e.caf ? e.caf + (e.caf === 1 ? ' Getränk' : ' Getränke') : 'Keins'; $('#jrCafLastBox').hidden = !e.caf;
+}
+function openJournal(which = 0) {
+  JR.edit = false;
+  const k = JR.k = which ? jrYKey() : jrDayKey(), o = JR.d.days[k] || {};
+  const auto = o.tags ? [] : jrAutoTags(k);
+  JR.e = { meal: o.meal || '20:00', stress: o.stress || null, caf: o.caf || 0, cafLast: o.cafLast || '14:00', note: o.note || '', tags: (o.tags || auto).slice(), auto };
+  $('#jrDay').textContent = new Date(k + 'T12:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit' });
+  $('#jrWhich').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.w === (which ? 1 : 0)));
+  $('#jrMeal').value = JR.e.meal; $('#jrCafLast').value = JR.e.cafLast; $('#jrNote').value = JR.e.note;
+  const r = JR.d.rem; $('#jrRemOn').checked = !!r.on; $('#jrRemT').value = r.t || '21:00'; $('#jrRemMOn').checked = !!r.mOn; $('#jrRemMT').value = r.mt || '08:00';
+  jrRenderSheet(); $('#jrSheet').hidden = false;
+}
+$('#jrWhich').querySelectorAll('button').forEach(b => b.onclick = () => openJournal(+b.dataset.w));
+$('#jrCafLess').onclick = () => { JR.e.caf = Math.max(0, JR.e.caf - 1); jrRenderSheet(); };
+$('#jrCafMore').onclick = () => { JR.e.caf = Math.min(10, JR.e.caf + 1); jrRenderSheet(); };
+$('#jrCancel').onclick = () => { $('#jrSheet').hidden = true; };
+$('#jrSheet').onclick = e => { if (e.target.id === 'jrSheet') $('#jrSheet').hidden = true; };
+$('#jrSave').onclick = async () => {
+  const e = JR.e; if (!e.stress) { toast('Bitte noch den Stress antippen (1–5).'); return; }
+  const k = JR.k || jrDayKey(), caf = e.caf;
+  JR.d.days[k] = { meal: $('#jrMeal').value || null, stress: e.stress, caf, cafLast: caf ? $('#jrCafLast').value || null : null, tags: e.tags.slice(), note: $('#jrNote').value.trim() || undefined };
+  const remBefore = JSON.stringify(JR.d.rem); JR.d.rem = { on: $('#jrRemOn').checked, t: $('#jrRemT').value || '21:00', mOn: $('#jrRemMOn').checked, mt: $('#jrRemMT').value || '08:00' };
+  try { await kvSet('journal', JR.d); } catch (x) { }
+  JR.edit = false; $('#jrSheet').hidden = true; renderJournal(); toast('Journal gespeichert ✓');
+  const changed = JSON.stringify(JR.d.rem) !== remBefore;
+  if (changed || JR.d.rem.on || JR.d.rem.mOn) jrSchedule(changed); // auch die „schon eingetragen“-Tage an Android melden
+  if (sync.cfg) setTimeout(() => syncRun(syncPending()), 800);
+};
+async function jrSchedule(user) {
+  const r = JR.d.rem, any = r.on || r.mOn;
+  const P = isNative() && HN(); if (!P) { if (user && any) toast('Erinnerungen gehen nur in der Android-App.'); return; }
+  const hm = t => t.split(':').map(Number), done = Object.keys(JR.d.days).sort().slice(-5), items = [];
+  // abends: fällt aus, wenn heute schon eingetragen · morgens: fällt aus, wenn gestern schon eingetragen
+  if (r.on) { const [h, m] = hm(r.t || '21:00'); items.push({ h, m, title: 'Abend-Journal', text: 'Kurz eintragen: Essenszeit, Stress und Koffein – dauert 20 Sekunden.', url: 'trainingsapp://journal', skip: done.join(',') }); }
+  if (r.mOn) { const [h, m] = hm(r.mt || '08:00'); items.push({ h, m, title: 'Journal von gestern', text: 'Gestern noch nicht eingetragen: Wann gegessen, wie viel Stress, wie viel Koffein?', url: 'trainingsapp://journal?d=gestern', skip: done.map(jrPlus1).join(',') }); }
+  try { if (any && user) await P.notifPerm(); await P.remind({ items }); }
+  catch (e) { if (user && any) toast('Für die Erinnerung bitte zuerst das App-Update installieren.'); }
+}
+{ const _o = window.onAppUrl; window.onAppUrl = url => { if (url && url.startsWith('trainingsapp://journal')) { goMain('overview'); setTimeout(() => openJournal(/gestern/.test(url) ? 1 : 0), 300); return; } return _o && _o(url); }; }
+
+// ===================== REKORDE & SERIEN =====================
+const WK_GOAL = 3; // Wochen-Serie: Wochen mit mindestens 3 Trainings
+const REC_DEF = [
+  ['dur', 'Längstes Training', s => s.durationSec, v => fmtDur(v)],
+  ['trimp', 'Höchste Belastung', s => s.trimp, v => Math.round(v)],
+  ['kcal', 'Meiste Kalorien', s => s.kcal, v => Math.round(v) + ' kcal'],
+  ['hard', 'Meiste Zeit in Z4 + Z5', s => s.zones ? s.zones[3] + s.zones[4] : null, v => fmtDur(v)],
+  ['rec', 'Beste Erholung in Pausen', s => recov(s), v => '−' + v + ' bpm']
+];
+const REC_NEW = new Map();
+function recBest(list) { const o = {}; for (const [k, , f] of REC_DEF) { let b = null; for (const s of list) { const v = f(s); if (v != null && v > 0 && (!b || v > b.v)) b = { v, s }; } o[k] = b; } return o; }
+function weekKey(d) { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return dayKey(x); }
+function streaks(list) {
+  const days = new Set(list.map(s => dayKey(s.date))), d = new Date(); d.setHours(12, 0, 0, 0);
+  let cur = 0; if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1); while (days.has(dayKey(d))) { cur++; d.setDate(d.getDate() - 1); }
+  const run = (keys, step) => { let best = 0, r = 0, prev = null; for (const k of keys) { const t = new Date(k + 'T12:00'); r = prev && Math.round((t - prev) / 864e5) === step ? r + 1 : 1; best = Math.max(best, r); prev = t; } return best; };
+  const wc = {}, wl = {}; list.forEach(s => { const w = weekKey(s.date); wc[w] = (wc[w] || 0) + 1; wl[w] = (wl[w] || 0) + (s.trimp || 0); });
+  const thisW = weekKey(new Date()), w = new Date(thisW + 'T12:00'); let wcur = 0;
+  if ((wc[thisW] || 0) < WK_GOAL) w.setDate(w.getDate() - 7);
+  while ((wc[dayKey(w)] || 0) >= WK_GOAL) { wcur++; w.setDate(w.getDate() - 7); }
+  const top = o => { const e = Object.entries(o).sort((a, b) => b[1] - a[1])[0]; return e ? { k: e[0], v: Math.round(e[1]) } : null; };
+  return { cur, best: run([...days].sort(), 1), wcur, wbest: run(Object.keys(wc).filter(k => wc[k] >= WK_GOAL).sort(), 7), thisWeek: wc[thisW] || 0, bestWeek: top(wl), mostWeek: top(wc) };
+}
+function renderRecords() {
+  const c = $('#recCard'), L = state.sessions; if (L.length < 2) { c.hidden = true; return; }
+  const B = recBest(L), S = streaks(L), wk7 = Date.now() - 7 * 864e5, isNew = s => L.length >= 5 && new Date(s.date).getTime() > wk7;
+  const fd = k => new Date(k + 'T12:00').toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  c.hidden = false;
+  c.innerHTML = `<h3>Rekorde &amp; Serien</h3><div class="rgrid2">
+    <div class="rtile"><i>Tage am Stück</i><b>${S.cur}</b><small>Rekord: ${S.best} ${S.best === 1 ? 'Tag' : 'Tage'}</small></div>
+    <div class="rtile"><i>Wochen mit ${WK_GOAL}+ Trainings</i><b>${S.wcur}</b><small>Rekord: ${S.wbest} · diese Woche ${Math.min(S.thisWeek, WK_GOAL)}/${WK_GOAL}</small><div class="wdots">${Array.from({ length: WK_GOAL }, (_, i) => `<i class="${i < S.thisWeek ? 'on' : ''}"></i>`).join('')}</div></div></div>
+    <div class="rlist">${REC_DEF.map(([k, n, , fmt]) => { const b = B[k]; return b ? `<button data-id="${b.s.id}"><span>${n}${isNew(b.s) ? '<em class="rnew">NEU</em>' : ''}<small>${fmtDate(b.s.date)} · ${esc(b.s.type)}</small></span><b>${fmt(b.v)}</b></button>` : ''; }).join('')}
+    ${S.bestWeek ? `<div><span>Härteste Woche<small>ab ${fd(S.bestWeek.k)}</small></span><b>${S.bestWeek.v}</b></div>` : ''}
+    ${S.mostWeek ? `<div><span>Meiste Trainings in einer Woche<small>ab ${fd(S.mostWeek.k)}</small></span><b>${S.mostWeek.v}×</b></div>` : ''}</div>`;
+  c.querySelectorAll('[data-id]').forEach(b => b.onclick = () => { const s = state.sessions.find(x => x.id === b.dataset.id); if (s) openSession(s); });
+}
+// Neuer Rekord? Beim Speichern eines neuen Trainings prüfen und melden
+{ const _sao = saveAndOpen; saveAndOpen = async function (s) {
+  try {
+    const fresh = !state.sessions.some(x => x.id === s.id) && Date.now() - new Date(s.date).getTime() < 3 * 864e5;
+    if (fresh && state.sessions.length >= 3) {
+      const B = recBest(state.sessions), S0 = streaks(state.sessions), S1 = streaks([s, ...state.sessions]), out = [];
+      for (const [k, n, f, fmt] of REC_DEF) { const v = f(s), b = B[k]; if (v != null && v > 0 && b && v > b.v) out.push({ n, v: fmt(v), old: fmt(b.v) }); }
+      if (S1.cur > S0.best && S1.cur >= 3) out.push({ n: 'Längste Serie', v: S1.cur + ' Tage am Stück', old: S0.best + ' Tage' });
+      if (S1.wcur > S0.wbest && S1.wcur >= 2) out.push({ n: `Wochen-Serie (${WK_GOAL}+ Trainings)`, v: S1.wcur + ' Wochen', old: S0.wbest + ' Wochen' });
+      if (out.length) { REC_NEW.set(s.id, out); setTimeout(() => toast(`Neuer Rekord: ${out[0].n}!`), 400); try { navigator.vibrate && navigator.vibrate([60, 60, 120]); } catch (e) { } }
+    }
+  } catch (e) { }
+  return _sao(s);
+}; }
+{ const _os = openSession; openSession = function (s, isNew) {
+  _os(s, isNew); const r = REC_NEW.get(s.id); if (!r || !r.length) return;
+  const h = $('#view-session .shead'); if (h) h.insertAdjacentHTML('afterend', `<div class="card recban"><h3 style="margin:0 0 6px">${r.length === 1 ? 'Neuer Rekord' : r.length + ' neue Rekorde'}</h3>${r.map(x => `<div class="rrow"><span>${x.n}</span><b>${x.v}${x.old ? ` <small style="color:var(--mut);font-weight:400">vorher ${x.old}</small>` : ''}</b></div>`).join('')}</div>`);
+}; }
+
+// ===================== ERHOLUNG RUNDE FÜR RUNDE über die Wochen (Analyse-Tab) =====================
+function isoWeek(d) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), wd = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - wd); return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7); }
+function renderRoundRec() {
+  const box = $('#rrBox'); if (!box) return;
+  const L = state.sessions.filter(s => s.rounds && s.rounds.filter(r => r.drop != null).length >= 2);
+  if (!L.length) { box.innerHTML = `<div class="card"><h3>Erholung Runde für Runde</h3><p class="hint" style="margin-top:0">Starte im Training den Intervall-Timer (nach links wischen). Dann misst die App in jeder Pause, wie schnell dein Puls fällt – und zeigt hier Runde für Runde, wie sich das über die Wochen entwickelt.</p></div>`; return; }
+  const W = {}; L.forEach(s => { const w = weekKey(s.date); (W[w] = W[w] || []).push(s); });
+  const wks = Object.keys(W).sort().slice(-8), nR = Math.min(12, Math.max(...L.map(s => s.rounds.length)));
+  const mean = v => v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  const at = (list, i) => { const m = mean(list.map(s => s.rounds[i] && s.rounds[i].drop).filter(x => x != null)); return m == null ? null : Math.round(m); };
+  const rows = wks.map(w => ({ w, n: W[w].length, v: Array.from({ length: nR }, (_, i) => at(W[w], i)) }));
+  const wkStat = list => {
+    const ds = list.map(s => s.rounds.map(r => r.drop).filter(x => x != null)).filter(a => a.length >= 2);
+    return { all: mean(ds.flat()), last: mean(ds.map(a => a[a.length - 1])), fade: mean(ds.map(a => a[0] - a[a.length - 1])) };
+  };
+  const nw = wkStat(W[wks[wks.length - 1]]), ow = wks.length > 1 ? wkStat(W[wks[0]]) : null;
+  const kw = k => 'KW ' + isoWeek(new Date(k + 'T12:00'));
+  const kp = (l, v, o, inv) => { const d = v != null && o != null ? Math.round(v - o) : null; const good = d != null && (inv ? d < 0 : d > 0); return `<div><span>${l}</span><b>${v != null ? Math.round(v) : '–'}</b>${d ? `<em style="color:${good ? 'var(--good)' : 'var(--bad)'}">${d > 0 ? '+' : ''}${d}</em>` : '<em style="color:var(--mut)">±0</em>'}</div>`; };
+  const all = rows.flatMap(r => r.v).filter(x => x != null), lo = Math.min(...all), hi = Math.max(...all);
+  const shade = v => v == null ? '' : (12 + 58 * (hi > lo ? (v - lo) / (hi - lo) : 0.5)).toFixed(0);
+  box.innerHTML = `<div class="card"><h3>Erholung Runde für Runde <small>Pulsabfall in der 1. Pausenminute</small></h3>
+    <div class="rrkpi">${kp('Ø Abfall', nw.all, ow && ow.all)}${kp('Letzte Runde', nw.last, ow && ow.last)}${kp('Einbruch R1→Ende', nw.fade, ow && ow.fade, true)}</div>
+    <p class="hint" style="margin:-4px 0 8px">${kw(wks[wks.length - 1])}${ow ? ` im Vergleich zu ${kw(wks[0])}` : ''}. Höherer Abfall = schneller erholt. Kleinerer Einbruch = du hältst länger durch.</p>
+    ${rows.length > 1 ? '<canvas id="rrChart" height="180"></canvas><div class="legend" id="rrLeg"></div>' : ''}
+    <div class="rrwrap"><table class="rrtab"><tr><th></th>${Array.from({ length: nR }, (_, i) => `<th>R${i + 1}</th>`).join('')}</tr>
+    ${rows.slice().reverse().map((r, j) => `<tr class="${j === 0 ? 'cur' : ''}"><td>${kw(r.w)} <small>${r.n}×</small></td>${r.v.map(v => v == null ? '<td class="na">·</td>' : `<td style="--a:${shade(v)}">−${v}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
+  if (rows.length > 1) requestAnimationFrame(() => drawRoundRec(rows.slice(-4), nR, kw));
+}
+function drawRoundRec(rows, nR, kw) {
+  const cv = $('#rrChart'); if (!cv || !cv.clientWidth) return;
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = 180; cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const L = 30, R = 8, T = 10, B = 22, pw = W - L - R, ph = H - T - B;
+  const all = rows.flatMap(r => r.v).filter(x => x != null), lo = Math.max(0, Math.floor((Math.min(...all) - 4) / 5) * 5), hi = Math.ceil((Math.max(...all) + 4) / 5) * 5;
+  const x = i => L + (nR === 1 ? pw / 2 : i / (nR - 1) * pw), y = v => T + ph - (v - lo) / (hi - lo) * ph;
+  g.font = '11px ' + MONO; g.fillStyle = C.mut; g.textAlign = 'right';
+  const st = hi - lo > 30 ? 10 : 5;
+  for (let v = Math.ceil(lo / st) * st; v <= hi; v += st) { g.fillText('−' + v, L - 5, y(v) + 4); g.strokeStyle = C.grid; g.beginPath(); g.moveTo(L, y(v)); g.lineTo(W - R, y(v)); g.stroke(); }
+  g.textAlign = 'center'; for (let i = 0; i < nR; i++) g.fillText('R' + (i + 1), x(i), H - 6);
+  const cols = rows.map((_, j) => j === rows.length - 1 ? C.acc : C.mut), alpha = rows.map((_, j) => j === rows.length - 1 ? 1 : 0.25 + 0.5 * j / Math.max(1, rows.length - 1));
+  rows.forEach((r, j) => {
+    g.globalAlpha = alpha[j]; g.strokeStyle = cols[j]; g.fillStyle = cols[j]; g.lineWidth = j === rows.length - 1 ? 2.5 : 1.5; g.beginPath(); let s = false;
+    r.v.forEach((v, i) => { if (v == null) return; s ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); s = true; }); g.stroke();
+    r.v.forEach((v, i) => { if (v != null) { g.beginPath(); g.arc(x(i), y(v), j === rows.length - 1 ? 3.5 : 2.5, 0, 7); g.fill(); } });
+  });
+  g.globalAlpha = 1;
+  $('#rrLeg').innerHTML = rows.map((r, j) => `<span style="opacity:${alpha[j]}"><i style="background:${cols[j]}"></i>${kw(r.w)}</span>`).join('');
+}
+{ const _ra = renderAnalyse; renderAnalyse = function () { _ra(); renderRoundRec(); }; }
+
+// ---- alles Neue mit dem Rest der App neu zeichnen ----
+function renderNew() { try { renderSick(); renderRecords(); renderJournal(); renderStWarn(); } catch (e) { console.error(e); } }
+{ const _rh = renderHistory; renderHistory = function () { _rh(); renderNew(); }; }
+{ const _rw = renderToday; renderToday = function () { _rw(); try { renderSick(); renderStWarn(); renderJournal(); } catch (e) { } }; }
+OV_BLOCKS.splice(OV_BLOCKS.findIndex(b => b[0] === 'todayCard') + 1, 0, ['jrCard', 'Abend-Journal'], ['recCard', 'Rekorde & Serien']);
+Object.assign(OV_WAIT, { jrCard: '', recCard: 'ab 2 Trainings' });
+{ const _om = ovMini; ovMini = function (id, has) {
+  try {
+    if (id === 'jrCard') { const e = JR.d.days[jrDayKey()]; return `<div class="wml">Abend-Journal</div><div><div class="wmv${e ? '' : ' t'}" style="color:${e ? 'var(--good)' : 'var(--acc)'}">${e ? '✓' : 'Offen'}</div><div class="wms">${e ? 'Heute eingetragen' : 'Essen, Stress, Koffein'}</div></div>`; }
+    if (id === 'recCard') { const S = streaks(state.sessions); return `<div class="wml">Serie</div><div><div class="wmv" style="color:var(--acc)">${S.cur}</div><div class="wms">${S.cur === 1 ? 'Tag' : 'Tage'} am Stück · Rekord ${S.best}</div></div>`; }
+  } catch (e) { }
+  return _om(id, has);
+}; }
+$('#ovGrid').addEventListener('click', e => { if (OV.edit || OV.justEdited) return; const m = e.target.closest('.wmini'); if (!m) return; const id = m.closest('.wdg').dataset.w; if (id === 'jrCard') openJournal(JR.d.days[jrDayKey()] || !JR.d.days[jrYKey()] ? 0 : 1); else if (id === 'recCard') { OV.size[id] = 'l'; ovSave(); } });
+(() => { // die neuen Karten ins Widget-Raster einhängen (wie oben bei den anderen); Warnungen bleiben fest oben
+  const g = $('#ovGrid');
+  [['jrCard', 'Abend-Journal'], ['recCard', 'Rekorde & Serien']].forEach(([id, n]) => {
+    const b = document.getElementById(id), w = document.createElement('div'); w.className = 'wdg'; w.dataset.w = id;
+    w.innerHTML = `<div class="wmini"></div><div class="wedit"><button class="wdel" aria-label="${esc(n)} ausblenden">−</button><button class="wsz" aria-label="${esc(n)}: Größe ändern"><i></i><i></i></button></div>`;
+    w.insertBefore(b, w.firstChild); g.appendChild(w);
+    new MutationObserver(ovQueue).observe(b, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
+  });
+  const known = OV_BLOCKS.map(b => b[0]); OV.order = OV.order.filter(id => known.includes(id)); known.forEach((id, i) => { if (!OV.order.includes(id)) OV.order.splice(Math.min(i, OV.order.length), 0, id); });
+  ovQueue();
+})();
+(async () => { await ready; renderNew(); renderFight(); })();
+
+// ===================== DEMO-MODUS: alles mit Beispiel-Daten zeigen, nichts speichern, nichts hochladen =====================
+function startDemo() {
+  if (window.__demo) return; window.__demo = true;
+  const _run = idb.run.bind(idb); idb.run = (n, mode, fn) => mode === 'readwrite' ? Promise.resolve() : _run(n, mode, fn);
+  sync.cfg = null; syncRun = async () => { }; whFetch = async () => { };
+  const DAY = 864e5, now = new Date(), p = state.profile, rnd = (a, b) => a + Math.random() * (b - a), list = [];
+  const mk = (daysAgo, type, mins, load, rounds, wi) => {
+    const d = new Date(now.getTime() - daysAgo * DAY); d.setHours(18, 30, 0, 0);
+    const dur = mins * 60, z45 = Math.round(dur * (0.18 + load / 1200)), avg = Math.round(p.max * (0.66 + load / 2000));
+    const zones = [dur * 0.1, dur * 0.22, dur * 0.3, z45 * 0.65, z45 * 0.35].map(Math.round);
+    const rs = rounds ? Array.from({ length: rounds }, (_, i) => ({ r: i + 1, d: 180, avg: Math.round(p.max * (0.82 + i * 0.012)), max: Math.round(p.max * (0.9 + i * 0.01)), drop: Math.round(20 + wi * 1.6 - i * (2.6 - wi * 0.25) + rnd(-2, 2)) })) : null;
+    list.push({ id: 'demo' + list.length, date: d.toISOString(), type, note: '', source: 'live', durationSec: dur, avgHr: avg, maxHr: Math.round(p.max * 0.95), kcal: Math.round(mins * 11 + load), trimp: load, zones, rounds: rs, hrr60: rs ? null : Math.round(rnd(14, 22)), efforts: [], effortCount: rs ? rs.length : 3, prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex }, rpe: Math.round(rnd(5, 8)), hr: null });
+  };
+  // 6 Wochen Training: 4×/Woche, Intervalle mit Runden, langsam besser werdende Erholung
+  for (let wi = 0; wi < 6; wi++) {
+    const ago = (6 - wi) * 7 + 3;
+    mk(ago, 'Kickboxen', 80, Math.round(rnd(120, 160)), 5, wi); mk(ago - 1, 'Laufen', 45, Math.round(rnd(55, 75)), 0, wi);
+    mk(ago - 3, 'Sparring', 70, Math.round(rnd(140, 180)), 5, wi); mk(ago - 5, 'Kraft', 50, Math.round(rnd(40, 60)), 0, wi);
+  }
+  mk(2, 'Pratzen', 75, 150, 5, 6.5); mk(1, 'Kickboxen', 90, 268, 6, 7); mk(0, 'Laufen', 40, 60, 0, 7); // letzte Tage: viel zu viel fürs Tapering, neuer Rekord
+  state.sessions = list.sort((a, b) => b.date.localeCompare(a.date));
+  FC.f = { title: 'Fight Night', name: 'K1-Turnier', place: 'Demo-Halle', date: dayKey(new Date(now.getTime() + 6 * DAY)), cls: 67 };
+  // WHOOP: 35 Tage normal, die letzten 2 Tage Ruhepuls hoch und HRV runter
+  const days = {};
+  for (let i = 35; i >= 0; i--) {
+    const k = dayKey(new Date(now.getTime() - i * DAY)), sick = i <= 1;
+    days[k] = { recovery: sick ? Math.round(rnd(18, 30)) : Math.round(rnd(55, 85)), hrv: sick ? Math.round(rnd(38, 44)) : Math.round(rnd(58, 72)), rhr: sick ? Math.round(rnd(57, 60)) : Math.round(rnd(49, 53)), sleepH: rnd(6.4, 8.2), sleepPerf: Math.round(rnd(70, 95)), deepH: 1.4, remH: 1.8, resp: sick ? 16.4 : 14.8, spo2: 96.5, skinTemp: sick ? 34.6 : 33.9 };
+  }
+  WH.tok = { access: 'demo', refresh: 'demo', exp: Date.now() + 1e12 }; WH.data = { days, last: Date.now(), cyV2: 1 };
+  // Journal: 25 Abende – spätes Essen und Koffein am Nachmittag drücken die Erholung am nächsten Morgen
+  const jd = {};
+  for (let i = 27; i >= 2; i--) {
+    const k = dayKey(new Date(now.getTime() - i * DAY)), late = Math.random() < 0.4, caf = Math.random() < 0.35, stress = 1 + Math.floor(Math.random() * 5);
+    const wd = new Date(k + 'T12:00').getDay(), work = wd >= 1 && wd <= 5, alc = Math.random() < 0.2, handy = Math.random() < 0.35, omega = Math.random() < 0.6;
+    const tags = [...(work ? ['Gearbeitet', 'Arbeitsweg'] : ['Frei']), ...(list.some(s => dayKey(s.date) === k) ? ['Training'] : ['Ruhetag']), ...(omega ? ['Omega-3'] : []), ...(Math.random() < 0.7 ? ['Kreatin'] : []), ...(alc ? ['Alkohol'] : []), ...(handy ? ['Spät am Handy'] : [])];
+    jd[k] = { meal: late ? '21:' + String(Math.floor(rnd(0, 59))).padStart(2, '0') : '19:' + String(Math.floor(rnd(0, 59))).padStart(2, '0'), stress, caf: caf ? 2 : 1, cafLast: caf ? '16:30' : '09:00', tags };
+    const nk = dayKey(new Date(now.getTime() - (i - 1) * DAY)); if (days[nk] && i > 2) days[nk].recovery = Math.round(Math.max(20, Math.min(95, 74 - (late ? 12 : 0) - (caf ? 8 : 0) - (stress >= 4 ? 6 : 0) - (alc ? 14 : 0) - (handy ? 6 : 0) + (omega ? 3 : 0) + rnd(-4, 4))));
+  }
+  JR.d = { days: jd, rem: JR_REM(), custom: [], hidden: [] };
+  const bar = document.createElement('div'); bar.id = 'demoBar'; bar.innerHTML = '<span>DEMO-MODUS · Beispiel-Daten, nichts wird gespeichert</span><button id="demoEnd">Beenden</button>';
+  document.body.prepend(bar); $('#demoEnd').onclick = () => { location.href = location.pathname; };
+  renderHistory(); renderFight(); renderWhoop(); renderToday(); renderPerf(); renderNew();
+  // Simulierter Brustgurt: Puls wandert rauf und runter, damit man Training starten und die Zonen-Säulen sehen kann
+  live.connected = true; live.dev = { name: 'Demo-Gurt' }; live.bat = 90; live.wantConnected = true;
+  setInterval(() => { const t = Date.now() / 1000, m = state.profile.max; live.hr = Math.round(m * (0.72 + 0.2 * Math.sin(t / 9) + 0.05 * Math.sin(t / 2.3))); live.hrAt = Date.now(); if (!live.running && state.view === 'start') renderLive(); }, 1000);
+  liveStatus('✓ Verbunden: Demo-Gurt (simulierter Puls)', 'good'); renderLiveButtons();
+  goMain('overview'); window.scrollTo(0, 0); toast('Demo-Modus an – Training starten zeigt einen simulierten Puls');
+}
+$('#demoBtn').onclick = startDemo;
+if (/[?&]demo\b/.test(location.search)) (async () => { await ready; setTimeout(startDemo, 600); })();
+
 // ===================== ZURÜCK-GESTE (Android-Geste, Zurück-Taste, Browser-Zurück) =====================
 // Schritt für Schritt zurück: Fenster zu → Bearbeiten beenden → Unterseite verlassen → zum Überblick → erst dann App verlassen
 window.__appBack = () => {
@@ -4297,7 +4919,7 @@ try {
 } catch (e) { }
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.20-1642';
+const APP_VERSION = '2026.11.23-0659';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;

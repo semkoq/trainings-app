@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.os.ParcelUuid;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
 
 import androidx.activity.OnBackPressedCallback;
 
@@ -35,6 +36,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @SuppressLint("MissingPermission")
@@ -179,7 +181,30 @@ public class HrPlugin extends Plugin {
         s.stopRecording(); call.resolve(dump(s));
     }
 
-    @PluginMethod public void ivStart(PluginCall call) { TrainingService s = TrainingService.instance; if (s == null) { call.reject("Dienst läuft nicht"); return; } s.startIntervals(call.getInt("rounds", 5), call.getInt("work", 120), call.getInt("rest", 60)); call.resolve(); }
+    @PluginMethod public void ivStart(PluginCall call) {
+        TrainingService s = TrainingService.instance; if (s == null) { call.reject("Dienst läuft nicht"); return; }
+        JSArray a = call.getArray("combos"); List<String> l = new ArrayList<>();
+        if (a != null) for (int i = 0; i < a.length(); i++) { String x = a.optString(i, ""); if (!x.isEmpty()) l.add(x); }
+        s.startIntervals(call.getInt("rounds", 5), call.getInt("work", 120), call.getInt("rest", 60), l.toArray(new String[0]), call.getInt("every", 0));
+        call.resolve();
+    }
+    // ---- Sprachausgabe (Kombi-Ansagen, wenn der Timer in der Web-Ansicht läuft) ----
+    private TextToSpeech tts; private boolean ttsOk = false;
+    @PluginMethod public void say(PluginCall call) {
+        String t = call.getString("text", "");
+        TrainingService s = TrainingService.instance;
+        if (s != null && s.say(t)) { call.resolve(); return; }
+        if (tts == null) { tts = new TextToSpeech(getContext(), st -> { if (st == TextToSpeech.SUCCESS && tts != null) { tts.setLanguage(Locale.GERMAN); tts.setSpeechRate(1.15f); ttsOk = true; tts.speak(t.replace("-", ", "), TextToSpeech.QUEUE_FLUSH, null, "first"); } }); call.resolve(); return; }
+        if (ttsOk) tts.speak(t.replace("-", ", "), TextToSpeech.QUEUE_FLUSH, null, "c" + System.currentTimeMillis());
+        call.resolve();
+    }
+    // ---- Tägliche Erinnerungen (Abend-Journal) ----
+    @PluginMethod public void remind(PluginCall call) {
+        JSArray items = call.getArray("items");
+        DayAlarm.save(getContext(), items == null ? "[]" : items.toString());
+        DayAlarm.scheduleAll(getContext());
+        call.resolve();
+    }
     @PluginMethod public void ivPause(PluginCall call) { TrainingService s = TrainingService.instance; if (s != null) s.ivSetPaused(call.getBoolean("paused", true)); call.resolve(); }
     @PluginMethod public void ivSkip(PluginCall call) { TrainingService s = TrainingService.instance; if (s != null && s.ivOn) s.ivNext(); call.resolve(); }
     @PluginMethod public void ivStop(PluginCall call) { TrainingService s = TrainingService.instance; if (s != null) s.stopIntervals(); call.resolve(); }

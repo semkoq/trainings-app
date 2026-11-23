@@ -28,11 +28,14 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.speech.tts.TextToSpeech;
 
 import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -78,6 +81,14 @@ public class TrainingService extends Service {
     public int ivRounds, ivWork, ivRest, ivRound = 1, ivPhase = 0; // 0 work, 1 rest
     private long ivEnd = 0, ivLeftPaused = 0;
     private int ivLastSec = -1, ivPhaseStartSec = -1;
+    // Kombi-Ansagen (Sprachausgabe während der Belastung)
+    private TextToSpeech tts;
+    private boolean ttsOk = false;
+    private String[] ivCombos = new String[0];
+    private int ivEvery = 0;
+    private double ivNextCombo = 2;
+    public String ivCombo = "";
+    private final Random rnd = new Random();
     private ToneGenerator tone;
 
     public static void start(Context c, String addr) {
@@ -97,6 +108,7 @@ public class TrainingService extends Service {
             getSystemService(NotificationManager.class).createNotificationChannel(ch);
         }
         try { tone = new ToneGenerator(AudioManager.STREAM_MUSIC, 100); } catch (Exception e) { tone = null; }
+        try { tts = new TextToSpeech(this, st -> { if (st == TextToSpeech.SUCCESS && tts != null) { tts.setLanguage(Locale.GERMAN); tts.setSpeechRate(1.15f); ttsOk = true; } }); } catch (Exception e) { tts = null; }
         h.post(tick);
     }
 
@@ -253,12 +265,17 @@ public class TrainingService extends Service {
 
     // ---------------- Intervalle ----------------
     public long ivLeftMs() { return ivPaused ? ivLeftPaused : Math.max(0, ivEnd - SystemClock.elapsedRealtime()); }
-    public void startIntervals(int rounds, int work, int rest) {
+    public void startIntervals(int rounds, int work, int rest, String[] combos, int every) {
         ivRounds = rounds; ivWork = work; ivRest = rest; ivOn = true; ivPaused = false;
+        ivCombos = combos == null ? new String[0] : combos; ivEvery = every;
         beep(1, 450); phase(0, 1);
     }
+    public boolean say(String t) {
+        if (tts == null || !ttsOk || t == null) return false;
+        try { tts.speak(t.replace("-", ", "), TextToSpeech.QUEUE_FLUSH, null, "c" + SystemClock.elapsedRealtime()); return true; } catch (Exception e) { return false; }
+    }
     private void phase(int ph, int round) {
-        ivPhase = ph; ivRound = round;
+        ivPhase = ph; ivRound = round; ivCombo = ""; ivNextCombo = 2;
         ivEnd = SystemClock.elapsedRealtime() + (ph == 0 ? ivWork : ivRest) * 1000L;
         ivLastSec = -1; ivPhaseStartSec = recording ? sec() : -1;
         emitIv();
@@ -295,6 +312,10 @@ public class TrainingService extends Service {
             }
             ivLastSec = s;
         }
+        if (ivPhase == 0 && ivEvery > 0 && ivCombos.length > 0 && left > 4000) {
+            double el = dur - left / 1000.0;
+            if (el >= ivNextCombo) { ivCombo = ivCombos[rnd.nextInt(ivCombos.length)]; say(ivCombo); ivNextCombo = el + ivEvery; }
+        }
         if (left <= 0) { beep(4, 100); ivNext(); }
         emitIv();
     }
@@ -302,6 +323,7 @@ public class TrainingService extends Service {
         java.util.Map<String, Object> m = new java.util.HashMap<>();
         m.put("on", ivOn); m.put("paused", ivPaused); m.put("phase", ivPhase == 0 ? "work" : "rest"); m.put("round", ivRound);
         m.put("rounds", ivRounds); m.put("left", ivLeftMs()); m.put("dur", (ivPhase == 0 ? ivWork : ivRest) * 1000L);
+        m.put("combo", ivCombo);
         if (listener != null) listener.onEvent("iv", m);
     }
     private void beep(int times, int len) {
@@ -331,6 +353,7 @@ public class TrainingService extends Service {
         if (gatt != null) { try { gatt.close(); } catch (Exception ignored) {} }
         if (wake != null && wake.isHeld()) wake.release();
         if (tone != null) tone.release();
+        if (tts != null) { try { tts.shutdown(); } catch (Exception ignored) {} tts = null; }
         instance = null;
         super.onDestroy();
     }

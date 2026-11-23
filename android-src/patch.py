@@ -15,9 +15,17 @@ perms = ['android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverF
 add = ''.join(f'    <uses-permission android:name="{p}" />\n' for p in perms)
 add += '    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />\n'
 add += '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'
+# Sprachausgabe (Kombi-Ansagen): ab Android 11 muss die App die Sprach-Engine „sehen“ dürfen
+add += '    <queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>\n'
 m = m.replace('<application', add + '\n    <application', 1)
 svc = '''        <service android:name=".TrainingService" android:exported="false" android:foregroundServiceType="connectedDevice" />
         <receiver android:name=".SuppAlarm" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".DayAlarm" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
@@ -35,7 +43,7 @@ deeplink = '''            <intent-filter>
 m = re.sub(r'(<activity[^>]*MainActivity[\s\S]*?</intent-filter>\n)', lambda x: x.group(1) + deeplink, m, count=1)
 m = m.replace('android:launchMode="singleTask"', 'android:launchMode="singleTask" android:screenOrientation="portrait"')
 open(f'{A}/AndroidManifest.xml', 'w').write(m)
-assert 'TrainingService' in m and 'trainingsapp' in m and 'CONNECTED_DEVICE' in m, 'Manifest-Patch fehlgeschlagen'
+assert 'TrainingService' in m and 'trainingsapp' in m and 'CONNECTED_DEVICE' in m and 'DayAlarm' in m and 'TTS_SERVICE' in m, 'Manifest-Patch fehlgeschlagen'
 
 g = open('android/app/build.gradle').read()
 g = re.sub(r'versionCode \d+', f'versionCode {run}', g)
