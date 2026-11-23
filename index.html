@@ -683,6 +683,15 @@ input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
 #demoBar{position:sticky;top:0;z-index:60;background:var(--acc);color:var(--on-acc,#000);font:600 11px var(--f-mono);letter-spacing:.06em;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 #demoBar button{background:#000;color:#fff;border:0;border-radius:8px;padding:6px 10px;font:600 12px var(--f-body);cursor:pointer;flex:none}
 /* ===== Supplements ===== */
+.spcat{margin-top:14px}.spcat h3{margin-bottom:8px}
+#spCatRes{margin-top:8px}
+.catitem{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;color:var(--txt);text-align:left;cursor:pointer;font:14px var(--f-body)}
+.catitem:first-child{border-top:0}
+.catitem .ct{flex:1;min-width:0}.catitem .ct b{display:block;font:600 14px var(--f-body)}
+.catitem .ct small{display:block;color:var(--mut);font:11px var(--f-mono);margin-top:2px}
+.catitem .ct small.chk{color:var(--warn)}
+.catitem .plus{font:600 20px var(--f-disp);color:var(--acc);flex:none}
+.catitem.have .plus{font-size:11px;color:var(--good);font-family:var(--f-mono)}
 .scanbtn{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px;padding:15px}
 .scanbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
 .spmanual{display:block;margin:10px auto 0;background:none;border:0;font:500 13px var(--f-body);cursor:pointer}
@@ -708,6 +717,9 @@ input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
 .slot:first-of-type{border-top:0}
 .slot .tm{font:600 15px var(--f-disp);width:46px;flex:none;color:var(--mut)}
 .slot .sn{flex:1;min-width:0;font-size:14px}.slot .sn small{display:block;color:var(--mut);font-size:12px}
+.dosebtn{display:flex;align-items:center;gap:6px;background:none;border:0;padding:3px 0 0;margin:0;color:var(--mut);font:12px var(--f-body);cursor:pointer;text-align:left}
+.dosebtn i{font:500 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;font-style:normal;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.dosebtn.custom{color:var(--acc);font-weight:600}
 .chk{width:34px;height:34px;flex:none;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .chk svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .chk.on{background:var(--good);border-color:var(--good);color:var(--bg)}
@@ -1035,6 +1047,9 @@ html,body{background:#000}
 </section>
 
 <section class="view" id="view-supps" hidden>
+  <div class="card spcat"><h3>Supplement suchen <small>ESN · SciTec · GEN</small></h3>
+    <input id="spCatIn" type="text" placeholder="z. B. Vitamin Stack, Omega-3, Koffein" autocomplete="off" enterkeyhint="search">
+    <div id="spCatRes"></div></div>
   <button class="btn scanbtn" id="spScan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg>Supplement scannen</button>
   <button class="link spmanual" id="spManual">Ohne Barcode hinzufügen</button>
   <div class="card" id="spToday" hidden></div>
@@ -1150,6 +1165,14 @@ html,body{background:#000}
     <label class="kbon"><input type="checkbox" id="jrRemOn"><span><b>Abends</b><small>für heute</small></span><input id="jrRemT" type="time" value="21:00" style="width:auto;margin:0 0 0 auto"></label>
     <label class="kbon" style="margin-top:10px"><input type="checkbox" id="jrRemMOn"><span><b>Morgens</b><small>für gestern – nur wenn noch offen</small></span><input id="jrRemMT" type="time" value="08:00" style="width:auto;margin:0 0 0 auto"></label>
     <div class="lvrow" style="margin-top:14px"><button class="btn ghost" id="jrCancel">Abbrechen</button><button class="btn" id="jrSave">Speichern</button></div>
+  </div>
+</div>
+<div id="amtSheet" class="bsheet" hidden>
+  <div class="sheet"><h3 id="amtName">Menge</h3>
+    <p class="hint" style="margin-top:0" id="amtHint"></p>
+    <div class="ivset" style="border:0"><span id="amtUnit">Kapseln</span><div class="step"><button id="amtLess">−</button><input id="amtVal" type="text" inputmode="decimal" autocomplete="off" style="width:84px;text-align:center;font:700 26px var(--f-disp)"><button id="amtMore">+</button></div></div>
+    <div class="chips" id="amtQuick" style="margin:2px 0 12px"></div>
+    <div class="lvrow"><button class="btn ghost" id="amtCancel">Abbrechen</button><button class="btn" id="amtSave">Genommen</button></div>
   </div>
 </div>
 <div id="wSheet" class="bsheet" hidden>
@@ -3705,12 +3728,40 @@ function renderSupps() {
   slots.sort((a, b) => (a.t || '99').localeCompare(b.t || '99'));
   const done = slots.filter(x => spTaken(dk, x.s.id, x.t)).length, td = $('#spToday');
   td.hidden = !slots.length;
-  td.innerHTML = slots.length ? `<h3>Heute <small>${done} von ${slots.length} genommen</small></h3>` + slots.map(({ s, t }) => { const on = spTaken(dk, s.id, t); return `<div class="slot${on ? ' done' : ''}"><span class="tm">${t || 'Tag'}</span><div class="sn">${esc(s.n)}<small>${spNum(s.dose || 1)} ${spU(s.unit, s.dose || 1)}</small></div><button class="chk${on ? ' on' : ''}" data-id="${s.id}" data-t="${t}" aria-label="${on ? 'Rückgängig' : 'Genommen'}">${CHECK}</button></div>`; }).join('') : '';
+  td.innerHTML = slots.length ? `<h3>Heute <small>${done} von ${slots.length} genommen</small></h3>` + slots.map(({ s, t }) => { const on = spTaken(dk, s.id, t); return `<div class="slot${on ? ' done' : ''}"><span class="tm">${t || 'Tag'}</span><div class="sn">${esc(s.n)}${spDoseBtn(s, t, dk)}</div><button class="chk${on ? ' on' : ''}" data-id="${s.id}" data-t="${t}" aria-label="${on ? 'Rückgängig' : 'Genommen'}">${CHECK}</button></div>`; }).join('') : '';
   td.querySelectorAll('.chk').forEach(b => b.onclick = () => spToggle(b.dataset.id, b.dataset.t));
   $('#spList').innerHTML = L.length ? L.map(s => `<div class="card"><div class="sp" data-open="${s.id}"><div class="spimg">${spImgHtml(s)}</div><div class="spt"><div class="spn">${esc(s.n)}</div>${s.brand ? `<div class="spb">${esc(s.brand)}</div>` : ''}<div class="spd">${spNum(s.dose || 1)} ${spU(s.unit, s.dose || 1)} · ${s.times && s.times.length ? s.times.slice().sort().join(', ') + ' Uhr' : 'ohne feste Uhrzeit'}</div></div><span class="arr" style="color:var(--mut)">›</span></div>${spStock(s)}</div>`).join('')
     : '<p class="empty">Noch keine Supplements.<br>Scann den Barcode auf der Packung – Name, Marke und Bild kommen automatisch.</p>';
   $('#spList').querySelectorAll('[data-open]').forEach(c => c.onclick = () => openSup(SP.list.find(x => x.id === c.dataset.open)));
 }
+const spEntry = (dk, id, slot) => ((SP.log[dk] || {})[id] || []).find(x => x.s === slot);
+function spDoseBtn(s, t, dk) { // Menge pro Einnahme – antippen, um sie für diesmal zu ändern (optional)
+  const e = spEntry(dk, s.id, t), a = e ? (e.a || 0) : (s.dose || 1), diff = e && a !== (s.dose || 1);
+  return `<button class="dosebtn${diff ? ' custom' : ''}" data-id="${s.id}" data-t="${t}">${spNum(a)} ${spU(s.unit, a)}${diff ? ' · angepasst' : ''}<i>ändern</i></button>`;
+}
+const AMT = { s: null, t: null, dk: null };
+function spOpenAmt(id, t) {
+  const s = SP.list.find(x => x.id === id); if (!s) return; const dk = dayKey(new Date()), e = spEntry(dk, id, t);
+  Object.assign(AMT, { s, t, dk }); const base = s.dose || 1, big = s.unit === 'g' || s.unit === 'ml';
+  $('#amtName').textContent = s.n; $('#amtUnit').textContent = spU(s.unit, 2); $('#amtVal').value = spNum(e ? e.a : base);
+  $('#amtHint').textContent = e ? 'Schon abgehakt – du kannst die Menge nachträglich ändern.' : `Normal: ${spNum(base)} ${spU(s.unit, base)}. Ändere die Menge nur, wenn du diesmal mehr oder weniger genommen hast.`;
+  const q = big ? [base / 2, base, base * 2] : [...new Set([0.5, 1, 2, 3, 4].concat([base]))].sort((a, b) => a - b);
+  $('#amtQuick').innerHTML = q.map(v => `<button class="chip" data-v="${v}">${spNum(v)}</button>`).join('');
+  $('#amtQuick').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('#amtVal').value = spNum(+b.dataset.v); });
+  $('#amtSave').textContent = e ? 'Speichern' : 'Genommen'; $('#amtSheet').hidden = false;
+}
+function amtStep(d) { const v = pnum($('#amtVal').value) || 0, big = AMT.s && (AMT.s.unit === 'g' || AMT.s.unit === 'ml'); $('#amtVal').value = spNum(Math.max(0, v + d * (big ? 1 : 0.5))); }
+$('#amtLess').onclick = () => amtStep(-1); $('#amtMore').onclick = () => amtStep(1);
+$('#amtCancel').onclick = () => { $('#amtSheet').hidden = true; };
+$('#amtSheet').onclick = e => { if (e.target.id === 'amtSheet') $('#amtSheet').hidden = true; };
+$('#amtSave').onclick = async () => {
+  const { s, t, dk } = AMT, a = pnum($('#amtVal').value); if (!s) return; if (!(a > 0 && a <= 1000)) { toast('Bitte eine Menge eingeben.'); return; }
+  const d = SP.log[dk] = SP.log[dk] || {}, arr = d[s.id] = d[s.id] || [], e = arr.find(x => x.s === t);
+  if (e) { if (s.left != null) s.left = Math.max(0, s.left + (e.a || 0) - a); e.a = a; } // nachträglich geändert: Vorrat korrigieren
+  else { arr.push({ s: t, a, t: Date.now() }); if (s.left != null) s.left = Math.max(0, s.left - a); }
+  $('#amtSheet').hidden = true; await spSave(); renderSupps(); toast(`${s.n}: ${spNum(a)} ${spU(s.unit, a)} ✓`);
+};
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.dosebtn'); if (b) spOpenAmt(b.dataset.id, b.dataset.t); });
 async function spToggle(id, slot) {
   const s = SP.list.find(x => x.id === id); if (!s) return;
   const dk = dayKey(new Date()), d = SP.log[dk] = SP.log[dk] || {}, arr = d[id] = d[id] || [], i = arr.findIndex(x => x.s === slot);
@@ -3726,7 +3777,7 @@ function spOvRender() {
   slots.sort((a, b) => (a.t || '99').localeCompare(b.t || '99'));
   const done = slots.filter(x => spTaken(dk, x.s.id, x.t)).length;
   c.hidden = false; c.classList.add('spov');
-  c.innerHTML = `<h3><span>Supplements heute <small>${done} von ${slots.length}</small></span><button id="spOvAll">Alle ›</button></h3>` + slots.map(({ s, t }) => { const on = spTaken(dk, s.id, t); return `<div class="slot${on ? ' done' : ''}"><span class="tm">${t || 'Tag'}</span><div class="sn">${esc(s.n)}<small>${spNum(s.dose || 1)} ${spU(s.unit, s.dose || 1)}</small></div><button class="chk${on ? ' on' : ''}" data-id="${s.id}" data-t="${t}" aria-label="${on ? 'Rückgängig' : 'Genommen'}">${CHECK}</button></div>`; }).join('');
+  c.innerHTML = `<h3><span>Supplements heute <small>${done} von ${slots.length}</small></span><button id="spOvAll">Alle ›</button></h3>` + slots.map(({ s, t }) => { const on = spTaken(dk, s.id, t); return `<div class="slot${on ? ' done' : ''}"><span class="tm">${t || 'Tag'}</span><div class="sn">${esc(s.n)}${spDoseBtn(s, t, dk)}</div><button class="chk${on ? ' on' : ''}" data-id="${s.id}" data-t="${t}" aria-label="${on ? 'Rückgängig' : 'Genommen'}">${CHECK}</button></div>`; }).join('');
   c.querySelectorAll('.chk').forEach(b => b.onclick = () => spToggle(b.dataset.id, b.dataset.t));
   $('#spOvAll').onclick = () => goMain('supps');
 }
@@ -3774,6 +3825,50 @@ $('#seSave').onclick = async () => {
 $('#seRefill').onclick = async () => { const s = SP.edit; if (!s || !s.pack) return; s.left = (s.left || 0) + s.pack; await spSave(); $('#supSheet').hidden = true; renderSupps(); toast(`Neue Packung: +${spNum(s.pack)} ${spU(s.unit, s.pack)}`); };
 $('#seDel').onclick = async () => { const s = SP.edit; if (!s || !confirm(`„${s.n}“ wirklich löschen?`)) return; SP.list = SP.list.filter(x => x !== s); await spSave(); $('#supSheet').hidden = true; renderSupps(); };
 $('#spManual').onclick = () => openSup({ n: '', brand: '', unit: 'Kapseln', pack: null, dose: 1, times: ['08:00'], rem: true, img: null }, true);
+// ---- Produktkatalog: Supplement per Name suchen, Packung und Einnahme sind schon eingetragen ----
+// Angaben aus Händlerseiten (Stand 23.11.2026), nicht vom Hersteller selbst – deshalb steht im Formular „bitte mit der Packung prüfen“.
+const IMG = 'https://images.openfoodfacts.org/images/products/';
+const SP_CAT = [
+  { n: 'Omega-3', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 100, dose: 1, times: ['08:00', '18:00'], note: '2× täglich 1 Weichkapsel (2000 mg Fischöl)', q: 'omega fischöl' },
+  { n: 'Caffeine 100 mg', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 100, dose: 1, times: ['16:00'], note: '1 Kapsel = 100 mg Koffein, 30–60 Min vor dem Training', q: 'koffein caffeine kaffee', img: IMG + '072/863/310/3751/front_fr.9.400.jpg' },
+  { n: 'NAC 500 mg', b: 'SciTec Nutrition', unit: 'Tabletten', pack: 60, dose: 1, times: ['08:00'], note: '1 Tablette täglich mit Wasser, am besten zum Essen', q: 'n-acetylcystein acetyl cystein', chk: 'Händler nennen Tabletten, manche Kapseln' },
+  { n: 'ZMB6', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 60, dose: 1, times: ['21:00'], note: 'Zink, Magnesium, B6 – abends', q: 'zmb zma zink magnesium', img: IMG + '599/910/000/1329/front_fr.4.400.jpg', chk: 'Händler: 1 oder 2 Kapseln täglich' },
+  { n: 'CO-Q10 50 mg', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 100, dose: 1, times: ['08:00'], note: 'zu einer Mahlzeit', q: 'coq10 co q10 coenzym ubichinon', chk: 'Händler: 1–3 Kapseln täglich, Stärke 10 oder 50 mg' },
+  { n: 'Ashwagandha KSM-66', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 60, dose: 1, times: ['20:00'], note: '1 Kapsel täglich mit Wasser', q: 'ashwagandha ksm66 ksm-66' },
+  { n: 'EAA Xpress', b: 'SciTec Nutrition', unit: 'g', pack: 400, dose: 10, times: ['17:30'], note: '10 g in 400 ml Wasser, vor dem Training bzw. zwischen den Mahlzeiten', q: 'eaa aminosäuren xpress express', chk: 'Packung 350 oder 400 g' },
+  { n: 'Creatine Bites', b: 'SciTec Nutrition', unit: 'Tabletten', pack: 240, dose: 4, times: ['09:00'], note: '4 Kautabletten täglich = 3 g Kreatin, jederzeit', q: 'creatin kreatin bites kautabletten' },
+  { n: 'Citrulline Malate 3000 mg', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 90, dose: 3, times: ['17:30'], note: '3 Kapseln = 1 Portion, 30–60 Min vor dem Training', q: 'citrullin malat', img: IMG + '072/863/310/0934/front_fr.4.400.jpg' },
+  { n: 'Beta-Alanin 800 mg', b: 'SciTec Nutrition', unit: 'Kapseln', pack: 150, dose: 5, times: ['17:30'], note: '5 Kapseln täglich, z. B. 2 morgens + 3 vor dem Training', q: 'beta alanin beta-alanine' },
+  { n: 'Vitamin Stack (120 Kapseln)', b: 'ESN', unit: 'Kapseln', pack: 120, dose: 1, times: ['08:00'], note: '1 Kapsel täglich mit reichlich Wasser oder Saft', q: 'vitamin stack multivitamin vitamine' },
+  { n: 'Vitamin Stack (60 Kapseln)', b: 'ESN', unit: 'Kapseln', pack: 60, dose: 1, times: ['08:00'], note: '1 Kapsel täglich mit reichlich Wasser oder Saft', q: 'vitamin stack multivitamin vitamine' },
+  { n: 'L-Tyrosin', b: 'GEN (German Elite Nutrition)', unit: 'Kapseln', pack: null, dose: null, times: ['08:00'], note: '', q: 'tyrosin l-tyrosin tyrosine gen german elite', chk: 'Keine verlässlichen Angaben gefunden – bitte von der Packung eintragen' }
+];
+const catNorm = t => String(t || '').toLowerCase().replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss').replace(/[^a-z0-9]+/g, ' ').trim();
+function spCatFind(q) {
+  const toks = catNorm(q).split(' ').filter(Boolean); // „Cytec“ wird wie SciTec gefunden
+  const hayOf = c => catNorm(c.b + ' ' + c.n + ' ' + c.q + (c.b.startsWith('SciTec') ? ' cytec' : ''));
+  const exact = SP_CAT.filter(c => { const hay = hayOf(c); return toks.every(t => hay.includes(t)); });
+  if (exact.length) return exact;
+  // Tippfehler („Vitaminsteak“ statt „Vitamin Stack“): Ähnlichkeit über 3-Buchstaben-Stücke
+  const tri = s => { const x = s.replace(/ /g, ''), o = new Set(); for (let i = 0; i + 3 <= x.length; i++) o.add(x.slice(i, i + 3)); return o; };
+  const qs = tri(toks.join(' ')); if (toks.join('').length < 5) return [];
+  return SP_CAT.map(c => { const h = tri(hayOf(c)); let n = 0; qs.forEach(t => { if (h.has(t)) n++; }); return [c, n / qs.size]; }).filter(x => x[1] >= 0.6).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+}
+const spHave = c => SP.list.find(s => catNorm(s.n) === catNorm(c.n) && catNorm(s.brand || '') === catNorm(c.b));
+function spCatRender() {
+  const q = $('#spCatIn').value.trim(), L = q ? spCatFind(q) : SP_CAT, box = $('#spCatRes');
+  box.innerHTML = L.length ? L.map(c => {
+    const i = SP_CAT.indexOf(c), have = spHave(c), info = c.pack && c.dose ? `${spNum(c.pack)} ${spU(c.unit, c.pack)} · ${spNum(c.dose)} ${spU(c.unit, c.dose)} pro Einnahme` : 'Packung und Einnahme noch eintragen';
+    return `<button class="catitem${have ? ' have' : ''}" data-i="${i}"><div class="ct"><b>${esc(c.n)}</b><small>${esc(c.b)} · ${info}</small>${c.chk ? `<small class="chk">bitte prüfen: ${esc(c.chk)}</small>` : ''}</div><span class="plus">${have ? 'schon da' : '+'}</span></button>`;
+  }).join('') : `<p class="hint" style="margin:6px 0 0">Nichts gefunden. Probier „Supplement scannen“ oder „Ohne Barcode hinzufügen“.</p>`;
+  box.querySelectorAll('.catitem').forEach(b => b.onclick = () => spCatPick(SP_CAT[+b.dataset.i]));
+}
+function spCatPick(c) {
+  const have = spHave(c); if (have) { toast('Hast du schon – hier zum Bearbeiten.'); openSup(have); return; }
+  openSup({ n: c.n, brand: c.b, unit: c.unit, pack: c.pack, dose: c.dose || 1, times: c.times.slice(), rem: true, img: c.img || null,
+    src: `Aus dem Katalog (Händlerangaben).${c.note ? ' ' + c.note + '.' : ''}${c.chk ? ' Bitte prüfen: ' + c.chk + '.' : ''} Bitte kurz mit deiner Packung vergleichen.` }, true);
+}
+$('#spCatIn').oninput = spCatRender; $('#spCatIn').onfocus = spCatRender;
 // ---- Barcode-Scanner (Kamera) ----
 const SC = { stream: null, det: null, zx: null, zxp: null, busy: false, last: null, hits: 0, t: null, cv: null };
 function scStatus(t) { $('#scStatus').textContent = t; }
@@ -4919,7 +5014,7 @@ try {
 } catch (e) { }
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.23-0659';
+const APP_VERSION = '2026.11.23-0720';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
