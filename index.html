@@ -870,6 +870,13 @@ html,body{background:#000}
 .bdpost{margin-top:12px}.bdpost b{font:600 13px var(--f-body)}.bdpost p{font-size:13px;color:var(--mut);margin-top:3px;padding-left:10px;border-left:2px solid var(--line)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.spwrap{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+.spwheel{position:relative;width:96px;height:200px;overflow-y:auto;scroll-snap-type:y mandatory;scroll-padding:80px 0;padding:80px 0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-y;-webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.spwheel::-webkit-scrollbar{display:none}
+.spwheel div{height:40px;line-height:40px;text-align:center;scroll-snap-align:start;font:500 20px var(--f-disp);color:var(--mut);cursor:pointer;user-select:none;-webkit-user-select:none}
+.spwheel div.on{font-size:30px;font-weight:600;color:var(--txt)}
+.spband{position:absolute;left:50%;top:80px;width:150px;height:40px;transform:translateX(-50%);border-top:2px solid var(--acc);border-bottom:2px solid var(--acc);pointer-events:none;box-sizing:border-box}
+.spunit{font:12px var(--f-mono);color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
 </style>
 </head>
 <body>
@@ -1099,6 +1106,7 @@ html,body{background:#000}
     <p class="hint" id="storeInfo">Speicher wird geladen …</p>
   </div>
   <div class="card"><h3>Demo-Modus</h3><p class="hint" style="margin-top:0">Zeigt alle Funktionen mit Beispiel-Daten: Tapering vor dem Kampf, Krank-Warnung, Abend-Journal, Rekorde und Runden-Erholung. Es wird nichts gespeichert und nichts hochgeladen. Zum Beenden die App neu öffnen.</p><button class="btn ghost" id="demoBtn">Demo-Modus starten</button></div>
+  <div class="card"><h3>Supplement-Erinnerung</h3><p class="hint" style="margin-top:0">So viele Minuten später erinnert dich der Knopf „+X Min später“ in der Benachrichtigung. Gilt für alle Supplements. Braucht die Android-App.</p><div class="spwrap"><div class="spwheel" id="spWheel" aria-label="Minuten bis zur Wiederholung"></div><div class="spband"></div><span class="spunit">Min</span></div></div>
   <div class="card">
     <h3>Sicherung</h3>
     <p class="hint" style="margin-top:0">Deine Trainings liegen nur auf diesem Handy. Mach ab und zu eine Sicherung – z.B. bevor du die App löschst oder ein neues Handy bekommst.</p>
@@ -1602,6 +1610,7 @@ function showView(v, dir) {
   document.querySelectorAll('#mainTabs .tab').forEach(x => x.classList.toggle('on', x.dataset.v === v));
   state.view = v;
   window.scrollTo(0, 0);
+  if (v === 'profile') requestAnimationFrame(() => spWheelShow());
 }
 const MAIN = ['overview', 'start', 'history', 'analyse', 'cut', 'supps'];
 (() => { const e = document.getElementById('hDate'), g = document.getElementById('hGreet'), h = new Date().getHours(); if (e) e.textContent = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }); if (g) g.textContent = (h < 11 ? 'Guten Morgen' : h < 18 ? 'Hallo' : 'Guten Abend') + ', Semir'; })();
@@ -1615,7 +1624,7 @@ $('#impBack').onclick = () => showView('profile');
 // Wischen zwischen Verlauf und Training
 (() => {
   let x0 = null, y0 = null;
-  document.addEventListener('touchstart', e => { if (!MAIN.includes(state.view)) { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.pager,#wkCard,.anachips,.bsheet,.editing')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchstart', e => { if (!MAIN.includes(state.view)) { x0 = null; return; } if (e.target.closest && e.target.closest('input,canvas,.spwheel,.pager,#wkCard,.anachips,.bsheet,.editing')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   document.addEventListener('touchend', e => {
     if (x0 == null) return;
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
@@ -3685,7 +3694,7 @@ $('#wSave').onclick = async () => { const kg = parseFloat(String($('#wIn').value
 ['#fightSheet', '#wSheet'].forEach(id => $(id).onclick = e => { if (e.target.id === id.slice(1)) $(id).hidden = true; });
 
 // ===================== SUPPLEMENTS: Scannen, Abhaken, Reichweite, Erinnerung =====================
-const SP = { list: [], log: {}, edit: null, isNew: false, times: [], img: null, apkOld: false };
+const SP = { list: [], log: {}, edit: null, isNew: false, times: [], img: null, apkOld: false, snooze: 10 };
 const PILL = '<svg viewBox="0 0 24 24"><path d="M10.5 20.5l10-10a4.95 4.95 0 0 0-7-7l-10 10a4.95 4.95 0 0 0 7 7z"/><path d="M8.5 8.5l7 7"/></svg>';
 const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const spNum = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
@@ -3695,7 +3704,8 @@ const spTaken = (dk, id, slot) => ((SP.log[dk] || {})[id] || []).some(x => x.s =
 (async () => {
   await ready;
   try { const d = await kvGet('supps'); if (d) { SP.list = d.list || []; SP.log = d.log || {}; } } catch (e) { }
-  renderSupps();
+  try { const n = Math.round(Number(await kvGet('spSnooze'))); if (n >= 1 && n <= 120) SP.snooze = n; } catch (e) { }
+  renderSupps(); spWheelShow();
   if (isNative()) spNativeInit(); else window.addEventListener('load', () => { if (isNative()) spNativeInit(); });
 })();
 async function spSave() {
@@ -4015,7 +4025,12 @@ function spSlots() { // pro Uhrzeit eine Benachrichtigung mit allen Supplements 
   SP.list.filter(s => s.rem !== false).forEach(s => (s.times || []).forEach(t => (by[t] = by[t] || []).push(s)));
   return Object.keys(by).sort().map(t => { const ss = by[t], [h, m] = t.split(':').map(Number); return { key: t, h, m, title: 'Supplements · ' + t, text: ss.map(s => `${s.n} – ${spNum(s.dose || 1)} ${spU(s.unit, s.dose || 1)}`).join(', '), ids: ss.map(s => s.id).join(','), skip: ss.every(s => spTaken(dk, s.id, t)) ? dk : '' }; });
 }
-async function spSchedule() { const P = HN(); if (!P || !isNative() || SP.apkOld) return; try { await P.suppSchedule({ items: spSlots() }); } catch (e) { SP.apkOld = true; } }
+// Später-Walze (Minuten, 1-120): eigener kv-Schlüssel 'spSnooze', nicht Teil von supps/Sync
+const spWheelEl = () => $('#spWheel');
+function spWheelMark(n) { const w = spWheelEl(); if (!w) return; const o = w.querySelector('.on'); if (o) o.classList.remove('on'); const r = w.children[n - 1]; if (r) r.classList.add('on'); }
+function spWheelShow() { const w = spWheelEl(); if (!w || $('#view-profile').hidden) return; if (!w.children.length) { w.innerHTML = Array.from({ length: 120 }, (_, i) => '<div data-n="' + (i + 1) + '">' + (i + 1) + '</div>').join(''); w.addEventListener('click', e => { const d = e.target.closest('[data-n]'); if (d) w.scrollTo({ top: (d.dataset.n - 1) * 40, behavior: 'smooth' }); }); w.addEventListener('scroll', () => { const n = Math.min(120, Math.max(1, Math.round(w.scrollTop / 40) + 1)); spWheelMark(n); clearTimeout(SP.wt); SP.wt = setTimeout(() => spWheelSet(n), 200); }, { passive: true }); } w.style.scrollSnapType = 'none'; w.scrollTop = (SP.snooze - 1) * 40; spWheelMark(SP.snooze); requestAnimationFrame(() => { w.style.scrollSnapType = ''; }); }
+async function spWheelSet(n) { if (n === SP.snooze) return; SP.snooze = n; try { await kvSet('spSnooze', n); } catch (e) { } spSchedule(); }
+async function spSchedule() { const P = HN(); if (!P || !isNative() || SP.apkOld) return; try { await P.suppSchedule({ items: spSlots(), snooze: SP.snooze }); } catch (e) { SP.apkOld = true; } }
 async function spPullTaken() { // in der Benachrichtigung auf „Genommen“ getippt
   const P = HN(); if (!P || !isNative() || SP.apkOld) return;
   try {
@@ -5014,7 +5029,7 @@ try {
 } catch (e) { }
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.23-0720';
+const APP_VERSION = '2026.11.24-0640';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;

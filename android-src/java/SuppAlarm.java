@@ -23,8 +23,18 @@ import java.util.Locale;
 /** Supplement-Erinnerungen: pro Uhrzeit ein täglicher Wecker, Benachrichtigung mit Knopf „Genommen“. */
 public class SuppAlarm extends BroadcastReceiver {
     static final String FIRE = "de.semkoq.trainingsapp.SUPP_FIRE", TAKEN = "de.semkoq.trainingsapp.SUPP_TAKEN";
+    static final String SNOOZE = "de.semkoq.trainingsapp.SUPP_SNOOZE", SHOW = "de.semkoq.trainingsapp.SUPP_SHOW";
     static final String CH = "supps";
     static final int MAXN = 24;
+
+    static void saveSnooze(Context c, int min) { prefs(c).edit().putInt("snooze", Math.max(1, Math.min(120, min))).apply(); }
+    static int snoozeMin(Context c) { return Math.max(1, Math.min(120, prefs(c).getInt("snooze", 10))); }
+
+    /** Eigener Wecker für das erneute Anzeigen (getrennt vom Tageswecker, den scheduleAll verwaltet). */
+    private static PendingIntent snoozePi(Context c, int i, String key) {
+        Intent it = new Intent(c, SuppAlarm.class).setAction(SHOW).putExtra("i", i).putExtra("k", key);
+        return PendingIntent.getBroadcast(c, 4600 + i, it, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
 
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("supps", Context.MODE_PRIVATE); }
     static String today() { return new SimpleDateFormat("yyyy-MM-dd", Locale.GERMANY).format(Calendar.getInstance().getTime()); }
@@ -86,6 +96,22 @@ public class SuppAlarm extends BroadcastReceiver {
                 } catch (Exception ignored) {}
             }
             try { c.getSystemService(NotificationManager.class).cancel(4200 + i); } catch (Exception ignored) {}
+            if (i >= 0 && i < MAXN) ((AlarmManager) c.getSystemService(Context.ALARM_SERVICE)).cancel(snoozePi(c, i, ""));
+        } else if (SNOOZE.equals(act)) {
+            int i = in.getIntExtra("i", -1);
+            String key = in.getStringExtra("k"); if (key == null) key = "";
+            try { c.getSystemService(NotificationManager.class).cancel(4200 + i); } catch (Exception ignored) {}
+            if (i >= 0 && i < MAXN) {
+                AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+                long when = System.currentTimeMillis() + snoozeMin(c) * 60000L;
+                if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, when, snoozePi(c, i, key));
+                else am.set(AlarmManager.RTC_WAKEUP, when, snoozePi(c, i, key));
+            }
+        } else if (SHOW.equals(act)) {
+            int i = in.getIntExtra("i", -1);
+            JSONObject o = items(c).optJSONObject(i);
+            String key = in.getStringExtra("k"); // Uhrzeit hat sich seit „Später“ geändert → nichts anzeigen
+            if (o != null && o.optString("key", "").equals(key == null ? "" : key) && !today().equals(o.optString("skip", ""))) notify(c, i, o);
         } else if (Intent.ACTION_BOOT_COMPLETED.equals(act) || Intent.ACTION_MY_PACKAGE_REPLACED.equals(act)) {
             scheduleAll(c);
         }
@@ -103,6 +129,8 @@ public class SuppAlarm extends BroadcastReceiver {
         PendingIntent pOpen = PendingIntent.getActivity(c, 4300 + i, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Intent tk = new Intent(c, SuppAlarm.class).setAction(TAKEN).putExtra("i", i);
         PendingIntent pTk = PendingIntent.getBroadcast(c, 4400 + i, tk, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent sz = new Intent(c, SuppAlarm.class).setAction(SNOOZE).putExtra("i", i).putExtra("k", o.optString("key", ""));
+        PendingIntent pSz = PendingIntent.getBroadcast(c, 4500 + i, sz, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         String text = o.optString("text", "");
         try {
             nm.notify(4200 + i, new NotificationCompat.Builder(c, CH)
@@ -115,6 +143,7 @@ public class SuppAlarm extends BroadcastReceiver {
                     .setAutoCancel(true)
                     .setContentIntent(pOpen)
                     .addAction(0, "Genommen", pTk)
+                    .addAction(0, "+" + snoozeMin(c) + " Min später", pSz)
                     .build());
         } catch (SecurityException ignored) {}
     }

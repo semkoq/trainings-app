@@ -217,6 +217,8 @@ public class HrPlugin extends Plugin {
     // ---- Supplement-Erinnerungen ----
     @PluginMethod public void suppSchedule(PluginCall call) {
         JSArray items = call.getArray("items");
+        Integer sn = call.getInt("snooze");
+        if (sn != null) SuppAlarm.saveSnooze(getContext(), sn);
         SuppAlarm.save(getContext(), items == null ? "[]" : items.toString());
         SuppAlarm.scheduleAll(getContext());
         call.resolve();
