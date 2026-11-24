@@ -877,6 +877,12 @@ html,body{background:#000}
 .spwheel div.on{font-size:30px;font-weight:600;color:var(--txt)}
 .spband{position:absolute;left:50%;top:80px;width:150px;height:40px;transform:translateX(-50%);border-top:2px solid var(--acc);border-bottom:2px solid var(--acc);pointer-events:none;box-sizing:border-box}
 .spunit{font:12px var(--f-mono);color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+/* ===== Auto-Zonen (Profil) ===== */
+.avlist{margin-top:10px}.avrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-top:10px}.avrow label{display:block;font-size:12px;color:var(--mut)}.avrow label input{margin-top:4px}.avrow label input[readonly]{opacity:.65}
+.avt{min-width:84px;font-family:var(--f-mono);font-size:12px;padding:11px 12px}
+.zhead{display:flex;align-items:baseline;gap:10px;margin-top:18px}.zhead b{font:600 14px var(--f-body)}.zhead .hint{margin:0;flex:1}
+#zTab{margin-top:6px}.zprow{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}#zTab .zprow:first-child{border-top:0}
+.zprow i{width:12px;height:12px;border-radius:50%}.zprow span{font-family:var(--f-mono);letter-spacing:.02em}.zprow label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut)}.zprow input{width:64px;margin:0;padding:6px 8px;text-align:center}
 </style>
 </head>
 <body>
@@ -1097,10 +1103,17 @@ html,body{background:#000}
       <label>Alter<input id="pAge" type="text" inputmode="numeric" autocomplete="off"></label>
       <label>Gewicht (kg)<input id="pWeight" type="text" inputmode="decimal" autocomplete="off"></label>
       <label>Geschlecht<select id="pSex"><option value="m">Männlich</option><option value="f">Weiblich</option></select></label>
-      <label>Ruhepuls<input id="pRest" type="text" inputmode="numeric" autocomplete="off"></label>
-      <label>Max-Puls<input id="pMax" type="text" inputmode="numeric" autocomplete="off"></label>
     </div>
-    <p class="hint" id="maxHint">Max-Puls: am besten den höchsten Wert aus einem harten Sparring oder Sprint nehmen. Die App sagt Bescheid, wenn sie einen höheren sieht.</p>
+    <div class="avlist">
+      <div class="avrow"><label>Ruhepuls<input id="pRest" type="text" inputmode="numeric" autocomplete="off"></label><button type="button" class="chip avt" data-k="rest"></button></div>
+      <div class="avrow"><label>Max-Puls<input id="pMax" type="text" inputmode="numeric" autocomplete="off"></label><button type="button" class="chip avt" data-k="max"></button></div>
+      <div class="avrow"><label>Schwellenpuls<input id="pThr" type="text" inputmode="numeric" autocomplete="off"></label><button type="button" class="chip avt" data-k="thr"></button></div>
+    </div>
+    <p class="hint" id="maxHint">Auto: Die App führt den Wert aus deinen Trainings nach (Max-Puls steigt nur, Ruhepuls aus WHOOP, Schwelle aus dem härtesten 20-Minuten-Block). Manuell: dein Wert bleibt, wie er ist.</p>
+    <div class="zhead"><b>Pulszonen</b><span id="zMode" class="hint"></span><button type="button" class="link" id="zAuto">Zonen auf Auto</button></div>
+    <div id="zTab"></div>
+    <p class="hint" id="zChg" hidden></p>
+    <div id="zHist" class="hint"></div>
     <p class="err" id="weightWarn" hidden>Gewicht fehlt – Kalorien werden mit 75 kg geschätzt.</p>
     <button class="btn" id="saveProfile">Speichern</button>
     <p class="hint" id="storeInfo">Speicher wird geladen …</p>
@@ -1459,23 +1472,46 @@ function trimpMin(hr, p) {
   return p.sex === 'f' ? r * 0.86 * Math.exp(1.67 * r) : r * 0.64 * Math.exp(1.92 * r);
 }
 
-function zoneOf(hr, max) {
-  const q = hr / max;
-  return q < 0.6 ? 0 : q < 0.7 ? 1 : q < 0.8 ? 2 : q < 0.9 ? 3 : 4;
+// Zonengrenzen in bpm [b1..b4]: Z1 < b1 <= Z2 < b2 <= Z3 < b3 <= Z4 < b4 <= Z5
+const zbOk = a => Array.isArray(a) && a.length === 4 && a.every(Number.isFinite) && a[0] < a[1] && a[1] < a[2] && a[2] < a[3];
+const zbLegacy = max => [0.6, 0.7, 0.8, 0.9].map(f => Math.ceil(f * max - 1e-9)); // alte feste Prozentgrenzen (erster Puls der nächsten Zone)
+function zbCalc(rest, max, thr) { // neue Regel: b3/b4 um die Schwelle, b1/b2 zwischen Ruhe und b3; null wenn nicht aufsteigend oder b4 >= Max
+  const b3 = Math.round(0.95 * thr), b4 = Math.round(1.03 * thr), b1 = Math.round(rest + 0.55 * (b3 - rest)), b2 = Math.round(rest + 0.8 * (b3 - rest)), z = [b1, b2, b3, b4];
+  return zbOk(z) && b4 < max && b1 > rest ? z : null;
 }
+const thrSub = p => p.rest + 0.85 * (p.max - p.rest); // Ersatz-Schwelle ohne brauchbare Daten
+function zbAuto(p) { return (p.thr && zbCalc(p.rest, p.max, p.thr)) || zbCalc(p.rest, p.max, thrSub(p)) || zbLegacy(p.max); }
+function refreshZb(p) { p.zb = p.auto && p.auto.zones === false && zbOk(p.zbManual) ? p.zbManual.slice() : zbAuto(p); return p; }
+const hasZb = p => !!p && typeof p === 'object' && !!(p.thr || zbOk(p.zb) || (p.auto && p.auto.zones === false && zbOk(p.zbManual)));
+function zoneBounds(p) {
+  p = p || state.profile;
+  if (p.auto && p.auto.zones === false && zbOk(p.zbManual)) return p.zbManual; // manuell gewinnt
+  if (zbOk(p.zb)) return p.zb;
+  return p.thr ? zbAuto(p) : zbLegacy(p.max); // ohne thr/zb (alte Trainings): 60/70/80/90 % vom Max-Puls
+}
+// Zahl = alte Prozentlogik, Objekt (Profil oder Trainings-Snapshot) = zoneBounds
+function zoneFn(p) {
+  if (typeof p !== 'number' && hasZb(p)) { const b = zoneBounds(p); return hr => hr < b[0] ? 0 : hr < b[1] ? 1 : hr < b[2] ? 2 : hr < b[3] ? 3 : 4; }
+  const max = typeof p === 'number' ? p : p.max;
+  return hr => { const q = hr / max; return q < 0.6 ? 0 : q < 0.7 ? 1 : q < 0.8 ? 2 : q < 0.9 ? 3 : 4; };
+}
+function zoneOf(hr, p) { return zoneFn(p)(hr); }
+function zoneText(p) { const b = zoneBounds(p); return `Z1 <${b[0]}, Z2 ${b[0]}–${b[1] - 1}, Z3 ${b[1]}–${b[2] - 1}, Z4 ${b[2]}–${b[3] - 1}, Z5 ab ${b[3]} bpm`; }
+// Trainings-Snapshot des Profils: neue Trainings speichern thr und zb mit
+const profSnap = (p, weight) => ({ max: p.max, rest: p.rest, ...(hasZb(p) ? { thr: p.thr, zb: zoneBounds(p).slice() } : {}), weight: weight !== undefined ? weight : p.weight, age: p.age, sex: p.sex });
 
 // Zonen-Balken (Pegel): aktuelle Zone leuchtet und füllt sich bis zur nächsten, Zonen darunter halb hell
 const ZG_H = [38, 52, 67, 83, 100];
-function zoneGauge(el, hr, max) {
+function zoneGauge(el, hr, p) {
   if (!el) return;
   if (!el.firstChild) el.innerHTML = ZG_H.map((hh, i) => `<div class="zc" style="--c:var(--z${i + 1})"><div class="zb" style="height:${hh}%"><i></i></div><span>Z${i + 1}</span></div>`).join('');
-  const z = hr != null ? zoneOf(hr, max) : -1, q = hr != null ? hr / max : 0;
-  const lo = [0.5, 0.6, 0.7, 0.8, 0.9][Math.max(0, z)], fill = z < 0 ? 0 : Math.max(0.12, Math.min(1, (q - lo) / 0.1));
+  const b = zoneBounds(p), z = hr != null ? zoneOf(hr, p) : -1;
+  const lo = [Math.max(30, b[0] - (b[1] - b[0])), ...b][Math.max(0, z)], hi = z === 4 ? Math.max(p.max, b[3] + 10) : b[Math.max(0, z)], fill = z < 0 ? 0 : Math.max(0.12, Math.min(1, (hr - lo) / (hi - lo)));
   el.querySelectorAll('.zc').forEach((c, i) => { c.classList.toggle('on', i === z); c.classList.toggle('past', i < z); c.querySelector('i').style.height = (i < z ? 100 : i === z ? fill * 100 : 0).toFixed(0) + '%'; });
 }
-function zoneGaugeText(hr, max) {
+function zoneGaugeText(hr, p) {
   if (hr == null) return '';
-  const z = zoneOf(hr, max), b = [0.6, 0.7, 0.8, 0.9].map(f => Math.ceil(f * max - 1e-9)); // erster Puls der nächsten Zone (wie zoneOf)
+  const z = zoneOf(hr, p), b = zoneBounds(p); // b[i] = erster Puls der nächsten Zone (wie zoneOf)
   const rng = z === 0 ? `unter ${b[0]} bpm` : z === 4 ? `ab ${b[3]} bpm` : `${b[z - 1]}–${b[z] - 1} bpm`;
   return z < 4 ? `${rng} · noch ${Math.max(1, b[z] - hr)} bis Z${z + 2}` : `${rng} · Maximalbereich`;
 }
@@ -1485,12 +1521,12 @@ function loadLabel(t) {
 
 function analyzeSeries(arr, p) {
   let n = 0, sum = 0, max = 0, min = 999, kcal = 0, trimp = 0;
-  const zones = [0, 0, 0, 0, 0];
+  const zones = [0, 0, 0, 0, 0], zf = zoneFn(p);
   for (const hr of arr) {
     if (hr == null) continue;
     n++; sum += hr; if (hr > max) max = hr; if (hr < min) min = hr;
     kcal += kcalPerMin(hr, p) / 60; trimp += trimpMin(hr, p) / 60;
-    zones[zoneOf(hr, p.max)]++;
+    zones[zf(hr)]++;
   }
   if (!n) throw new Error('Keine brauchbaren Pulswerte.');
   // Belastungsphasen (≥85 % HFmax, ≥20 s) + Erholung nach 60 s
@@ -1562,7 +1598,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const fmtDur = sec => { sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return h ? `${h}:${String(m).padStart(2, '0')} h` : `${m}:${String(s).padStart(2, '0')} min`; };
 const fmtDate = iso => new Date(iso).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' }) + ', ' + new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
-const DEFAULT_PROFILE = { age: 22, weight: null, sex: 'm', rest: 60, max: 198 };
+const DEFAULT_PROFILE = { age: 22, weight: null, sex: 'm', rest: 60, max: 198, auto: { max: true, rest: true, thr: true, zones: true } };
 const state = { profile: { ...DEFAULT_PROFILE }, sessions: [], current: null, type: 'Kickboxen' };
 
 // ---------- Speicher: IndexedDB auf dem Handy ----------
@@ -1597,6 +1633,7 @@ const ready = (async () => {
   await store.init();
   try { const p = await store.loadProfile(); if (p) state.profile = { ...DEFAULT_PROFILE, ...p }; } catch (e) { }
   try { state.sessions = (await store.loadSessions()).map(withHr).sort((a, b) => b.date.localeCompare(a.date)); } catch (e) { toast('Verlauf konnte nicht geladen werden.'); }
+  if (state.profile.thr == null && !state.profile.zb) await autoProfile(null, true, { skipRest: true }); // einmalig: bestehendes Profil bekommt Schwelle und Zonen in bpm
   fillProfileForm(); renderHistory();
   $('#storeInfo').textContent = `Gespeichert auf diesem Handy · ${state.sessions.length} Trainings.`;
 })();
@@ -1721,7 +1758,7 @@ function summaryToSessions(text, fallbackType = 'Sonstiges') {
       durationSec: Math.round(x.sec), avgHr: Math.round(x.hr), maxHr: null, minHr: null,
       kcal: Math.round(kcalPerMin(x.hr, pp) * min), kcalDevice: null, trimp: Math.round(trimpMin(x.hr, pp) * min), icuLoad: x.load,
       zones: null, effortCount: null, effortSec: null, hrr60: null, efforts: [],
-      prof: { max: p.max, rest: p.rest, weight: pp.weight, age: p.age, sex: p.sex }, hr: null, ai: null, created: new Date().toISOString()
+      prof: profSnap(p, pp.weight), hr: null, ai: null, created: new Date().toISOString()
     };
   });
 }
@@ -1751,8 +1788,8 @@ async function fileToSession(name, buf, fallbackType, note, lastModified) {
     id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
     date: (parsed.date && !isNaN(parsed.date)) ? parsed.date.toISOString() : new Date().toISOString(),
     type: guessType(name, parsed.sport, fallbackType), note: note || '', source: (name.split('.').pop() || '').slice(0, 5),
-    ...res, kcalDevice: parsed.deviceKcal || null,
-    prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
+    ...res, peak3: rawPeak3(parsed.samples), kcalDevice: parsed.deviceKcal || null,
+    prof: profSnap(p),
     hr: { step: 5, v: downsample(arr, 5) }, hr1: arr.map(x => x == null ? null : Math.round(x)), ai: null, created: new Date().toISOString()
   };
 }
@@ -1777,6 +1814,7 @@ async function batchSave(makers) {
     } catch (e) { bad++; }
   }
   state.sessions.sort((a, b) => b.date.localeCompare(a.date));
+  if (ok) await autoProfile(null, false, { smooth: true });
   prog.innerHTML = `<p><b>${ok} ${ok === 1 ? 'Training' : 'Trainings'} importiert.</b>${dupN ? (dupN === 1 ? ' 1 war schon drin.' : ` ${dupN} waren schon drin.`) : ''}${bad ? ` ${bad} Dateien ohne Pulsdaten übersprungen.` : ''}${failSave ? ` ${failSave} konnten nicht gespeichert werden.` : ''}</p><button class="btn" id="toHist">Zum Verlauf</button>`;
   $('#toHist').onclick = () => { prog.hidden = true; renderHistory(); showView('history'); };
 }
@@ -1855,7 +1893,7 @@ $('#manualBtn').onclick = async () => {
     durationSec: Math.round(dur * 60), avgHr: Math.round(avg), maxHr: max > 0 ? Math.round(max) : null, minHr: null,
     kcal: Math.round(kcalPerMin(avg, p) * dur), kcalDevice: kc > 0 ? Math.round(kc) : null,
     trimp: Math.round(trimpMin(avg, p) * dur), zones: null, effortCount: null, effortSec: null, hrr60: null, efforts: [],
-    prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex }, hr: null, ai: null, created: new Date().toISOString()
+    prof: profSnap(p), hr: null, ai: null, created: new Date().toISOString()
   };
   ['#mDur', '#mAvg', '#mMax', '#mKcal'].forEach(x => $(x).value = '');
   $('#mDate').value = toLocalInput(new Date());
@@ -1867,6 +1905,7 @@ async function saveAndOpen(s) {
   let saved = true;
   try { await store.saveSession(s); } catch (e) { saved = false; toast(e && e.name === 'QuotaExceededError' ? 'Speicher voll – alte Trainings löschen.' : 'Speichern fehlgeschlagen, Analyse trotzdem unten.'); }
   state.sessions = [withHr(s), ...state.sessions.filter(x => x.id !== s.id)].sort((a, b) => b.date.localeCompare(a.date));
+  await autoProfile(s);
   openSession(s, true);
   return saved;
 }
@@ -1910,7 +1949,7 @@ function verdict(s) {
   } else out.push(`Erstes gespeichertes ${s.type}-Training – ab dem nächsten siehst du hier, ob du besser wirst.`);
   const w = weekLoad(s.date);
   if (w.ratio != null && w.ratio > 1.5) out.push(`<b>Achtung:</b> Deine Belastung der letzten 7 Tage ist ${w.ratio.toFixed(1)}× so hoch wie dein Schnitt – Regeneration einplanen.`);
-  if (s.maxHr && s.maxHr > state.profile.max) out.push(`Neuer Max-Puls: <b>${s.maxHr}</b> (Profil: ${state.profile.max}). <button class="link" id="setMax">Im Profil übernehmen</button>`);
+  if (s.maxHr && s.maxHr > state.profile.max && AU(state.profile).max === false) out.push(`Neuer Max-Puls: <b>${s.maxHr}</b> (Profil: ${state.profile.max}). <button class="link" id="setMax">Im Profil übernehmen</button>`);
   return out.map(x => `<p>${x}</p>`).join('');
 }
 
@@ -1964,7 +2003,7 @@ function openSession(s, isNew) {
   showView('session');
   $('#backBtn').onclick = () => { if (isNew && s.source !== 'live' && s.source !== 'manuell') showView('new'); else if (isNew) goMain('overview'); else { renderHistory(); showView('history'); } };
   $('#sType').onchange = async e => { s.type = e.target.value; try { await store.saveSession(s); } catch (x) { } openSession(s, isNew); };
-  const sm = $('#setMax'); if (sm) sm.onclick = async () => { state.profile.max = s.maxHr; try { await store.saveProfile(state.profile); } catch (x) { } fillProfileForm(); toast('Max-Puls aktualisiert'); openSession(s, isNew); };
+  const sm = $('#setMax'); if (sm) sm.onclick = async () => { state.profile = refreshZb({ ...state.profile, max: s.maxHr }); try { await store.saveProfile(state.profile); } catch (x) { } fillProfileForm(); toast('Max-Puls aktualisiert'); openSession(s, isNew); };
   let armed = false;
   $('#delBtn').onclick = async e => {
     if (!armed) { armed = true; e.target.textContent = 'Wirklich löschen? Nochmal tippen'; e.target.classList.add('armed'); setTimeout(() => { armed = false; e.target.textContent = 'Training löschen'; e.target.classList.remove('armed'); }, 4000); return; }
@@ -1984,9 +2023,9 @@ function drawHR(cv, s) {
   const lo = Math.max(40, Math.floor((Math.min(...nums) - 10) / 10) * 10), hi = Math.max(max, Math.max(...nums)) + 5;
   const L = 34, R = 6, T = 6, B = 22, pw = W - L - R, ph = H - T - B;
   const y = v => T + ph - (v - lo) / (hi - lo) * ph, x = i => L + i / (vals.length - 1) * pw;
-  const bounds = [0, 0.6, 0.7, 0.8, 0.9, 2];
+  const bounds = [0, ...zoneBounds(s.prof), 1e4];
   for (let z = 0; z < 5; z++) {
-    const a = Math.max(lo, bounds[z] * max), b = Math.min(hi, bounds[z + 1] * max); if (b <= a) continue;
+    const a = Math.max(lo, bounds[z]), b = Math.min(hi, bounds[z + 1]); if (b <= a) continue;
     g.fillStyle = ZONE_COLORS[z] + '22'; g.fillRect(L, y(b), pw, y(a) - y(b));
   }
   g.fillStyle = C.mut; g.font = '11px ' + MONO; g.textAlign = 'right';
@@ -1996,8 +2035,8 @@ function drawHR(cv, s) {
   for (let m = 0; m <= totalMin; m += tick) g.fillText(m + "'", L + (m * 60 / step) / (vals.length - 1) * pw, H - 6);
   // Linie in der Farbe der jeweiligen Pulszone
   g.lineWidth = 2; g.lineJoin = 'round'; g.lineCap = 'round';
-  let prev = null;
-  vals.forEach((v, i) => { if (v == null) { prev = null; return; } if (prev) { g.strokeStyle = ZONE_COLORS[zoneOf(Math.max(v, prev.v), max)]; g.beginPath(); g.moveTo(x(prev.i), y(prev.v)); g.lineTo(x(i), y(v)); g.stroke(); } prev = { i, v }; });
+  let prev = null; const zf = zoneFn(s.prof);
+  vals.forEach((v, i) => { if (v == null) { prev = null; return; } if (prev) { g.strokeStyle = ZONE_COLORS[zf(Math.max(v, prev.v))]; g.beginPath(); g.moveTo(x(prev.i), y(prev.v)); g.lineTo(x(i), y(v)); g.stroke(); } prev = { i, v }; });
 }
 
 // ---------- KI-Coach ----------
@@ -2015,7 +2054,7 @@ Antworte auf Deutsch, locker und direkt, ohne Floskeln, max. 200 Wörter. Gliede
 Keine medizinischen Diagnosen. Kalorien sind Schätzungen aus dem Puls.
 
 Profil: Alter ${state.profile.age}, Gewicht ${state.profile.weight || 'unbekannt'} kg, Ruhepuls ${s.prof.rest}, Max-Puls ${s.prof.max}.
-Zonen: Z1 <60 %, Z2 60–70 %, Z3 70–80 %, Z4 80–90 %, Z5 >90 % vom Max-Puls. Belastungsphasen = Abschnitte ≥85 % Max-Puls ≥20 s.
+Zonen: ${hasZb(s.prof) ? zoneText(s.prof) + (s.prof.thr ? ', Schwellenpuls ' + s.prof.thr : '') : 'Z1 <60 %, Z2 60–70 %, Z3 70–80 %, Z4 80–90 %, Z5 >90 % vom Max-Puls'}. Belastungsphasen = Abschnitte ≥85 % Max-Puls ≥20 s.
 
 HEUTIGES TRAINING: ${JSON.stringify(strip(s))}
 ${s.rpe ? `Selbsteinschätzung: Anstrengung ${s.rpe}/10, körperlich ${s.feelBody || '–'}/5, mental ${s.feelMind || '–'}/5${s.rateNote ? ', Kommentar: ' + s.rateNote : ''}` : ''}
@@ -2110,22 +2149,112 @@ function renderYear() {
 }
 
 // ---------- Profil ----------
+const AU = p => ({ max: true, rest: true, thr: true, zones: true, ...(p && p.auto) }); // Auto-Schalter (Standard: alles an)
+let PF = { auto: AU(), zb: [0, 0, 0, 0] }; // Stand im Formular (Schalter, Zonengrenzen)
+const avUi = () => { for (const k of ['rest', 'max', 'thr']) { const i = $('#p' + k[0].toUpperCase() + k.slice(1)), b = document.querySelector(`.avt[data-k="${k}"]`); i.readOnly = PF.auto[k]; b.textContent = PF.auto[k] ? 'Auto' : 'Manuell'; b.classList.toggle('on', PF.auto[k]); } $('#zMode').textContent = PF.auto.zones ? 'Auto' : 'Manuell'; };
+function zoneRanges() { const b = PF.zb, r = [`unter ${b[0]}`, `${b[0]}–${b[1] - 1}`, `${b[1]}–${b[2] - 1}`, `${b[2]}–${b[3] - 1}`, `ab ${b[3]}`]; r.forEach((t, i) => { const e = $('#zr' + i); if (e) e.textContent = t + ' bpm'; }); }
+function zoneTab() {
+  $('#zTab').innerHTML = ZONE_NAMES.map((n, i) => `<div class="zprow"><i style="background:var(--z${i + 1})"></i><div>${n}<br><span id="zr${i}" style="color:var(--z${i + 1})"></span></div>${i ? `<label>ab <input class="zin" data-i="${i - 1}" type="text" inputmode="numeric" value="${PF.zb[i - 1]}" autocomplete="off"></label>` : '<span></span>'}</div>`).join('');
+  zoneRanges();
+}
+function zonePreview() { // Zonen live mitrechnen, solange sie auf Auto stehen
+  if (!PF.auto.zones) return;
+  const rest = pnum($('#pRest').value), max = pnum($('#pMax').value), thr = pnum($('#pThr').value); if (!(rest > 0 && max > 0)) return;
+  PF.zb = zbAuto({ rest, max, thr: thr > 0 ? thr : null });
+  document.querySelectorAll('#zTab .zin').forEach(e => e.value = PF.zb[+e.dataset.i]); zoneRanges();
+}
 function fillProfileForm() {
   const p = state.profile;
+  PF = { auto: AU(p), zb: zoneBounds(p).slice() };
   $('#pAge').value = p.age ?? ''; $('#pWeight').value = p.weight != null ? String(p.weight).replace('.', ',') : ''; $('#pSex').value = p.sex || 'm'; $('#pRest').value = p.rest ?? ''; $('#pMax').value = p.max ?? '';
+  $('#pThr').value = p.thr != null ? p.thr : Math.round(thrSub(p));
   $('#weightWarn').hidden = !!p.weight;
+  avUi(); zoneTab(); profMeta();
 }
-$('#pAge').oninput = () => { const a = parseInt($('#pAge').value); if (a > 0) $('#maxHint').textContent = `Schätzung: ${220 - a} bpm. Besser: höchster Wert aus einem harten Sparring/Sprint.`; };
+function profMeta() { // Hinweis + Verlauf; bei offenem Formular zusätzlich nur die Auto-Felder und Auto-Zonen nachziehen (manuelle Eingaben bleiben)
+  const p = state.profile, dm = d => new Date(d + 'T12:00').toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  const c = $('#zChg'); c.hidden = !p.chg; if (p.chg) c.textContent = `Zuletzt ${dm(p.chg.d)}: ${p.chg.t}`;
+  $('#zHist').innerHTML = (p.hist || []).slice(-6).reverse().map(h => `${dm(h.d)} · Ruhe ${h.rest} · Max ${h.max}${h.thr ? ' · Schwelle ' + h.thr : ''}`).join('<br>');
+  if (state.view !== 'profile') return;
+  [['rest', '#pRest'], ['max', '#pMax'], ['thr', '#pThr']].forEach(([k, id]) => { if (PF.auto[k] && p[k] != null) $(id).value = p[k]; });
+  if (PF.auto.zones) { PF.zb = zoneBounds(p).slice(); document.querySelectorAll('#zTab .zin').forEach(e => e.value = PF.zb[+e.dataset.i]); zoneRanges(); }
+}
+document.querySelectorAll('.avt').forEach(b => b.onclick = () => { PF.auto[b.dataset.k] = !PF.auto[b.dataset.k]; avUi(); });
+['#pRest', '#pMax', '#pThr'].forEach(id => $(id).addEventListener('input', zonePreview));
+$('#zTab').addEventListener('input', e => { if (!e.target.classList.contains('zin')) return; PF.auto.zones = false; document.querySelectorAll('#zTab .zin').forEach(x => PF.zb[+x.dataset.i] = Math.round(pnum(x.value))); avUi(); zoneRanges(); });
+$('#zAuto').onclick = async () => {
+  await ready;
+  const p = { ...state.profile, auto: { ...AU(state.profile), zones: true } }; delete p.zbManual; refreshZb(p); state.profile = p;
+  try { await store.saveProfile(p); toast('Zonen stehen wieder auf Auto'); } catch (e) { toast('Speichern fehlgeschlagen'); }
+  fillProfileForm();
+};
 $('#saveProfile').onclick = async () => {
   await ready;
   const num = id => { const v = pnum($(id).value); return v > 0 ? v : null; };
-  const p = { ...state.profile, age: num('#pAge') || DEFAULT_PROFILE.age, weight: num('#pWeight'), sex: $('#pSex').value, rest: num('#pRest') || DEFAULT_PROFILE.rest, max: num('#pMax') || DEFAULT_PROFILE.max };
+  const au = { ...PF.auto };
+  const p = { ...state.profile, age: num('#pAge') || DEFAULT_PROFILE.age, weight: num('#pWeight'), sex: $('#pSex').value, rest: num('#pRest') || DEFAULT_PROFILE.rest, max: num('#pMax') || DEFAULT_PROFILE.max, auto: au };
   if (p.rest < 30 || p.rest > 110) { toast('Der Ruhepuls sollte zwischen 30 und 110 liegen'); return; }
   if (p.max <= p.rest + 40) { toast('Max-Puls muss deutlich über dem Ruhepuls liegen'); return; }
+  const thr = Math.round(num('#pThr') || 0);
+  if (!au.thr || state.profile.thr != null) p.thr = thr || undefined;
+  if (!au.thr && p.thr && (p.thr <= p.rest + 20 || p.thr >= p.max)) { toast('Der Schwellenpuls muss zwischen Ruhepuls und Max-Puls liegen'); return; }
+  if (au.zones) delete p.zbManual;
+  else { if (!zbOk(PF.zb) || PF.zb[3] >= p.max || PF.zb[0] <= p.rest) { toast('Zonengrenzen müssen aufsteigend sein, über dem Ruhepuls und unter dem Max-Puls liegen'); return; } p.zbManual = PF.zb.slice(); }
+  refreshZb(p);
   state.profile = p;
   try { await store.saveProfile(p); toast('Profil gespeichert'); } catch (e) { toast('Speichern fehlgeschlagen'); }
+  await autoProfile(null, true); // Auto-Werte gleich neu rechnen, manuelle bleiben (Schwelle ohne neues Training unverändert)
   fillProfileForm();
 };
+
+// ---------- Auto-Profil: Max-Puls, Ruhepuls, Schwelle und Zonen aus den Trainings nachführen ----------
+const _aps = new Map();
+function apStats(s) { // bestes 20-min-Fenster aus der 1-Hz-Pulsreihe, je Training einmal gerechnet
+  const h = s.hr1; if (!h || h.length < 120) return null;
+  const k = s.id + ':' + h.length; if (_aps.has(k)) return _aps.get(k);
+  const n = h.length, ps = new Float64Array(n + 1), pc = new Int32Array(n + 1); let best20 = null;
+  for (let i = 0; i < n; i++) { const v = h[i]; ps[i + 1] = ps[i] + (v == null ? 0 : v); pc[i + 1] = pc[i] + (v == null ? 0 : 1); }
+  if ((s.durationSec || n) >= 1500) for (let i = 0; i + 1200 <= n; i += 5) { const c = pc[i + 1200] - pc[i]; if (c >= 1080) { const v = (ps[i + 1200] - ps[i]) / c; if (best20 == null || v > best20) best20 = v; } }
+  const r = { best20 }; _aps.set(k, r); return r;
+}
+// Max-Puls-Spitze aus den ROHEN Messpunkten (vor der 1-Hz-Auffüllung): höchster Wert, der von mind. 3 echten Punkten in Folge gehalten wurde, über mind. 5 s Zeitspanne
+function rawPeak3(samples) {
+  const a = (samples || []).filter(x => x.hr >= 30 && x.hr <= 240 && x.t >= 0).sort((x, y) => x.t - y.t); let best = 0;
+  for (let i = 0, j = 2; i + 2 < a.length; i++) {
+    if (j < i + 2) j = i + 2; while (j < a.length && a[j].t - a[i].t < 5) j++; if (j >= a.length) break;
+    let m = 999; for (let k = i; k <= j; k++) if (a[k].hr < m) m = a[k].hr; if (m > best) best = m;
+  }
+  return best || null;
+}
+// session: gerade neu dazugekommenes Training; o.smooth: Schwelle um höchstens ±3 bpm schieben (nur bei neuem Training/Batch); o.skipRest: Ruhepuls nicht anfassen
+async function autoProfile(session, silent, o) {
+  try {
+    o = o || {}; const smooth = !!session || !!o.smooth;
+    const old = state.profile, p = { ...old, auto: AU(old) }, a = p.auto, oldZb = zoneBounds(old).slice(), now = Date.now(), day = dayKey(now);
+    const list = session && !state.sessions.includes(session) ? [session, ...state.sessions] : state.sessions;
+    if (a.max) { const c = list.reduce((m, s) => Math.max(m, s.peak3 || 0), 0); if (c >= 150 && c <= 225 && c > p.max) p.max = c; } // nur Anstieg; Trainings ohne peak3 zählen nicht
+    if (a.rest && !o.skipRest) { // Ruhepuls nur aus WHOOP (Ø der letzten 7 Tage)
+      const D = typeof WH !== 'undefined' && WH.data && WH.data.days;
+      if (D) { const rh = Object.keys(D).sort().slice(-7).map(k => D[k].rhr).filter(x => x); if (rh.length >= 3) { const r = Math.round(rh.reduce((x, y) => x + y, 0) / rh.length); if (r >= 30 && r <= 110 && p.max > r + 40) p.rest = r; } }
+    }
+    if (a.thr) {
+      const v = list.filter(s => now - new Date(s.date).getTime() <= 90 * 864e5).map(s => { const k = apStats(s); return k && k.best20; }).filter(x => x != null);
+      let tg = null; if (v.length >= 3) { const raw = Math.max(...v) * 0.95; if (raw >= 0.75 * p.max && raw <= 0.95 * p.max) tg = raw; }
+      tg = Math.round(tg != null ? tg : thrSub(p));
+      p.thr = !old.thr ? tg : smooth ? Math.max(old.thr - 3, Math.min(old.thr + 3, tg)) : old.thr; // ±3 bpm nur bei neuem Training; sonst bleibt die Schwelle
+    }
+    refreshZb(p);
+    const h = (old.hist || []).slice(), e = { d: day, rest: p.rest, max: p.max, thr: p.thr }, l = h[h.length - 1];
+    if (l && l.d === day) h[h.length - 1] = e; else if (!l || l.rest !== e.rest || l.max !== e.max || l.thr !== e.thr) h.push(e);
+    p.hist = h.slice(-60);
+    const parts = []; [['rest', 'Ruhepuls'], ['max', 'Max-Puls'], ['thr', 'Schwelle']].forEach(([k, n]) => { if (old[k] != null && Math.abs(p[k] - old[k]) >= 2) parts.push(`${n} ${old[k]} → ${p[k]}`); });
+    if (p.zb.some((v, i) => Math.abs(v - oldZb[i]) >= 3)) parts.push('Zonen angepasst');
+    if (parts.length && !silent) { p.chg = { d: day, t: parts.join(', ') }; toast(p.chg.t); }
+    const chg = JSON.stringify(p) !== JSON.stringify(old); state.profile = p;
+    if (chg) { try { await store.saveProfile(p); } catch (x) { } if (state.view === 'profile') profMeta(); else fillProfileForm(); } // offenes Formular nie zurücksetzen
+    return p;
+  } catch (e) { return state.profile; }
+}
 
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
 fillProfileForm();
@@ -2240,7 +2369,7 @@ function liveTick() {
     live.samples.push({ t, hr });
     live.n++; live.sum += hr; if (hr > live.max) live.max = hr;
     live.kcal += kcalPerMin(hr, p) / 60; live.trimp += trimpMin(hr, p) / 60;
-    const z = zoneOf(hr, p.max); live.zones[z]++;
+    const z = zoneOf(hr, p); live.zones[z]++;
     if (z === 4 && live.lastZone !== 4 && navigator.vibrate) navigator.vibrate([120, 80, 120]);
     live.lastZone = z;
   }
@@ -2260,8 +2389,8 @@ async function samplesToSession(samples, startedAt, type, note, rounds, rr, rrT)
   return {
     id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
     date: new Date(startedAt).toISOString(), type, note: note || '', source: 'live',
-    ...res, kcalDevice: null,
-    prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex },
+    ...res, peak3: rawPeak3(samples), kcalDevice: null,
+    prof: profSnap(p),
     hr: { step: 5, v: downsample(arr, 5) }, hr1: arr.map(x => x == null ? null : Math.round(x)), ai: null, created: new Date().toISOString(),
     rounds: roundStats(arr, rounds), ...hrvFrom(rr, rrT, arr)
   };
@@ -2353,11 +2482,11 @@ async function countdownStart() {
 
 function renderLive() {
   const p = state.profile, fresh = live.hr != null && Date.now() - live.hrAt < 5000;
-  const hr = fresh ? live.hr : null, z = hr != null ? zoneOf(hr, p.max) : -1;
+  const hr = fresh ? live.hr : null, z = hr != null ? zoneOf(hr, p) : -1;
   $('#lvHr').textContent = hr ?? '--';
   $('#lvHrBox').style.setProperty('--zc', z >= 0 ? ZONE_COLORS[z] : 'var(--line)');
   $('#lvZone').textContent = hr != null ? `${ZONE_NAMES[z]} · ${Math.floor(hr / p.max * 100)} %` : (live.connected ? 'warte auf Puls …' : 'nicht verbunden');
-  zoneGauge($('#lvGauge'), hr, p.max); zoneGauge($('#ivGauge'), hr, p.max); $('#lvGaugeT').textContent = zoneGaugeText(hr, p.max);
+  zoneGauge($('#lvGauge'), hr, p); zoneGauge($('#ivGauge'), hr, p); $('#lvGaugeT').textContent = zoneGaugeText(hr, p);
   const sec = live.running || live.samples.length ? liveSec() : 0;
   $('#lvTime').textContent = fmtClock(sec);
   $('#lvTime').classList.toggle('paused', live.paused);
@@ -2381,8 +2510,8 @@ function drawLiveChart() {
   const lo = 50, hi = Math.max(max, live.max) + 5;
   const L = 30, R = 6, T = 6, B = 20, pw = W - L - R, ph = H - T - B;
   const y = v => T + ph - (Math.max(lo, v) - lo) / (hi - lo) * ph, x = t => L + (t - t0) / span * pw;
-  const bounds = [0, 0.6, 0.7, 0.8, 0.9, 2];
-  for (let zz = 0; zz < 5; zz++) { const a = Math.max(lo, bounds[zz] * max), b = Math.min(hi, bounds[zz + 1] * max); if (b <= a) continue; g.fillStyle = ZONE_COLORS[zz] + '22'; g.fillRect(L, y(b), pw, y(a) - y(b)); }
+  const bounds = [0, ...zoneBounds(state.profile), 1e4];
+  for (let zz = 0; zz < 5; zz++) { const a = Math.max(lo, bounds[zz]), b = Math.min(hi, bounds[zz + 1]); if (b <= a) continue; g.fillStyle = ZONE_COLORS[zz] + '22'; g.fillRect(L, y(b), pw, y(a) - y(b)); }
   g.fillStyle = C.mut; g.font = '11px ' + MONO; g.textAlign = 'right';
   for (let v = 60; v <= hi; v += 20) g.fillText(v, L - 5, y(v) + 4);
   g.textAlign = 'center';
@@ -2390,8 +2519,8 @@ function drawLiveChart() {
   for (let t = Math.ceil(Math.max(0, t0) / tick) * tick; t <= now; t += tick) g.fillText(Math.round(t / 60) + "'", x(t), H - 5);
   if (pts.length > 1) {
     g.lineWidth = 2.2; g.lineJoin = 'round'; g.lineCap = 'round';
-    let prev = null;
-    for (const s of pts) { if (prev && s.t - prev.t <= 10) { g.strokeStyle = ZONE_COLORS[zoneOf(Math.max(s.hr, prev.hr), max)]; g.beginPath(); g.moveTo(x(prev.t), y(prev.hr)); g.lineTo(x(s.t), y(s.hr)); g.stroke(); } prev = s; }
+    let prev = null; const zf = zoneFn(state.profile);
+    for (const s of pts) { if (prev && s.t - prev.t <= 10) { g.strokeStyle = ZONE_COLORS[zf(Math.max(s.hr, prev.hr))]; g.beginPath(); g.moveTo(x(prev.t), y(prev.hr)); g.lineTo(x(s.t), y(s.hr)); g.stroke(); } prev = s; }
   }
 }
 
@@ -2531,8 +2660,8 @@ function ivTick() {
   $('#ivProg').style.width = (100 - Math.max(0, left) / iv.dur * 100).toFixed(1) + '%';
   const fresh = live.hr != null && Date.now() - live.hrAt < 5000;
   $('#ivHrV').textContent = fresh ? live.hr : '--';
-  $('#ivHrZ').textContent = fresh ? '· ' + ZONE_NAMES[zoneOf(live.hr, state.profile.max)] : '';
-  $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile.max)] : '';
+  $('#ivHrZ').textContent = fresh ? '· ' + ZONE_NAMES[zoneOf(live.hr, state.profile)] : '';
+  $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile)] : '';
 }
 $('#ivStart').onclick = ivStart;
 $('#ivPause').onclick = () => {
@@ -2862,9 +2991,9 @@ async function nativeConnect(prefId) {
   } catch (e) { liveStatus('Fehler: ' + (e && e.message || e), 'bad'); }
 }
 function nativeRecompute(samples) {
-  const p = state.profile;
+  const p = state.profile, zf = zoneFn(p);
   Object.assign(live, { samples: samples || [], zones: [0, 0, 0, 0, 0], kcal: 0, trimp: 0, sum: 0, n: 0, max: 0 });
-  for (const x of live.samples) { live.n++; live.sum += x.hr; if (x.hr > live.max) live.max = x.hr; live.kcal += kcalPerMin(x.hr, p) / 60; live.trimp += trimpMin(x.hr, p) / 60; live.zones[zoneOf(x.hr, p.max)]++; }
+  for (const x of live.samples) { live.n++; live.sum += x.hr; if (x.hr > live.max) live.max = x.hr; live.kcal += kcalPerMin(x.hr, p) / 60; live.trimp += trimpMin(x.hr, p) / 60; live.zones[zf(x.hr)]++; }
 }
 async function nativeResync() {
   const P = HN(); if (!P || !live.running) return;
@@ -2889,7 +3018,7 @@ function ivRenderNative(d) {
   if (d.combo !== undefined) kbShow(d.phase === 'work' ? d.combo || '' : '');
   const fresh = live.hr != null && Date.now() - live.hrAt < 5000;
   $('#ivHrV').textContent = fresh ? live.hr : '--';
-  $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile.max)] : '';
+  $('#ivHrV').style.color = fresh ? ZONE_COLORS[zoneOf(live.hr, state.profile)] : '';
 }
 async function nativeInit() {
   const P = HN(); if (!P) return;
@@ -3025,9 +3154,8 @@ async function whFetch(days = 7) {
     for (const c of cy) { const sc = c.score || {}; if (sc.strain == null) continue; const k = dayKey(new Date(c.start).getTime() + 8 * 3600e3); Object.assign(D[k] = D[k] || {}, { strain: Math.round(sc.strain * 10) / 10, kj: sc.kilojoule != null ? Math.round(sc.kilojoule) : null, kjDone: c.end ? 1 : 0 }); }
     try { const bm = await whReq('GET', `${WH_API}/user/measurement/body`, { headers: { Authorization: 'Bearer ' + await whToken() } }); if (bm && bm.weight_kilogram) WH.data.body = { kg: Math.round(bm.weight_kilogram * 10) / 10, h: bm.height_meter ? Math.round(bm.height_meter * 100) : null }; } catch (e) { }
     WH.data.last = Date.now(); await kvSet('whoopData', WH.data);
-    // Ruhepuls im Profil automatisch nachführen (Ø der letzten 7 Tage)
-    const rh = Object.keys(D).sort().slice(-7).map(k => D[k].rhr).filter(x => x);
-    if (rh.length >= 3) { const avg = Math.round(rh.reduce((a, b) => a + b, 0) / rh.length); if (avg !== state.profile.rest) { state.profile.rest = avg; await store.saveProfile(state.profile); fillProfileForm(); } }
+    // Profil automatisch nachführen
+    await autoProfile(); // Ruhepuls: Ø der letzten 7 Tage WHOOP, nur bei Auto
     whUi(); renderWhoop(); renderPerf(); renderToday(); if (sync.cfg) syncRun(syncPending());
   } catch (e) { whStatus('WHOOP-Fehler: ' + e.message); if (e.refresh && (e.status === 400 || e.status === 401)) { WH.tok = null; await kvSet('whoopTok', null); whUi(); whStatus('WHOOP-Zugang abgelaufen – bitte neu verbinden.'); } }
   finally { WH.busy = false; }
@@ -4921,7 +5049,7 @@ function startDemo() {
     const dur = mins * 60, z45 = Math.round(dur * (0.18 + load / 1200)), avg = Math.round(p.max * (0.66 + load / 2000));
     const zones = [dur * 0.1, dur * 0.22, dur * 0.3, z45 * 0.65, z45 * 0.35].map(Math.round);
     const rs = rounds ? Array.from({ length: rounds }, (_, i) => ({ r: i + 1, d: 180, avg: Math.round(p.max * (0.82 + i * 0.012)), max: Math.round(p.max * (0.9 + i * 0.01)), drop: Math.round(20 + wi * 1.6 - i * (2.6 - wi * 0.25) + rnd(-2, 2)) })) : null;
-    list.push({ id: 'demo' + list.length, date: d.toISOString(), type, note: '', source: 'live', durationSec: dur, avgHr: avg, maxHr: Math.round(p.max * 0.95), kcal: Math.round(mins * 11 + load), trimp: load, zones, rounds: rs, hrr60: rs ? null : Math.round(rnd(14, 22)), efforts: [], effortCount: rs ? rs.length : 3, prof: { max: p.max, rest: p.rest, weight: p.weight, age: p.age, sex: p.sex }, rpe: Math.round(rnd(5, 8)), hr: null });
+    list.push({ id: 'demo' + list.length, date: d.toISOString(), type, note: '', source: 'live', durationSec: dur, avgHr: avg, maxHr: Math.round(p.max * 0.95), kcal: Math.round(mins * 11 + load), trimp: load, zones, rounds: rs, hrr60: rs ? null : Math.round(rnd(14, 22)), efforts: [], effortCount: rs ? rs.length : 3, prof: profSnap(p), rpe: Math.round(rnd(5, 8)), hr: null });
   };
   // 6 Wochen Training: 4×/Woche, Intervalle mit Runden, langsam besser werdende Erholung
   for (let wi = 0; wi < 6; wi++) {
@@ -4939,6 +5067,7 @@ function startDemo() {
     days[k] = { recovery: sick ? Math.round(rnd(18, 30)) : Math.round(rnd(55, 85)), hrv: sick ? Math.round(rnd(38, 44)) : Math.round(rnd(58, 72)), rhr: sick ? Math.round(rnd(57, 60)) : Math.round(rnd(49, 53)), sleepH: rnd(6.4, 8.2), sleepPerf: Math.round(rnd(70, 95)), deepH: 1.4, remH: 1.8, resp: sick ? 16.4 : 14.8, spo2: 96.5, skinTemp: sick ? 34.6 : 33.9 };
   }
   WH.tok = { access: 'demo', refresh: 'demo', exp: Date.now() + 1e12 }; WH.data = { days, last: Date.now(), cyV2: 1 };
+  autoProfile(null, true); // Demo: Ruhepuls aus WHOOP, Schwelle als Ersatzwert, Zonen in bpm (Speichern ist gesperrt)
   // Journal: 25 Abende – spätes Essen und Koffein am Nachmittag drücken die Erholung am nächsten Morgen
   const jd = {};
   for (let i = 27; i >= 2; i--) {
@@ -4999,7 +5128,7 @@ $('#bkFile').onchange = async e => {
     for (const s of d.sessions) { if (!s || !s.id || !s.date) continue; await store.saveSession(s); n++; }
     if (d.profile) { state.profile = { ...DEFAULT_PROFILE, ...d.profile }; await store.saveProfile(state.profile); fillProfileForm(); }
     state.sessions = (await store.loadSessions()).map(withHr).sort((a, b) => b.date.localeCompare(a.date));
-    renderHistory(); $('#storeInfo').textContent = `Gespeichert auf diesem Handy · ${state.sessions.length} Trainings.`;
+    await autoProfile(null, true); renderHistory(); $('#storeInfo').textContent = `Gespeichert auf diesem Handy · ${state.sessions.length} Trainings.`;
     toast(`${n} Trainings geladen`);
   } catch (err) { toast(err.message || 'Sicherung konnte nicht gelesen werden.'); }
 };
@@ -5029,7 +5158,7 @@ try {
 } catch (e) { }
 
 // ===================== App-Update (Service Worker) =====================
-const APP_VERSION = '2026.11.24-0640';
+const APP_VERSION = '2026.11.24-0704';
 $('#appVer').textContent = 'App-Version ' + APP_VERSION;
 if ('serviceWorker' in navigator) {
   let reloaded = false;
